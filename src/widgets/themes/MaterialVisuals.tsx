@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Box, Button, Slider, Switch, TextField, Typography } from '@mui/material';
 import type { Locale, WidgetDefinition, WidgetSize, WidgetThemeTokens } from '../core/types';
-import { bars, heat, spark } from '../data/mockData';
+import { bars, heat, spark, spark2 } from '../data/mockData';
 
 interface Props {
   def: WidgetDefinition;
@@ -171,34 +171,46 @@ function MaterialGauge({ def, theme, locale, size }: Props) {
   const stateText = state === 'danger' ? label(locale, 'Critical', 'بحرانی') : state === 'warning' ? label(locale, 'Warning', 'هشدار') : label(locale, 'Normal', 'عادی');
 
   if (p.compact) {
-    return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', direction: 'ltr' }}>
-      <RadialGauge value={value} max={max} unit={unit} theme={theme} size={116} tone={tone} />
+    return <Box sx={{ height:'100%', display:'grid', placeItems:'center', direction:'ltr' }}>
+      <RadialGauge value={value} max={max} unit={unit} theme={theme} size={112} tone={tone}/>
     </Box>;
   }
 
   if (p.wide && !p.large) {
-    return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: '128px minmax(0,1fr)', gap: 1.6, alignItems: 'center', direction: 'ltr' }}>
-      <RadialGauge value={value} max={max} unit={unit} theme={theme} size={120} tone={tone} />
-      <Box sx={{ minWidth: 0 }}>
-        <ToneBadge text={stateText} tone={state} theme={theme} />
-        <Typography sx={{ mt: 1.1, fontSize: 10.5, color: theme.muted }}>{label(locale, 'Operating range', 'محدوده عملکرد')}</Typography>
-        <Box sx={{ mt: .6 }}><Progress value={value} max={max} theme={theme} tone={tone} /></Box>
-        <Box sx={{ mt: .7, display: 'flex', justifyContent: 'space-between', color: theme.muted }}><Typography sx={{ fontSize: 10 }}>0</Typography><Typography sx={{ fontSize: 10 }}>{max}{unit}</Typography></Box>
+    return <Box sx={{ height:'100%', display:'grid', gridTemplateColumns:'122px minmax(0,1fr)', gap:1.3, alignItems:'center', direction:'ltr' }}>
+      <RadialGauge value={value} max={max} unit={unit} theme={theme} size={112} tone={tone}/>
+      <Box sx={{ minWidth:0 }}>
+        <ToneBadge text={stateText} tone={state} theme={theme}/>
+        <Box sx={{ mt:.9, display:'flex', justifyContent:'space-between', alignItems:'baseline' }}>
+          <Typography sx={{ fontSize:10.5, color:theme.muted }}>{label(locale,'Operating range','محدوده عملکرد')}</Typography>
+          <Typography sx={{ fontSize:10.5, fontWeight:800 }}>{Math.round(pct*100)}%</Typography>
+        </Box>
+        <Box sx={{ mt:.45 }}><Progress value={value} max={max} theme={theme} tone={tone}/></Box>
+        <Box sx={{ mt:.55, display:'flex', justifyContent:'space-between', color:theme.muted }}><Typography sx={{fontSize:9.5}}>0</Typography><Typography sx={{fontSize:9.5}}>{max}{unit}</Typography></Box>
       </Box>
     </Box>;
   }
 
-  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: 'minmax(160px,.9fr) minmax(0,1fr)', alignItems: 'center', gap: 2, direction: 'ltr' }}>
-    <Box sx={{ display: 'grid', placeItems: 'center' }}><RadialGauge value={value} max={max} unit={unit} theme={theme} size={172} tone={tone} /></Box>
-    <Box sx={{ minWidth: 0 }}>
-      <ToneBadge text={stateText} tone={state} theme={theme} />
-      <Typography sx={{ mt: 1.4, fontSize: 11, color: theme.muted }}>{label(locale, 'Threshold usage', 'درصد از آستانه')}</Typography>
-      <Typography sx={{ mt: .25, fontSize: 26, fontWeight: 850 }}>{Math.round(pct * 100)}%</Typography>
-      <Box sx={{ mt: .8 }}><Progress value={value} max={max} theme={theme} tone={tone} /></Box>
-      <Box sx={{ mt: 1.2, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .75 }}>
-        <StatBox label={label(locale, 'Warning', 'هشدار')} value={`${Math.round(max * .75)}${unit}`} theme={theme} />
-        <StatBox label={label(locale, 'Critical', 'بحرانی')} value={`${Math.round(max * .9)}${unit}`} theme={theme} />
+  return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'1fr auto', gap:1.1, direction:'ltr' }}>
+    <Box sx={{ display:'grid', gridTemplateColumns:'190px minmax(0,1fr)', alignItems:'center', gap:1.7, minHeight:0 }}>
+      <Box sx={{ display:'grid', placeItems:'center' }}><RadialGauge value={value} max={max} unit={unit} theme={theme} size={184} tone={tone}/></Box>
+      <Box sx={{ minWidth:0 }}>
+        <ToneBadge text={stateText} tone={state} theme={theme}/>
+        <Box sx={{ mt:1, display:'flex', justifyContent:'space-between', alignItems:'baseline' }}>
+          <Typography sx={{ fontSize:11, color:theme.muted }}>{label(locale,'Threshold usage','درصد از آستانه')}</Typography>
+          <Typography sx={{ fontSize:27, fontWeight:850 }}>{Math.round(pct*100)}%</Typography>
+        </Box>
+        <Progress value={value} max={max} theme={theme} tone={tone}/>
+        <Box sx={{ mt:1.1, display:'grid', gridTemplateColumns:'1fr 1fr', gap:.7 }}>
+          <StatBox label={label(locale,'Warning','هشدار')} value={`${Math.round(max*.75)}${unit}`} theme={theme}/>
+          <StatBox label={label(locale,'Critical','بحرانی')} value={`${Math.round(max*.9)}${unit}`} theme={theme}/>
+        </Box>
       </Box>
+    </Box>
+    <Box sx={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:.7 }}>
+      <StatBox label={label(locale,'Minimum','کمینه')} value={`0${unit}`} theme={theme}/>
+      <StatBox label={label(locale,'Current','فعلی')} value={`${value}${unit}`} theme={theme} accent/>
+      <StatBox label={label(locale,'Maximum','بیشینه')} value={`${max}${unit}`} theme={theme}/>
     </Box>
   </Box>;
 }
@@ -215,9 +227,19 @@ function MaterialBattery({ def, theme, locale, size }: Props) {
   const value = clamp(n(def.mock.value, 76), 0, 100);
   const voltage = s(def.mock.voltage, '3.94 V');
   const remain = s(def.mock.remaining, '8h 42m');
-  if (p.compact) return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', direction: 'ltr' }}><Box sx={{ textAlign: 'center' }}><BatteryShape value={value} theme={theme} width={94} height={44} /><Typography sx={{ mt: .75, fontSize: 26, fontWeight: 850 }}>{value}%</Typography><Typography sx={{ fontSize: 10.5, color: theme.muted }}>{voltage}</Typography></Box></Box>;
-  if (p.wide && !p.large) return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: '150px 1fr', alignItems: 'center', gap: 1.6, direction: 'ltr' }}><Box sx={{ display: 'grid', placeItems: 'center' }}><BatteryShape value={value} theme={theme} /></Box><Box><Typography sx={{ fontSize: 34, lineHeight: 1, fontWeight: 850 }}>{value}%</Typography><Typography sx={{ mt: .45, fontSize: 11, color: theme.muted }}>{voltage} · {remain}</Typography><Box sx={{ mt: 1 }}><ToneBadge text={value > 40 ? label(locale, 'Battery healthy', 'باتری سالم') : label(locale, 'Charge soon', 'نیاز به شارژ')} tone={value > 40 ? 'success' : 'warning'} theme={theme} /></Box></Box></Box>;
-  return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: '1fr auto', gap: 1.3, direction: 'ltr' }}><Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2.3 }}><BatteryShape value={value} theme={theme} width={164} height={76} /><Box><Typography sx={{ fontSize: 42, fontWeight: 850, lineHeight: 1 }}>{value}%</Typography><Typography sx={{ mt: .45, fontSize: 12, color: theme.muted }}>{label(locale, 'Estimated', 'زمان تقریبی')} {remain}</Typography></Box></Box><Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: .75 }}><StatBox label={label(locale, 'Voltage', 'ولتاژ')} value={voltage} theme={theme} accent /><StatBox label={label(locale, 'Health', 'سلامت')} value="Good" theme={theme} /><StatBox label={label(locale, 'Cycles', 'چرخه')} value="148" theme={theme} /></Box></Box>;
+
+  if (p.compact) return <Box sx={{ height:'100%', display:'grid', placeItems:'center', direction:'ltr' }}><Box sx={{ textAlign:'center' }}><BatteryShape value={value} theme={theme} width={94} height={44}/><Typography sx={{ mt:.7, fontSize:26, fontWeight:850 }}>{value}%</Typography><Typography sx={{ fontSize:10.5, color:theme.muted }}>{voltage}</Typography></Box></Box>;
+
+  if (p.wide && !p.large) return <Box sx={{ height:'100%', display:'grid', gridTemplateColumns:'150px 1fr', alignItems:'center', gap:1.5, direction:'ltr' }}><Box sx={{ display:'grid', placeItems:'center' }}><BatteryShape value={value} theme={theme}/></Box><Box><Typography sx={{ fontSize:34, lineHeight:1, fontWeight:850 }}>{value}%</Typography><Typography sx={{ mt:.4, fontSize:11, color:theme.muted }}>{voltage} · {remain}</Typography><Box sx={{ mt:.85 }}><ToneBadge text={value>40?label(locale,'Battery healthy','باتری سالم'):label(locale,'Charge soon','نیاز به شارژ')} tone={value>40?'success':'warning'} theme={theme}/></Box></Box></Box>;
+
+  return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'auto minmax(84px,1fr) auto', gap:1, direction:'ltr' }}>
+    <Box sx={{ display:'flex', alignItems:'center', justifyContent:'center', gap:2.2 }}><BatteryShape value={value} theme={theme} width={154} height={70}/><Box><Typography sx={{ fontSize:40, fontWeight:850, lineHeight:1 }}>{value}%</Typography><Typography sx={{ mt:.35, fontSize:11, color:theme.muted }}>{label(locale,'Estimated','زمان تقریبی')} {remain}</Typography></Box></Box>
+    <Box sx={{ minHeight:0, border:`1px solid ${theme.border}`, borderRadius:1.25, p:.8, bgcolor:'#fbfcff' }}>
+      <Box sx={{ display:'flex', justifyContent:'space-between', mb:.35 }}><Typography sx={{ fontSize:9.5, color:theme.muted }}>{label(locale,'Discharge trend','روند تخلیه')}</Typography><Typography sx={{ fontSize:9.5, color:theme.muted }}>24h</Typography></Box>
+      <ChartSvg values={spark2} color={theme.accent} fill minHeight={62}/>
+    </Box>
+    <Box sx={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:.7 }}><StatBox label={label(locale,'Voltage','ولتاژ')} value={voltage} theme={theme} accent/><StatBox label={label(locale,'Health','سلامت')} value="Good" theme={theme}/><StatBox label={label(locale,'Cycles','چرخه')} value="148" theme={theme}/></Box>
+  </Box>;
 }
 
 function MaterialSignal({ def, theme, locale, size }: Props) {
@@ -237,20 +259,30 @@ function MaterialTank({ def, theme, locale, size }: Props) {
   const p = profile(size);
   const value = clamp(n(def.mock.value, 63), 0, 100);
   const liters = s(def.mock.liters, '1,260 L');
-  const TankShape = ({ large = false }: { large?: boolean }) => <Box sx={{ width: large ? 100 : 70, height: large ? 142 : 98, border: `2px solid ${theme.border}`, borderRadius: 2, p: .45, display: 'flex', alignItems: 'end', bgcolor: '#fbfcff', overflow: 'hidden', position: 'relative' }}><Box sx={{ width: '100%', height: `${value}%`, bgcolor: theme.accent, borderRadius: '5px 5px 10px 10px', position: 'relative', '&::before': { content: '""', position: 'absolute', left: 0, right: 0, top: -4, height: 8, borderRadius: '50%', bgcolor: theme.accent } }} /></Box>;
-  if (p.compact) return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', direction: 'ltr' }}><Box sx={{ display: 'flex', alignItems: 'center', gap: 1.1 }}><TankShape /><Box><Typography sx={{ fontSize: 27, fontWeight: 850 }}>{value}%</Typography><Typography sx={{ fontSize: 10.5, color: theme.muted }}>{liters}</Typography></Box></Box></Box>;
-  if (p.wide && !p.large) return <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, direction: 'ltr' }}><TankShape /><Box><Typography sx={{ fontSize: 34, fontWeight: 850 }}>{value}%</Typography><Typography sx={{ color: theme.muted, fontSize: 11 }}>{liters}</Typography><Box sx={{ mt: .9, width: 150 }}><Progress value={value} theme={theme} /></Box></Box></Box>;
-  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: '150px 1fr', alignItems: 'center', gap: 2, direction: 'ltr' }}><Box sx={{ display: 'grid', placeItems: 'center' }}><TankShape large /></Box><Box><Typography sx={{ fontSize: 42, lineHeight: 1, fontWeight: 850 }}>{value}%</Typography><Typography sx={{ mt: .4, color: theme.muted }}>{liters} {label(locale, 'stored', 'موجود')}</Typography><Box sx={{ mt: 1.2 }}><Progress value={value} theme={theme} /></Box><Box sx={{ mt: 1.2, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .75 }}><StatBox label={label(locale, 'Capacity', 'ظرفیت')} value="2,000 L" theme={theme} /><StatBox label={label(locale, 'Available', 'فضای خالی')} value="740 L" theme={theme} /></Box></Box></Box>;
+  const TankShape = ({ large = false }: { large?: boolean }) => <Box sx={{ width:large?92:68, height:large?126:94, border:`2px solid ${theme.border}`, borderRadius:1.5, p:.4, display:'flex', alignItems:'end', bgcolor:'#fbfcff', overflow:'hidden', position:'relative' }}><Box sx={{ width:'100%', height:`${value}%`, bgcolor:theme.accent, borderRadius:'4px 4px 7px 7px', position:'relative', '&::before':{content:'""', position:'absolute', left:0, right:0, top:-4, height:8, borderRadius:'50%', bgcolor:theme.accent} }}/></Box>;
+
+  if (p.compact) return <Box sx={{ height:'100%', display:'grid', placeItems:'center', direction:'ltr' }}><Box sx={{ display:'flex', alignItems:'center', gap:1 }}><TankShape/><Box><Typography sx={{ fontSize:27, fontWeight:850 }}>{value}%</Typography><Typography sx={{ fontSize:10.5, color:theme.muted }}>{liters}</Typography></Box></Box></Box>;
+
+  if (p.tall) return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'auto auto auto 1fr', justifyItems:'center', alignContent:'center', gap:1, direction:'ltr' }}>
+    <TankShape large/>
+    <Box sx={{ textAlign:'center' }}><Typography sx={{ fontSize:34, lineHeight:1, fontWeight:850 }}>{value}%</Typography><Typography sx={{ mt:.3, color:theme.muted, fontSize:11 }}>{liters}</Typography></Box>
+    <Box sx={{ width:'78%' }}><Progress value={value} theme={theme}/></Box>
+    <Box sx={{ width:'100%', alignSelf:'end', display:'grid', gridTemplateColumns:'1fr 1fr', gap:.55 }}><StatBox label={label(locale,'Capacity','ظرفیت')} value="2,000 L" theme={theme}/><StatBox label={label(locale,'Free','خالی')} value="740 L" theme={theme}/></Box>
+  </Box>;
+
+  if (p.wide && !p.large) return <Box sx={{ height:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:1.8, direction:'ltr' }}><TankShape/><Box><Typography sx={{ fontSize:34, fontWeight:850 }}>{value}%</Typography><Typography sx={{ color:theme.muted, fontSize:11 }}>{liters}</Typography><Box sx={{ mt:.8, width:150 }}><Progress value={value} theme={theme}/></Box></Box></Box>;
+
+  return <Box sx={{ height:'100%', display:'grid', gridTemplateColumns:'140px 1fr', alignItems:'center', gap:1.7, direction:'ltr' }}><Box sx={{ display:'grid', placeItems:'center' }}><TankShape large/></Box><Box><Typography sx={{ fontSize:42, lineHeight:1, fontWeight:850 }}>{value}%</Typography><Typography sx={{ mt:.35, color:theme.muted }}>{liters} {label(locale,'stored','موجود')}</Typography><Box sx={{ mt:1 }}><Progress value={value} theme={theme}/></Box><Box sx={{ mt:1, display:'grid', gridTemplateColumns:'1fr 1fr', gap:.7 }}><StatBox label={label(locale,'Capacity','ظرفیت')} value="2,000 L" theme={theme}/><StatBox label={label(locale,'Available','فضای خالی')} value="740 L" theme={theme}/></Box></Box></Box>;
 }
 
 function MaterialBoolean({ def, theme, locale, size }: Props) {
   const p = profile(size);
   const [on, setOn] = useState(Boolean(def.mock.value ?? true));
   const Icon = def.icon;
-  const text = on ? label(locale, 'Active', 'فعال') : label(locale, 'Inactive', 'غیرفعال');
+  const text = on ? label(locale,'Active','فعال') : label(locale,'Inactive','غیرفعال');
   const color = on ? '#16a34a' : '#64748b';
-  if (p.compact) return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center' }}><Box onClick={() => setOn(v => !v)} sx={{ cursor: 'pointer', textAlign: 'center' }}><Box sx={{ width: 64, height: 64, mx: 'auto', borderRadius: 2, bgcolor: `${color}10`, border: `1px solid ${color}20`, display: 'grid', placeItems: 'center' }}><Icon sx={{ fontSize: 30, color }} /></Box><Typography sx={{ mt: .8, fontSize: 13, fontWeight: 850, color }}>{text}</Typography></Box></Box>;
-  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: p.large ? '150px 1fr' : '100px 1fr', alignItems: 'center', gap: 1.5 }}><Box onClick={() => setOn(v => !v)} sx={{ cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Box sx={{ width: p.large ? 94 : 76, height: p.large ? 94 : 76, borderRadius: 2.5, bgcolor: `${color}10`, border: `1px solid ${color}25`, display: 'grid', placeItems: 'center' }}><Icon sx={{ fontSize: p.large ? 44 : 34, color }} /></Box></Box><Box><ToneBadge text={text} tone={on ? 'success' : 'neutral'} theme={theme} />{p.large && <Box sx={{ mt: 1.25, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .75 }}><StatBox label={label(locale, 'Since', 'از زمان')} value="09:14" theme={theme} /><StatBox label={label(locale, 'Uptime', 'آپ‌تایم')} value="18h 42m" theme={theme} /></Box>}<Typography sx={{ mt: 1, fontSize: 10.5, color: theme.muted }}>{label(locale, 'Click state to toggle demo', 'برای تغییر وضعیت نمونه کلیک کنید')}</Typography></Box></Box>;
+  if (p.compact) return <Box sx={{ height:'100%', display:'grid', placeItems:'center' }}><Box onClick={()=>setOn(v=>!v)} sx={{ cursor:'pointer', textAlign:'center' }}><Box sx={{ width:62, height:62, mx:'auto', borderRadius:1.5, bgcolor:`${color}0c`, border:`1px solid ${color}20`, display:'grid', placeItems:'center' }}><Icon sx={{ fontSize:29, color }}/></Box><Typography sx={{ mt:.7, fontSize:13, fontWeight:850, color }}>{text}</Typography></Box></Box>;
+  return <Box sx={{ height:'100%', display:'grid', gridTemplateColumns:p.large?'136px 1fr':'96px 1fr', alignItems:'center', gap:1.4 }}><Box onClick={()=>setOn(v=>!v)} sx={{ cursor:'pointer', display:'grid', placeItems:'center' }}><Box sx={{ width:p.large?86:72, height:p.large?86:72, borderRadius:2, bgcolor:`${color}0c`, border:`1px solid ${color}20`, display:'grid', placeItems:'center' }}><Icon sx={{ fontSize:p.large?42:32, color }}/></Box></Box><Box><ToneBadge text={text} tone={on?'success':'neutral'} theme={theme}/>{p.large&&<><Box sx={{ mt:1, display:'grid', gridTemplateColumns:'1fr 1fr', gap:.7 }}><StatBox label={label(locale,'Since','از زمان')} value="09:14" theme={theme}/><StatBox label={label(locale,'Uptime','آپ‌تایم')} value="18h 42m" theme={theme}/></Box><Box sx={{ mt:1.05, display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:.35 }}>{[1,1,1,1,0,1].map((x,i)=><Box key={i} sx={{ height:8, borderRadius:.5, bgcolor:x?color:'#cbd5e1' }}/>)}</Box></>}<Typography sx={{ mt:.8, fontSize:10.5, color:theme.muted }}>{label(locale,'Click state to toggle demo','برای تغییر وضعیت نمونه کلیک کنید')}</Typography></Box></Box>;
 }
 
 function MaterialAlarm({ def, theme, locale, size }: Props) {
@@ -259,10 +291,10 @@ function MaterialAlarm({ def, theme, locale, size }: Props) {
   const active = Boolean(def.mock.value);
   const severity = s(def.mock.severity, 'warning');
   const color = active ? (severity === 'critical' ? '#dc2626' : '#d97706') : '#16a34a';
-  const state = active ? label(locale, 'Alarm active', 'هشدار فعال') : label(locale, 'Normal', 'عادی');
+  const state = active ? label(locale,'Alarm active','هشدار فعال') : label(locale,'Normal','عادی');
   const tone = active ? (severity === 'critical' ? 'danger' : 'warning') : 'success';
-  if (p.compact) return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center' }}><Box sx={{ textAlign: 'center' }}><Box sx={{ width: 68, height: 68, mx: 'auto', borderRadius: 2.5, display: 'grid', placeItems: 'center', bgcolor: `${color}0d`, border: `1px solid ${color}25` }}><Icon sx={{ fontSize: 34, color }} /></Box><Typography sx={{ mt: .8, fontSize: 12.5, fontWeight: 850, color }}>{state}</Typography></Box></Box>;
-  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: p.large ? '160px 1fr' : '110px 1fr', alignItems: 'center', gap: 1.6 }}><Box sx={{ display: 'grid', placeItems: 'center' }}><Box sx={{ width: p.large ? 104 : 82, height: p.large ? 104 : 82, borderRadius: 3, display: 'grid', placeItems: 'center', bgcolor: `${color}0d`, border: `1px solid ${color}25` }}><Icon sx={{ fontSize: p.large ? 50 : 38, color }} /></Box></Box><Box><ToneBadge text={state} tone={tone} theme={theme} />{p.large && <><Typography sx={{ mt: 1.2, fontSize: 11, color: theme.muted }}>{active ? label(locale, 'Immediate attention required', 'نیازمند بررسی فوری') : label(locale, 'Sensor is reporting normal state', 'سنسور وضعیت عادی گزارش می‌کند')}</Typography><Box sx={{ mt: 1.2, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .75 }}><StatBox label={label(locale, 'Last event', 'آخرین رخداد')} value={active ? '09:42' : 'Yesterday'} theme={theme} /><StatBox label={label(locale, 'Zone', 'زون')} value="Floor 2" theme={theme} /></Box></>}</Box></Box>;
+  if (p.compact) return <Box sx={{ height:'100%', display:'grid', placeItems:'center' }}><Box sx={{ textAlign:'center' }}><Box sx={{ width:66, height:66, mx:'auto', borderRadius:2, display:'grid', placeItems:'center', bgcolor:`${color}0c`, border:`1px solid ${color}20` }}><Icon sx={{ fontSize:33, color }}/></Box><Typography sx={{ mt:.7, fontSize:12.5, fontWeight:850, color }}>{state}</Typography></Box></Box>;
+  return <Box sx={{ height:'100%', display:'grid', gridTemplateColumns:p.large?'140px 1fr':'104px 1fr', alignItems:'center', gap:1.4 }}><Box sx={{ display:'grid', placeItems:'center' }}><Box sx={{ width:p.large?92:78, height:p.large?92:78, borderRadius:2.2, display:'grid', placeItems:'center', bgcolor:`${color}0c`, border:`1px solid ${color}20` }}><Icon sx={{ fontSize:p.large?46:37, color }}/></Box></Box><Box><ToneBadge text={state} tone={tone} theme={theme}/>{p.large&&<><Typography sx={{ mt:1, fontSize:11, color:theme.muted }}>{active?label(locale,'Immediate attention required','نیازمند بررسی فوری'):label(locale,'Sensor is reporting normal state','سنسور وضعیت عادی گزارش می‌کند')}</Typography><Box sx={{ mt:1, display:'grid', gridTemplateColumns:'1fr 1fr', gap:.7 }}><StatBox label={label(locale,'Last event','آخرین رخداد')} value={active?'09:42':'Yesterday'} theme={theme}/><StatBox label={label(locale,'Zone','زون')} value="Floor 2" theme={theme}/></Box><Box sx={{ mt:1, display:'flex', gap:.35 }}>{[0,0,0,1,0,0,0,active?1:0].map((x,i)=><Box key={i} sx={{ flex:1, height:8, borderRadius:.5, bgcolor:x?color:'#e5e7eb' }}/>)}</Box></>}</Box></Box>;
 }
 
 function MaterialLineChart({ def, theme, size }: Props) {
@@ -299,7 +331,15 @@ function MaterialDonut({ def, theme, locale, size }: Props) {
 
 function MaterialHeatmap({ theme, size }: Props) {
   const p = profile(size);
-  return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'minmax(0,1fr) auto', gap: .65 }}><Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gridTemplateRows: `repeat(${heat.length},1fr)`, gap: p.large ? .7 : .45, minHeight: 0 }}>{heat.flat().map((v,i)=><Box key={i} sx={{ minHeight: 16, borderRadius: .75, bgcolor: `rgba(79,70,229,${.08 + (v/100)*.78})`, border: '1px solid rgba(79,70,229,.08)' }} />)}</Box><Box sx={{ display: 'flex', justifyContent: 'space-between', color: theme.muted }}>{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(day=><Typography key={day} sx={{ fontSize: 9 }}>{p.compact ? day[0] : day}</Typography>)}</Box></Box>;
+  return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'minmax(0,1fr) auto', gap:.65 }}>
+    <Box sx={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gridTemplateRows:`repeat(${heat.length},1fr)`, gap:p.large?.7:.45, minHeight:0 }}>
+      {heat.flat().map((v,i)=>{
+        const alpha = .10 + clamp(v,0,1) * .84;
+        return <Box key={i} sx={{ minHeight:16, borderRadius:.6, bgcolor:`rgba(79,70,229,${alpha})`, border:'1px solid rgba(79,70,229,.10)' }}/>;
+      })}
+    </Box>
+    <Box sx={{ display:'flex', justifyContent:'space-between', color:theme.muted }}>{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(day=><Typography key={day} sx={{ fontSize:9 }}>{p.compact?day[0]:day}</Typography>)}</Box>
+  </Box>;
 }
 
 function MaterialTimeline({ theme, size }: Props) {
@@ -314,14 +354,33 @@ function MaterialTimeline({ theme, size }: Props) {
 
 function MaterialMap({ theme, size }: Props) {
   const p = profile(size);
-  return <Box sx={{ height: '100%', borderRadius: 1.5, overflow: 'hidden', position: 'relative', border: `1px solid ${theme.border}`, background: '#f4f7fb' }}><Box sx={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(transparent 0 95%,rgba(148,163,184,.14) 95%),linear-gradient(90deg,transparent 0 95%,rgba(148,163,184,.14) 95%)', backgroundSize: p.large ? '42px 42px' : '34px 34px' }} /><svg viewBox="0 0 300 180" width="100%" height="100%" style={{ position:'absolute', inset:0 }}><path d="M10 125 C 55 80,95 82,136 118 S 224 156,290 92" fill="none" stroke={theme.accent} strokeWidth="4" strokeLinecap="round"/>{[{x:72,y:96},{x:134,y:118},{x:214,y:126}].map((pt,i)=><g key={i}><circle cx={pt.x} cy={pt.y} r="9" fill={theme.accent} opacity=".12"/><circle cx={pt.x} cy={pt.y} r="5" fill={theme.accent}/></g>)}</svg><Box sx={{ position:'absolute', left:10, bottom:10 }}><ToneBadge text="3 devices" tone="accent" theme={theme}/></Box></Box>;
+  return <Box sx={{ height:'100%', borderRadius:1.25, overflow:'hidden', position:'relative', border:`1px solid ${theme.border}`, background:'#f7f8fb' }}>
+    <svg viewBox="0 0 300 180" width="100%" height="100%" preserveAspectRatio="none" style={{position:'absolute',inset:0}}>
+      <rect width="300" height="180" fill="#f7f8fb"/>
+      <path d="M-15 45 C55 20 92 58 160 38 S255 24 322 56" fill="none" stroke="#dce4ed" strokeWidth="15"/>
+      <path d="M36 -10 C65 48 34 94 75 196" fill="none" stroke="#e2e8f0" strokeWidth="10"/>
+      <path d="M230 -10 C205 38 226 92 190 196" fill="none" stroke="#e5eaf1" strokeWidth="9"/>
+      <path d="M-10 136 C55 110 106 132 158 113 S245 98 314 128" fill="none" stroke="#dfe6ee" strokeWidth="7"/>
+      <path d="M10 125 C55 80 95 82 136 118 S224 156 290 92" fill="none" stroke={theme.accent} strokeWidth={p.large?4:3.2} strokeLinecap="round"/>
+      {[{x:72,y:96},{x:134,y:118},{x:214,y:126}].map((pt,i)=><g key={i}><circle cx={pt.x} cy={pt.y} r="9" fill={theme.accent} opacity=".13"/><circle cx={pt.x} cy={pt.y} r="5" fill={theme.accent}/></g>)}
+      {p.large&&<><text x="116" y="33" fill="#94a3b8" fontSize="8">Industrial Ave</text><text x="214" y="82" fill="#94a3b8" fontSize="8">North Rd</text></>}
+    </svg>
+    <Box sx={{ position:'absolute', left:10, bottom:10 }}><ToneBadge text="3 devices" tone="accent" theme={theme}/></Box>
+    {p.large&&<Box sx={{ position:'absolute', right:10, top:10, px:.8, py:.45, borderRadius:1, bgcolor:'rgba(255,255,255,.88)', border:`1px solid ${theme.border}` }}><Typography sx={{ fontSize:9.5, color:theme.muted }}>12.4 km route</Typography></Box>}
+  </Box>;
 }
 
 function MaterialCoordinates({ def, theme, locale, size }: Props) {
   const p = profile(size);
-  const lat = s(def.mock.lat,'35.7219° N'); const lng=s(def.mock.lng,'51.3347° E'); const accuracy=s(def.mock.accuracy,'4.2 m');
-  if (!p.large) return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'repeat(3,1fr)', gap:.65, alignContent:'center', direction:'ltr' }}><StatBox label="LAT" value={lat} theme={theme}/><StatBox label="LNG" value={lng} theme={theme}/><StatBox label={label(locale,'Accuracy','دقت')} value={accuracy} theme={theme} accent/></Box>;
-  return <Box sx={{ height:'100%', display:'grid', gridTemplateColumns:'1fr 128px', gap:1.25, alignItems:'center', direction:'ltr' }}><Box sx={{ display:'grid', gap:.75 }}><StatBox label="LATITUDE" value={lat} theme={theme}/><StatBox label="LONGITUDE" value={lng} theme={theme}/><StatBox label={label(locale,'Accuracy','دقت')} value={accuracy} theme={theme} accent/></Box><Box sx={{ height:128, borderRadius:2, border:`1px solid ${theme.border}`, bgcolor:'#f4f7fb', display:'grid', placeItems:'center', position:'relative', overflow:'hidden' }}><Box sx={{ position:'absolute', width:1, top:12,bottom:12,bgcolor:'#dbe2eb' }}/><Box sx={{ position:'absolute', height:1,left:12,right:12,bgcolor:'#dbe2eb' }}/><Box sx={{ width:18,height:18,borderRadius:'50%',bgcolor:`${theme.accent}18`,border:`4px solid ${theme.accent}` }}/></Box></Box>;
+  const lat=s(def.mock.lat,'35.7219° N'); const lng=s(def.mock.lng,'51.3347° E'); const accuracy=s(def.mock.accuracy,'4.2 m');
+  if (!p.large) return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'repeat(3,1fr)', gap:.6, alignContent:'center', direction:'ltr' }}><StatBox label="LAT" value={lat} theme={theme}/><StatBox label="LNG" value={lng} theme={theme}/><StatBox label={label(locale,'Accuracy','دقت')} value={accuracy} theme={theme} accent/></Box>;
+  return <Box sx={{ height:'100%', display:'grid', gridTemplateColumns:'1fr 154px', gap:1.15, alignItems:'center', direction:'ltr' }}>
+    <Box sx={{ display:'grid', gap:.7 }}><StatBox label="LATITUDE" value={lat} theme={theme}/><StatBox label="LONGITUDE" value={lng} theme={theme}/><StatBox label={label(locale,'Accuracy','دقت')} value={accuracy} theme={theme} accent/></Box>
+    <Box sx={{ height:154, borderRadius:1.5, border:`1px solid ${theme.border}`, bgcolor:'#f7f8fb', position:'relative', overflow:'hidden' }}>
+      <svg viewBox="0 0 154 154" width="100%" height="100%"><rect width="154" height="154" fill="#f7f8fb"/><path d="M-10 44 C38 22 72 56 166 28" fill="none" stroke="#dce4ed" strokeWidth="12"/><path d="M45 -8 C66 36 36 86 63 170" fill="none" stroke="#e2e8f0" strokeWidth="8"/><path d="M-8 120 C48 92 102 118 166 86" fill="none" stroke="#dfe6ee" strokeWidth="7"/><circle cx="91" cy="86" r="22" fill={theme.accent} opacity=".12"/><circle cx="91" cy="86" r="7" fill="#fff" stroke={theme.accent} strokeWidth="4"/></svg>
+      <Box sx={{ position:'absolute', left:8, bottom:8, px:.65, py:.35, bgcolor:'rgba(255,255,255,.9)', border:`1px solid ${theme.border}`, borderRadius:1 }}><Typography sx={{ fontSize:9.5, color:theme.muted }}>± {accuracy}</Typography></Box>
+    </Box>
+  </Box>;
 }
 
 function MaterialCompass({ def, theme, size }: Props) {
@@ -333,14 +392,30 @@ function MaterialCompass({ def, theme, size }: Props) {
 
 function MaterialButton({ theme, locale, size }: Props) {
   const p=profile(size); const [sent,setSent]=useState(false);
-  if (p.compact) return <Box sx={{ height:'100%',display:'grid',placeItems:'center' }}><Box sx={{ textAlign:'center' }}><Button variant="contained" onClick={()=>{setSent(true);setTimeout(()=>setSent(false),1100)}} sx={{ borderRadius:1.5,textTransform:'none',fontWeight:800,px:2.1,boxShadow:'none' }}>{label(locale,'Send command','ارسال فرمان')}</Button><Typography sx={{ mt:.8,fontSize:10.5,color:sent?'#16a34a':theme.muted }}>{sent?label(locale,'Queued','در صف ارسال'):label(locale,'Ready','آماده')}</Typography></Box></Box>;
-  return <Box sx={{ height:'100%',display:'grid',gridTemplateColumns:p.large?'1fr 150px':'1fr 140px',alignItems:'center',gap:1.5 }}><Box><Typography sx={{ fontSize:18,fontWeight:850 }}>{label(locale,'Device command','فرمان دستگاه')}</Typography><Typography sx={{ mt:.4,fontSize:11,color:theme.muted }}>{label(locale,'Send a predefined RPC/downlink action to this device.','ارسال فرمان از پیش تعریف‌شده به دستگاه.')}</Typography>{p.large&&<Box sx={{ mt:1.2,display:'grid',gridTemplateColumns:'1fr 1fr',gap:.75 }}><StatBox label="TARGET" value="Device" theme={theme}/><StatBox label="TIMEOUT" value="5 sec" theme={theme}/></Box>}</Box><Box sx={{ textAlign:'center' }}><Button fullWidth variant="contained" onClick={()=>{setSent(true);setTimeout(()=>setSent(false),1100)}} sx={{ borderRadius:1.5,textTransform:'none',fontWeight:800,boxShadow:'none' }}>{label(locale,'Send command','ارسال فرمان')}</Button><Typography sx={{ mt:.7,fontSize:10.5,color:sent?'#16a34a':theme.muted }}>{sent?label(locale,'Command queued','فرمان در صف قرار گرفت'):label(locale,'Ready','آماده')}</Typography></Box></Box>;
+  const trigger=()=>{setSent(true);setTimeout(()=>setSent(false),1100)};
+  if (p.compact) return <Box sx={{ height:'100%',display:'grid',placeItems:'center' }}><Box sx={{ textAlign:'center' }}><Button variant="contained" onClick={trigger} sx={{ borderRadius:1.25,textTransform:'none',fontWeight:800,px:2.1,boxShadow:'none' }}>{label(locale,'Send command','ارسال فرمان')}</Button><Typography sx={{ mt:.7,fontSize:10.5,color:sent?'#16a34a':theme.muted }}>{sent?label(locale,'Queued','در صف ارسال'):label(locale,'Ready','آماده')}</Typography></Box></Box>;
+  if (!p.large) return <Box sx={{ height:'100%',display:'grid',gridTemplateColumns:'1fr 142px',alignItems:'center',gap:1.4 }}><Box><Typography sx={{ fontSize:18,fontWeight:850 }}>{label(locale,'Device command','فرمان دستگاه')}</Typography><Typography sx={{ mt:.35,fontSize:11,color:theme.muted }}>{label(locale,'Send a predefined RPC/downlink action to this device.','ارسال فرمان از پیش تعریف‌شده به دستگاه.')}</Typography></Box><Box sx={{ textAlign:'center' }}><Button fullWidth variant="contained" onClick={trigger} sx={{ borderRadius:1.25,textTransform:'none',fontWeight:800,boxShadow:'none' }}>{label(locale,'Send command','ارسال فرمان')}</Button><Typography sx={{ mt:.6,fontSize:10.5,color:sent?'#16a34a':theme.muted }}>{sent?label(locale,'Command queued','فرمان در صف قرار گرفت'):label(locale,'Ready','آماده')}</Typography></Box></Box>;
+  return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'auto auto 1fr', gap:1.1 }}>
+    <Box><Typography sx={{ fontSize:22,fontWeight:850 }}>{label(locale,'Device command','فرمان دستگاه')}</Typography><Typography sx={{ mt:.35,fontSize:11,color:theme.muted }}>{label(locale,'Send a predefined RPC/downlink action to this device.','ارسال فرمان از پیش تعریف‌شده به دستگاه.')}</Typography></Box>
+    <Box sx={{ display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:.7 }}><StatBox label="TARGET" value="Device" theme={theme}/><StatBox label="TIMEOUT" value="5 sec" theme={theme}/><StatBox label="METHOD" value="RPC" theme={theme} accent/></Box>
+    <Box sx={{ alignSelf:'end', display:'grid', gridTemplateColumns:'1fr 160px', gap:1, alignItems:'end' }}><Box><Typography sx={{ fontSize:10.5,color:theme.muted }}>{label(locale,'Last execution','آخرین اجرا')}</Typography><Typography sx={{ mt:.25,fontSize:13,fontWeight:800 }}>09:41:32 · ACK</Typography></Box><Button fullWidth variant="contained" onClick={trigger} sx={{ borderRadius:1.25,textTransform:'none',fontWeight:800,boxShadow:'none' }}>{sent?label(locale,'Queued','در صف'):label(locale,'Send command','ارسال فرمان')}</Button></Box>
+  </Box>;
 }
 
-function MaterialSwitch({ theme, locale, size }: Props) {
-  const p=profile(size); const [checked,setChecked]=useState(true);
-  if(p.compact) return <Box sx={{ height:'100%',display:'grid',placeItems:'center' }}><Box sx={{ textAlign:'center' }}><Switch checked={checked} onChange={(_,v)=>setChecked(v)} sx={{ transform:'scale(1.22)','& .MuiSwitch-switchBase.Mui-checked':{color:theme.accent},'& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track':{backgroundColor:theme.accent} }}/><Typography sx={{ mt:.55,fontSize:15,fontWeight:850,color:checked?theme.accent:theme.muted }}>{checked?'ON':'OFF'}</Typography></Box></Box>;
-  return <Box sx={{ height:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',gap:1.5 }}><Box><Typography sx={{ fontSize:p.large?25:20,fontWeight:850 }}>{checked?label(locale,'Output enabled','خروجی فعال'):label(locale,'Output disabled','خروجی غیرفعال')}</Typography><Typography sx={{ mt:.35,fontSize:11,color:theme.muted }}>{label(locale,'Tap switch to change device state','برای تغییر وضعیت کلید را بزنید')}</Typography>{p.large&&<Box sx={{ mt:1.2 }}><ToneBadge text={checked?label(locale,'Running','در حال کار'):label(locale,'Stopped','متوقف')} tone={checked?'success':'neutral'} theme={theme}/></Box>}</Box><Switch checked={checked} onChange={(_,v)=>setChecked(v)} sx={{ transform:p.large?'scale(1.55)':'scale(1.35)','& .MuiSwitch-switchBase.Mui-checked':{color:theme.accent},'& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track':{backgroundColor:theme.accent} }}/></Box>;
+function MaterialSwitch({ def, theme, locale, size }: Props) {
+  const p=profile(size); const [checked,setChecked]=useState(Boolean(def.mock.value ?? true));
+  const semantic = def.id === 'door-lock'
+    ? { on:label(locale,'Locked','قفل'), off:label(locale,'Unlocked','باز'), action:label(locale,'Door access','دسترسی درب'), running:label(locale,'Secured','ایمن') }
+    : def.id === 'siren'
+      ? { on:label(locale,'Beacon active','چراغ هشدار فعال'), off:label(locale,'Beacon standby','چراغ هشدار آماده'), action:label(locale,'Safety output','خروجی ایمنی'), running:label(locale,'Attention','هشدار') }
+      : { on:label(locale,'Output enabled','خروجی فعال'), off:label(locale,'Output disabled','خروجی غیرفعال'), action:label(locale,'Relay output','خروجی رله'), running:label(locale,'Running','در حال کار') };
+  const stateText = checked ? semantic.on : semantic.off;
+  if(p.compact) return <Box sx={{ height:'100%',display:'grid',placeItems:'center' }}><Box sx={{ textAlign:'center' }}><Switch checked={checked} onChange={(_,v)=>setChecked(v)} sx={{ transform:'scale(1.22)','& .MuiSwitch-switchBase.Mui-checked':{color:theme.accent},'& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track':{backgroundColor:theme.accent} }}/><Typography sx={{ mt:.5,fontSize:14.5,fontWeight:850,color:checked?theme.accent:theme.muted }}>{stateText}</Typography></Box></Box>;
+  if(!p.large) return <Box sx={{ height:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',gap:1.4 }}><Box><Typography sx={{ fontSize:20,fontWeight:850 }}>{stateText}</Typography><Typography sx={{ mt:.3,fontSize:11,color:theme.muted }}>{semantic.action}</Typography></Box><Switch checked={checked} onChange={(_,v)=>setChecked(v)} sx={{ transform:'scale(1.35)','& .MuiSwitch-switchBase.Mui-checked':{color:theme.accent},'& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track':{backgroundColor:theme.accent} }}/></Box>;
+  return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'1fr auto', gap:1 }}>
+    <Box sx={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:2 }}><Box><Typography sx={{ fontSize:26,fontWeight:850 }}>{stateText}</Typography><Typography sx={{ mt:.3,fontSize:11,color:theme.muted }}>{semantic.action}</Typography><Box sx={{ mt:1 }}><ToneBadge text={checked?semantic.running:label(locale,'Stopped','متوقف')} tone={checked?'success':'neutral'} theme={theme}/></Box></Box><Switch checked={checked} onChange={(_,v)=>setChecked(v)} sx={{ transform:'scale(1.65)','& .MuiSwitch-switchBase.Mui-checked':{color:theme.accent},'& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track':{backgroundColor:theme.accent} }}/></Box>
+    <Box sx={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:.7 }}><StatBox label={label(locale,'Last change','آخرین تغییر')} value="09:42" theme={theme}/><StatBox label={label(locale,'Source','منبع')} value="Dashboard" theme={theme}/><StatBox label={label(locale,'State','وضعیت')} value={checked?'ON':'OFF'} theme={theme} accent/></Box>
+  </Box>;
 }
 
 function MaterialSlider({ def, theme, locale, size }: Props) {
@@ -349,8 +424,13 @@ function MaterialSlider({ def, theme, locale, size }: Props) {
 }
 
 function MaterialInput({ def, theme, locale, size }: Props) {
-  const p=profile(size); const [value,setValue]=useState(String(def.mock.value??'22.5'));
-  return <Box sx={{ height:'100%',display:'flex',alignItems:'center',justifyContent:'center' }}><Box sx={{ width:'100%',maxWidth:p.large?360:undefined }}><TextField value={value} onChange={e=>setValue(e.target.value)} label={label(locale,'Target value','مقدار هدف')} size="small" fullWidth inputProps={{dir:'ltr'}} sx={{ '& .MuiOutlinedInput-root':{borderRadius:1.5},'& .MuiOutlinedInput-notchedOutline':{borderColor:theme.border} }}/>{p.large&&<Typography sx={{ mt:.8,fontSize:10.5,color:theme.muted }}>{label(locale,'Enter a value and press Enter in the production control.','در نسخه نهایی پس از ورود مقدار، فرمان ارسال می‌شود.')}</Typography>}</Box></Box>;
+  const p=profile(size); const [value,setValue]=useState(String(def.mock.value??'22.5')); const [applied,setApplied]=useState(false);
+  if(!p.large) return <Box sx={{ height:'100%',display:'flex',alignItems:'center',justifyContent:'center' }}><TextField value={value} onChange={e=>setValue(e.target.value)} label={label(locale,'Target value','مقدار هدف')} size="small" fullWidth inputProps={{dir:'ltr'}} sx={{ '& .MuiOutlinedInput-root':{borderRadius:1.25},'& .MuiOutlinedInput-notchedOutline':{borderColor:theme.border} }}/></Box>;
+  return <Box sx={{ height:'100%',display:'grid',gridTemplateRows:'auto auto 1fr',gap:1.1 }}>
+    <Box sx={{ display:'grid',gridTemplateColumns:'1fr 120px',gap:.8,alignItems:'end' }}><TextField value={value} onChange={e=>{setValue(e.target.value);setApplied(false)}} label={label(locale,'Target value','مقدار هدف')} size="small" fullWidth inputProps={{dir:'ltr'}} sx={{ '& .MuiOutlinedInput-root':{borderRadius:1.25},'& .MuiOutlinedInput-notchedOutline':{borderColor:theme.border} }}/><Button variant="contained" onClick={()=>setApplied(true)} sx={{ height:40,borderRadius:1.25,textTransform:'none',fontWeight:800,boxShadow:'none' }}>{label(locale,'Apply','اعمال')}</Button></Box>
+    <Box sx={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:.7 }}><StatBox label={label(locale,'Current','فعلی')} value={`${def.mock.value ?? '22.5'}${s(def.mock.unit,'')}`} theme={theme}/><StatBox label={label(locale,'Pending','در انتظار')} value={`${value}${s(def.mock.unit,'')}`} theme={theme} accent/></Box>
+    <Typography sx={{ alignSelf:'end',fontSize:10.5,color:applied?'#16a34a':theme.muted }}>{applied?label(locale,'Command queued successfully','فرمان با موفقیت در صف قرار گرفت'):label(locale,'Enter a value, review it, then apply.','مقدار را وارد، بررسی و سپس اعمال کنید.')}</Typography>
+  </Box>;
 }
 
 function MaterialThermostat({ def, theme, locale, size }: Props) {
@@ -365,8 +445,10 @@ function MaterialColor({ theme, locale, size }: Props) {
 }
 
 function MaterialDirection({ theme, locale, size }: Props) {
-  const p=profile(size); const [active,setActive]=useState('•'); const keys=['↑','←','•','→','↓']; const button=p.compact?38:p.large?52:44;
-  return <Box sx={{ height:'100%',display:'grid',placeItems:'center',direction:'ltr' }}><Box><Box sx={{ display:'grid',gridTemplateColumns:`repeat(3,${button}px)`,gridTemplateRows:`repeat(3,${button}px)`,gap:.55 }}>{keys.map((k,i)=>{const pos=[2,4,5,6,8][i]; return <Button key={k} onClick={()=>setActive(k)} sx={{ gridColumn:((pos-1)%3)+1,gridRow:Math.floor((pos-1)/3)+1,minWidth:0,width:button,height:button,p:0,borderRadius:1.5,border:`1px solid ${active===k?theme.accent:theme.border}`,color:active===k?'#fff':theme.foreground,bgcolor:active===k?theme.accent:'#fff','&:hover':{bgcolor:active===k?theme.accent:`${theme.accent}08`} }}>{k}</Button>})}</Box>{!p.compact&&<Typography sx={{ mt:.75,textAlign:'center',fontSize:10,color:theme.muted }}>{label(locale,'Last command','آخرین فرمان')}: {active}</Typography>}</Box></Box>;
+  const p=profile(size); const [active,setActive]=useState('•'); const keys=['↑','←','•','→','↓']; const button=p.compact?38:p.large?64:46;
+  const pad = <Box sx={{ display:'grid',gridTemplateColumns:`repeat(3,${button}px)`,gridTemplateRows:`repeat(3,${button}px)`,gap:p.large?.75:.55 }}>{keys.map((k,i)=>{const pos=[2,4,5,6,8][i]; return <Button key={k} onClick={()=>setActive(k)} sx={{ gridColumn:((pos-1)%3)+1,gridRow:Math.floor((pos-1)/3)+1,minWidth:0,width:button,height:button,p:0,borderRadius:1.25,border:`1px solid ${active===k?theme.accent:theme.border}`,color:active===k?'#fff':theme.foreground,bgcolor:active===k?theme.accent:'#fff','&:hover':{bgcolor:active===k?theme.accent:`${theme.accent}08`} }}>{k}</Button>})}</Box>;
+  if(!p.large) return <Box sx={{ height:'100%',display:'grid',placeItems:'center',direction:'ltr' }}><Box>{pad}{!p.compact&&<Typography sx={{ mt:.7,textAlign:'center',fontSize:10,color:theme.muted }}>{label(locale,'Last command','آخرین فرمان')}: {active}</Typography>}</Box></Box>;
+  return <Box sx={{ height:'100%',display:'grid',gridTemplateColumns:'220px 1fr',gap:1.6,alignItems:'center',direction:'ltr' }}><Box sx={{ display:'grid',placeItems:'center' }}>{pad}</Box><Box><ToneBadge text={label(locale,'PTZ / motion ready','کنترل حرکت آماده')} tone="success" theme={theme}/><Box sx={{ mt:1,display:'grid',gap:.7 }}><StatBox label={label(locale,'Last command','آخرین فرمان')} value={active} theme={theme} accent/><StatBox label={label(locale,'Speed','سرعت')} value="40%" theme={theme}/><StatBox label={label(locale,'Mode','حالت')} value="Momentary" theme={theme}/></Box></Box></Box>;
 }
 
 function rowColor(cell: string, theme: WidgetThemeTokens) {
@@ -379,12 +461,21 @@ function rowColor(cell: string, theme: WidgetThemeTokens) {
 
 function MaterialTable({ theme, locale, mode, size }: Props & { mode:'table'|'measurement-list'|'alarms'|'events'|'logs' }) {
   const p=profile(size);
-  const rows = mode==='alarms' ? [['Fire sensor','Critical','09:42'],['Door open','Warning','09:17'],['Battery low','Info','08:51']]
-    : mode==='logs' ? [['gateway-01','connected','09:44:21'],['pump-04','rpc ack','09:43:12'],['sensor-18','telemetry','09:42:08']]
-    : mode==='events' ? [['Valve','Opened','09:41'],['Pump','Started','09:34'],['Mode','Auto','09:12']]
-    : mode==='measurement-list' ? [['24.8 °C','09:44'],['24.6 °C','09:39'],['24.7 °C','09:34'],['24.4 °C','09:29']]
-    : [['GW-01','Online','24.8 °C'],['Pump-04','Online','68%'],['Node-18','Sleep','3.8 V'],['Valve-02','Alert','Open']];
-  return <Box sx={{ height:'100%',display:'grid',gridTemplateRows:p.large?'auto minmax(0,1fr) auto':'minmax(0,1fr)',gap:.8,direction:'ltr' }}>{p.large&&<Box sx={{ display:'flex',gap:.7 }}><ToneBadge text={`${rows.length} ${label(locale,'rows','ردیف')}`} tone="neutral" theme={theme}/>{mode==='alarms'&&<ToneBadge text="1 critical" tone="danger" theme={theme}/>}</Box>}<Box sx={{ minHeight:0,overflow:'hidden',border:`1px solid ${theme.border}`,borderRadius:1.5 }}>{rows.map((row,i)=><Box key={i} sx={{ display:'grid',gridTemplateColumns:`repeat(${row.length},minmax(0,1fr))`,gap:1,minHeight:p.large?44:36,alignItems:'center',px:1,py:.55,borderBottom:i<rows.length-1?`1px solid ${theme.border}`:'none',bgcolor:mode==='alarms'&&i===0?'rgba(220,38,38,.035)':'#fff' }}>{row.map((cell,j)=><Typography key={j} sx={{ fontSize:p.large?12:11,fontWeight:j===0?750:600,color:j===1?rowColor(cell,theme):j===0?theme.foreground:theme.muted,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{cell}</Typography>)}</Box>)}</Box>{p.large&&<Typography sx={{ fontSize:10,color:theme.muted }}>{label(locale,'Latest data shown','آخرین داده‌ها نمایش داده شده‌اند')}</Typography>}</Box>;
+  const baseRows = mode==='alarms' ? [['Fire sensor','Critical','09:42'],['Door open','Warning','09:17'],['Battery low','Info','08:51'],['Gas level','Warning','08:23'],['Pump overload','Critical','07:58'],['Signal weak','Info','07:21']]
+    : mode==='logs' ? [['gateway-01','connected','09:44:21'],['pump-04','rpc ack','09:43:12'],['sensor-18','telemetry','09:42:08'],['valve-02','state sync','09:40:44'],['node-07','heartbeat','09:39:11'],['gw-01','route update','09:38:02'],['sensor-11','telemetry','09:37:48']]
+    : mode==='events' ? [['Valve','Opened','09:41'],['Pump','Started','09:34'],['Mode','Auto','09:12'],['Fan','Speed 72%','09:02'],['Door','Locked','08:58'],['Valve','Closed','08:46']]
+    : mode==='measurement-list' ? [['24.8 °C','09:44'],['24.6 °C','09:39'],['24.7 °C','09:34'],['24.4 °C','09:29'],['24.2 °C','09:24'],['24.5 °C','09:19'],['24.1 °C','09:14'],['23.9 °C','09:09']]
+    : [['GW-01','Online','24.8 °C'],['Pump-04','Online','68%'],['Node-18','Sleep','3.8 V'],['Valve-02','Alert','Open'],['Node-07','Online','44%'],['Sensor-11','Online','742 ppm'],['Tracker-18','Online','-72 dBm'],['AHU-03','Online','72%']];
+  const rows = p.large ? baseRows : baseRows.slice(0,4);
+  const headers = mode==='measurement-list' ? [label(locale,'Reading','مقدار'),label(locale,'Time','زمان')] : mode==='table' ? [label(locale,'Device','دستگاه'),label(locale,'State','وضعیت'),label(locale,'Value','مقدار')] : [label(locale,'Item','مورد'),label(locale,'State','وضعیت'),label(locale,'Time','زمان')];
+  return <Box sx={{ height:'100%',display:'grid',gridTemplateRows:p.large?'auto minmax(0,1fr) auto':'minmax(0,1fr)',gap:.65,direction:'ltr' }}>
+    {p.large&&<Box sx={{ display:'flex',gap:.7 }}><ToneBadge text={`${rows.length} ${label(locale,'rows','ردیف')}`} tone="neutral" theme={theme}/>{mode==='alarms'&&<ToneBadge text="2 critical" tone="danger" theme={theme}/>}</Box>}
+    <Box sx={{ minHeight:0,overflow:'hidden',border:`1px solid ${theme.border}`,borderRadius:1.25,bgcolor:'#fff' }}>
+      {p.large&&<Box sx={{ display:'grid',gridTemplateColumns:`repeat(${headers.length},minmax(0,1fr))`,gap:1,px:1,py:.65,bgcolor:'#f8fafc',borderBottom:`1px solid ${theme.border}` }}>{headers.map(h=><Typography key={h} sx={{ fontSize:9.5,color:theme.muted,fontWeight:800,textTransform:'uppercase',letterSpacing:.25 }}>{h}</Typography>)}</Box>}
+      {rows.map((row,i)=><Box key={i} sx={{ display:'grid',gridTemplateColumns:`repeat(${row.length},minmax(0,1fr))`,gap:1,minHeight:p.large?36:34,alignItems:'center',px:1,py:.45,borderBottom:i<rows.length-1?`1px solid ${theme.border}`:'none',bgcolor:mode==='alarms'&&['Critical'].includes(row[1])?'rgba(220,38,38,.03)':'#fff' }}>{row.map((cell,j)=><Typography key={j} sx={{ fontSize:p.large?11.2:10.8,fontWeight:j===0?750:600,color:j===1?rowColor(cell,theme):j===0?theme.foreground:theme.muted,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{cell}</Typography>)}</Box>)}
+    </Box>
+    {p.large&&<Box sx={{ display:'flex',justifyContent:'space-between' }}><Typography sx={{ fontSize:10,color:theme.muted }}>{label(locale,'Latest data shown','آخرین داده‌ها نمایش داده شده‌اند')}</Typography><Typography sx={{ fontSize:10,color:theme.muted }}>{label(locale,'Auto refresh','بروزرسانی خودکار')}</Typography></Box>}
+  </Box>;
 }
 
 function MaterialClock({ theme, locale, size }: Props) {
@@ -394,7 +485,17 @@ function MaterialClock({ theme, locale, size }: Props) {
 
 function MaterialText({ theme, locale, size }: Props) {
   const p=profile(size);
-  return <Box sx={{ height:'100%',display:'flex',flexDirection:'column',justifyContent:p.large?'flex-start':'center',direction:locale==='fa'?'rtl':'ltr',textAlign:locale==='fa'?'right':'left' }}><Typography sx={{ fontSize:p.large?24:19,fontWeight:850 }}>{label(locale,'Server room status','وضعیت اتاق سرور')}</Typography><Typography sx={{ mt:1,fontSize:12,color:theme.muted,lineHeight:1.85 }}>{label(locale,'All sensors are within their normal ranges. Latest telemetry was received less than a minute ago.','همه سنسورها در محدوده عادی هستند. آخرین بسته داده کمتر از یک دقیقه قبل دریافت شده است.')}</Typography>{p.large&&<Box sx={{ mt:1.4,display:'grid',gridTemplateColumns:'1fr 1fr',gap:.75,direction:'ltr' }}><StatBox label="SENSORS" value="12 online" theme={theme} accent/><StatBox label="LAST UPDATE" value="38 sec" theme={theme}/></Box>}</Box>;
+  if(!p.large) return <Box sx={{ height:'100%',display:'flex',flexDirection:'column',justifyContent:'center',direction:locale==='fa'?'rtl':'ltr',textAlign:locale==='fa'?'right':'left' }}><Typography sx={{ fontSize:19,fontWeight:850 }}>{label(locale,'Server room status','وضعیت اتاق سرور')}</Typography><Typography sx={{ mt:.8,fontSize:12,color:theme.muted,lineHeight:1.75 }}>{label(locale,'All sensors are within their normal ranges. Latest telemetry was received less than a minute ago.','همه سنسورها در محدوده عادی هستند. آخرین بسته داده کمتر از یک دقیقه قبل دریافت شده است.')}</Typography></Box>;
+  const checks=[
+    [label(locale,'Temperature','دما'),'24.8°C','#16a34a'],
+    [label(locale,'Humidity','رطوبت'),'46%','#16a34a'],
+    [label(locale,'Door','درب'),label(locale,'Closed','بسته'),'#16a34a'],
+  ];
+  return <Box sx={{ height:'100%',display:'grid',gridTemplateRows:'auto auto 1fr',gap:1.1,direction:locale==='fa'?'rtl':'ltr',textAlign:locale==='fa'?'right':'left' }}>
+    <Box><Typography sx={{ fontSize:23,fontWeight:850 }}>{label(locale,'Server room status','وضعیت اتاق سرور')}</Typography><Typography sx={{ mt:.55,fontSize:12,color:theme.muted,lineHeight:1.75 }}>{label(locale,'All sensors are within their normal ranges. Latest telemetry was received less than a minute ago.','همه سنسورها در محدوده عادی هستند. آخرین بسته داده کمتر از یک دقیقه قبل دریافت شده است.')}</Typography></Box>
+    <Box sx={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:.7,direction:'ltr' }}><StatBox label="SENSORS" value="12 online" theme={theme} accent/><StatBox label="LAST UPDATE" value="38 sec" theme={theme}/></Box>
+    <Box sx={{ alignSelf:'end',border:`1px solid ${theme.border}`,borderRadius:1.25,overflow:'hidden',direction:'ltr' }}>{checks.map(([name,value,color],i)=><Box key={name} sx={{ display:'grid',gridTemplateColumns:'1fr auto',gap:1,alignItems:'center',px:1,py:.7,borderBottom:i<checks.length-1?`1px solid ${theme.border}`:'none' }}><Box sx={{ display:'flex',alignItems:'center',gap:.65 }}><Box sx={{ width:7,height:7,borderRadius:'50%',bgcolor:color }}/><Typography sx={{ fontSize:11,fontWeight:700 }}>{name}</Typography></Box><Typography sx={{ fontSize:11,fontWeight:800,color:theme.muted }}>{value}</Typography></Box>)}</Box>
+  </Box>;
 }
 
 function MaterialImage({ theme, size }: Props) {

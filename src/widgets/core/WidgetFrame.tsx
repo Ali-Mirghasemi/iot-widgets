@@ -49,7 +49,7 @@ function MaterialFrame(p: FrameProps) {
     minHeight: 0,
     overflow: 'hidden',
     position: 'relative',
-    borderRadius: '16px',
+    borderRadius: '12px',
     bgcolor: '#fff',
     border: `1px solid ${p.theme.border}`,
     boxShadow: '0 8px 24px rgba(15,23,42,.07)',
@@ -79,7 +79,7 @@ function MaterialFrame(p: FrameProps) {
         <Box sx={{
           width:d.compact?30:34,
           height:d.compact?30:34,
-          borderRadius:'10px',
+          borderRadius:'8px',
           display:'grid',
           placeItems:'center',
           bgcolor:`${p.theme.accent}0d`,
