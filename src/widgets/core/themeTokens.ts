@@ -17,7 +17,7 @@ export const widgetThemes: Record<WidgetThemeId, WidgetThemeTokens> = {
   },
   flat: {
     id: 'flat',
-    label: 'Flat',
+    label: 'Industrial Flat',
     background: '#f4f7f9',
     surface: '#ffffff',
     foreground: '#152231',
