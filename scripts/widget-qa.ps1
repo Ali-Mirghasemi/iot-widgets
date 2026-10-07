@@ -259,19 +259,88 @@ function Copy-CleanDirectory {
     Copy-Item -LiteralPath $Source -Destination $Destination -Recurse -Force
 }
 
-function New-Zip {
+function Reset-RawOutput {
+    param([Parameter(Mandatory)] [string]$Name)
+    $path = Join-Path $ProjectRoot $Name
+    if (Test-Path -LiteralPath $path) {
+        Remove-Item -LiteralPath $path -Recurse -Force
+    }
+}
+
+function Copy-WidgetQaOutput {
     param(
-        [Parameter(Mandatory)] [string[]]$Paths,
+        [Parameter(Mandatory)] [string]$SourceRoot,
+        [Parameter(Mandatory)] [string]$Theme,
         [Parameter(Mandatory)] [string]$Destination
     )
 
-    $existing = @($Paths | Where-Object { Test-Path -LiteralPath $_ })
-    if ($existing.Count -eq 0) { return }
+    if (-not (Test-Path -LiteralPath $SourceRoot)) {
+        throw "Expected output directory does not exist: $SourceRoot"
+    }
 
+    $sourceTheme = Join-Path $SourceRoot $Theme
+    if (-not (Test-Path -LiteralPath $sourceTheme)) {
+        throw "Expected theme output does not exist: $sourceTheme"
+    }
+
+    if (Test-Path -LiteralPath $Destination) {
+        Remove-Item -LiteralPath $Destination -Recurse -Force
+    }
+    New-Item -ItemType Directory -Path $Destination -Force | Out-Null
+
+    # Copy only this requested theme plus the report files for this exact run.
+    Copy-Item -LiteralPath $sourceTheme -Destination (Join-Path $Destination $Theme) -Recurse -Force
+    foreach ($name in @('report.json', 'SUMMARY.txt')) {
+        $sourceFile = Join-Path $SourceRoot $name
+        if (Test-Path -LiteralPath $sourceFile) {
+            Copy-Item -LiteralPath $sourceFile -Destination (Join-Path $Destination $name) -Force
+        }
+    }
+}
+
+function Copy-FullQaOutput {
+    param(
+        [Parameter(Mandatory)] [string]$SourceRoot,
+        [Parameter(Mandatory)] [string]$Theme,
+        [Parameter(Mandatory)] [string]$Destination
+    )
+
+    if (-not (Test-Path -LiteralPath $SourceRoot)) {
+        throw "Expected output directory does not exist: $SourceRoot"
+    }
+
+    $sourceTheme = Join-Path $SourceRoot $Theme
+    if (-not (Test-Path -LiteralPath $sourceTheme)) {
+        throw "Expected theme output does not exist: $sourceTheme"
+    }
+
+    if (Test-Path -LiteralPath $Destination) {
+        Remove-Item -LiteralPath $Destination -Recurse -Force
+    }
+    New-Item -ItemType Directory -Path $Destination -Force | Out-Null
+    Copy-Item -LiteralPath $sourceTheme -Destination (Join-Path $Destination $Theme) -Recurse -Force
+}
+
+function New-ZipFromDirectory {
+    param(
+        [Parameter(Mandatory)] [string]$SourceDirectory,
+        [Parameter(Mandatory)] [string]$Destination
+    )
+
+    if (-not (Test-Path -LiteralPath $SourceDirectory)) {
+        throw "ZIP source directory does not exist: $SourceDirectory"
+    }
     if (Test-Path -LiteralPath $Destination) {
         Remove-Item -LiteralPath $Destination -Force
     }
-    Compress-Archive -LiteralPath $existing -DestinationPath $Destination -CompressionLevel Optimal -Force
+
+    Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction SilentlyContinue
+    [System.IO.Compression.ZipFile]::CreateFromDirectory(
+        $SourceDirectory,
+        $Destination,
+        [System.IO.Compression.CompressionLevel]::Optimal,
+        $false
+    )
 }
 
 $SelectedThemes = Resolve-ThemeList $Themes
@@ -350,11 +419,14 @@ try {
                     $env:WIDGET_QA_PORT = [string]$port
                     Remove-Item Env:WIDGET_QA_URL -ErrorAction SilentlyContinue
 
+                    # Never let files from an older locale/theme leak into this run.
+                    Reset-RawOutput -Name 'widget-screenshots'
+
                     $widgetsLog = Join-Path $logDir 'npm-screenshots.log'
                     Invoke-NpmScript -Name 'screenshots' -LogFile $widgetsLog -NpmCommand $NpmCommand
 
                     $rawWidgets = Join-Path $ProjectRoot 'widget-screenshots'
-                    Copy-CleanDirectory -Source $rawWidgets -Destination $widgetsDest
+                    Copy-WidgetQaOutput -SourceRoot $rawWidgets -Theme $theme -Destination $widgetsDest
                     $widgetsStatus = 'PASS'
                 } catch {
                     $widgetsStatus = 'FAIL'
@@ -374,11 +446,14 @@ try {
                     $env:WIDGET_QA_URL = "http://127.0.0.1:$port"
                     Remove-Item Env:WIDGET_QA_PORT -ErrorAction SilentlyContinue
 
+                    # Full-page output is also cleaned before every locale/theme run.
+                    Reset-RawOutput -Name 'full-screenshots'
+
                     $fullLog = Join-Path $logDir 'npm-screenshots-full.log'
                     Invoke-NpmScript -Name 'screenshots:full' -LogFile $fullLog -NpmCommand $NpmCommand
 
                     $rawFull = Join-Path $ProjectRoot 'full-screenshots'
-                    Copy-CleanDirectory -Source $rawFull -Destination $fullDest
+                    Copy-FullQaOutput -SourceRoot $rawFull -Theme $theme -Destination $fullDest
                     $fullStatus = 'PASS'
                 } catch {
                     $fullStatus = 'FAIL'
@@ -426,13 +501,9 @@ Only requested locales are included.
             $themeManifestPath = Join-Path $themeStage 'QA-MANIFEST.txt'
             Set-Content -LiteralPath $themeManifestPath -Value $themeManifest -Encoding UTF8
 
-            $zipItems = New-Object System.Collections.Generic.List[string]
-            foreach ($localeName in $Locales) {
-                $localePath = Join-Path $themeStage $localeName
-                if (Test-Path -LiteralPath $localePath) { $zipItems.Add($localePath) }
-            }
-            $zipItems.Add($themeManifestPath)
-            New-Zip -Paths ($zipItems.ToArray()) -Destination $themeZip
+            # Archive the staging directory itself. This avoids duplicate/nested ZIPs and
+            # produces one portable archive containing only this requested theme.
+            New-ZipFromDirectory -SourceDirectory $themeStage -Destination $themeZip
 
             # Delete staging so out/ contains only the final theme archive(s).
             Remove-Item -LiteralPath $themeStage -Recurse -Force -ErrorAction SilentlyContinue
