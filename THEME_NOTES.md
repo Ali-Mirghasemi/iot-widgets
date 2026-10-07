@@ -1,77 +1,91 @@
-# Industrial Flat — Theme Notes
+# HUD / Cyber (`gaming`) theme notes
 
-- Stable theme ID: `flat`
-- Working/display name: **Industrial Flat**
-- Scope: theme-local visual renderer only. Material 3 and every other theme are untouched.
+## Scope
+
+This patch redesigns the complete `gaming` theme only. Stable theme ID and widget IDs are unchanged. Material 3 and all other themes are untouched.
+
+The theme implementation is isolated in:
+
+- `src/widgets/themes/GamingVisuals.tsx`
+
+It exports both the gaming visual renderer and the gaming frame so the theme can move to another React + MUI project without depending on showcase-only state.
 
 ## Design direction
 
-Industrial Flat is intentionally closer to a compact operator/HMI surface than a consumer dashboard. The renderer uses hard rectangular zones, thin borders, neutral process surfaces, dense numeric hierarchy, square segmented indicators, setpoint/deviation scales, orthogonal schematics, and restrained rounding. Saturated color is reserved for state and exception meaning rather than decoration.
+The previous gaming theme behaved mostly like a dark recolor. This version is built as an operational telemetry/HUD system instead:
 
-Current references reviewed before implementation included ISA-101 / high-performance HMI guidance and current industrial/SCADA dashboard examples such as Siemens WinCC OA-style monitoring surfaces. The useful patterns were: grayscale/neutral normal-state UI, report-by-exception color, compact trends beside live values, explicit setpoint/feedback context, dense status tables, and process-specific schematics instead of generic KPI cards.
+- angular instrument-frame geometry rather than rounded cards/pills;
+- restrained cyan for live telemetry, green for healthy/confirmed state, amber for caution, red for critical state;
+- machine-readable IDs, channel/state labels, compact status rails, segmented meters, scan/grid structure, and tabular numeric readouts;
+- composition changes by widget size rather than simple scaling;
+- semantic visual language for tank level, battery reserve, cellular signal, alarm loops, map/route, compass, SCADA, state history, etc.;
+- richer 2x2+ cards use history, metadata, state context, or secondary measurements instead of leaving dead space.
 
-## What changed
+## Size behavior
 
-### Metrics
+- **1x1:** primary value/state only, strongly glanceable.
+- **2x1 / 3x1:** compact secondary context, segmented scale, trend, or operational metadata.
+- **1x2:** deliberately vertical composition where supported, especially tank-level use.
+- **2x2+ / 3x2 / 3x3:** history traces, multiple metadata fields, state lanes, process context, richer maps/tables.
 
-- Metric values now change composition by size: glanceable value/state at 1x1, scale/trend context at 2x1, and history + secondary readouts at 2x2+.
-- Gauges use industrial segmented bargraphs rather than Material-style radial gauges.
-- Battery and signal are equipment/status displays with operational metadata.
-- Tank is a semantic vessel/level visualization and deliberately uses vertical space for 1x2.
-- Boolean/state widgets read like digital I/O feedback instead of generic badges.
-- Fire/alarm widgets use bounded alarm fields and severity/state treatment.
+Wide one-row controls/gauges use reduced circular/control geometry so nothing is cut by the shorter content region.
 
-### Controls
+## Semantic widgets
 
-- Command buttons provide local sent feedback in mock mode.
-- Switches use explicit two-position operator controls with local feedback state.
-- Sliders expose setpoint, feedback and (large sizes) output history.
-- Numeric inputs are editable and expose apply state, range and current value.
-- Thermostat +/- controls change target locally; large layouts add deviation and temperature history.
-- Color controls change swatch/brightness locally.
-- Direction controls respond to directional/stop commands and show the last command.
+Notable non-generic treatments include:
 
-### Charts
+- Fire / smoke / leak alarms: dedicated alarm-loop indicator with zone/test context.
+- Tank / water level: actual vessel fill geometry plus volume/inlet context.
+- Battery: segmented reserve pack plus voltage/remaining runtime and discharge trace at larger sizes.
+- Cellular signal: RF bars, dBm readout, RSRQ/SINR context and history.
+- State timeline / status history: discrete state rails rather than a generic line chart.
+- Map / route: HUD grid, path/track, location markers, lock/accuracy metadata.
+- SCADA: process-loop mimic with tank, pump, valve, flow and pressure/temperature context.
 
-- Line/area charts use industrial grid plots with compact summary bands.
-- Bar/histogram views use hard rectangular marks rather than rounded decorative bars.
-- Donut/capacity content is rendered as a block-capacity display to keep this theme structurally distinct.
-- Heatmap and timeline views use square status cells/blocks.
+## Mock interactions
 
-### Location
+Controls keep local mock state and visibly respond without showcase-only state coupling:
 
-- Map/route visuals are schematic/orthogonal rather than consumer-map styled.
-- Coordinates expose fix/accuracy metadata in larger sizes.
-- Compass uses a square instrument plate and axis-based pointer.
+- command button: Ready → Queued → Acknowledged → Ready;
+- relay/switch and boolean state: toggle locally;
+- slider/fan level: updates target value and segmented output;
+- manual setpoint: editable local value;
+- thermostat: local setpoint slider;
+- RGB control: on/off preview, hue presets, hue slider, brightness slider on larger cards;
+- directional control: last-command highlight.
 
-### Tables
+## English / Persian
 
-- Tables, measurement lists, alarms, events and logs use compact industrial headers, alternating rows, semantic state color and live status footers.
-- Large fleet tables use spare vertical space for a 24-hour fleet-health trend instead of leaving a large blank region.
+- Widget titles and appropriate UI labels support Persian.
+- Frame titles use RTL in Persian.
+- Numeric telemetry, units, coordinates, machine IDs, chart axes, and SCADA notation remain LTR where technically appropriate.
+- Persian QA was visually checked with representative metrics and table widgets.
 
-### Display
+## Reference direction
 
-- Clock uses a monospaced operations readout with sync/drift metadata at large sizes.
-- Text/status widgets add sensor/update/alarm metadata.
-- Image is a semantic CCTV/live-monitor surface.
-- Iframe is shown as an embedded operations panel rather than an empty placeholder.
-- SCADA is a process schematic with tank, pump, valve, flow, pressure and state readouts.
+The redesign used current telemetry/operations patterns rather than generic RGB gaming-card references, especially:
 
-## Responsiveness and locale
+- NASA Open MCT — telemetry hierarchy and operational information density: https://github.com/nasa/openmct
+- Grafana State timeline — discrete state periods: https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/state-timeline/
+- Grafana Status history — multi-series state inspection: https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/status-history/
 
-The renderer derives layout from the supported `WidgetSize` and changes composition when area/aspect ratio changes. User-facing Persian text uses RTL where useful, while numeric, chart, process and technical instrument content intentionally remains LTR.
+The implementation is original and does not copy any proprietary UI pixel-for-pixel.
 
 ## QA performed
 
-- Read `docs/profile.md`, `docs/agents.md`, and `docs/todo.md` completely before editing.
-- Inspected the existing `flat` screenshots for metrics, controls, charts, location, tables and display.
-- Verified renderer coverage against the visual IDs used by the registry.
-- Ran an isolated strict TypeScript check for `FlatVisuals.tsx`; it passes.
-- Temporarily wired the renderer into the `flat` dispatcher only for QA, then restored the shared files before packaging.
-- Attempted both requested screenshot scripts with `WIDGET_QA_THEME=flat` and Chromium configured. Both stop before capture because the supplied project has an incomplete `node_modules/playwright` installation (`playwright/index.js` is missing). Outbound DNS is disabled in the execution sandbox, so dependencies could not be repaired with `npm ci`.
+The requested project commands were attempted with `WIDGET_QA_THEME=gaming`:
 
-Because of that environment limitation, **new post-redesign screenshots could not be generated or visually inspected here**. The pre-change flat screenshot set was inspected and preserved. Run the commands in `INTEGRATION.md` after installing the project dependencies to complete pixel/overflow QA.
+- `npm run screenshots:full`
+- `npm run screenshots`
 
-## Known follow-up
+Both stop before rendering because the uploaded project archive does not contain installed Node packages and `playwright` is unavailable in `node_modules`. The sandbox package registry was also unreachable, so the project dependency set could not be restored here.
 
-The implementation is type-checked and size-aware, but the coordinator should still run the project's Playwright screenshot/overflow diagnostics after applying the small shared integration. Any pixel-level issue that only appears with the project's actual browser/font environment should be fixed in `FlatVisuals.tsx`, not by changing Material 3 or another theme.
+Additional checks completed:
+
+- TypeScript JSX syntax transpile: **0 diagnostics**.
+- All **35 registered visual types** are explicitly handled by `GamingVisualRenderer`.
+- Offline visual smoke sheets were rendered for all six categories at the project's deterministic QA base dimensions (280×228, including all supported size shapes) and inspected manually.
+- Representative Persian sheets were rendered and inspected.
+- A wide-row pass reduced circular/control geometry where the short row could otherwise clip.
+
+Exact MUI/Playwright screenshot verification should still be rerun after applying the small integration described in `INTEGRATION.md` on a machine with dependencies installed.

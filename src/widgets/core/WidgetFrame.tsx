@@ -5,6 +5,7 @@ import MoreHoriz from '@mui/icons-material/MoreHoriz';
 import type { Locale, WidgetDefinition, WidgetSize, WidgetThemeTokens } from './types';
 import { IOSFrame as IOSThemeFrame } from '../themes/IOSFrame';
 import { GlassFrame as AuroraGlassFrame } from '../themes/GlassFrame';
+import { GamingFrame as GamingThemeFrame } from '../themes/GamingVisuals';
 
 interface FrameProps {
   def: WidgetDefinition;
@@ -232,7 +233,7 @@ export function WidgetFrame(props: FrameProps) {
   switch (props.theme.id) {
     case 'flat': return <FlatFrame {...props}/>;
     case 'minimal': return <MinimalFrame {...props}/>;
-    case 'gaming': return <GamingFrame {...props}/>;
+    case 'gaming': return <GamingThemeFrame {...props}/>;
     case 'ios': return <IOSThemeFrame {...props}/>;
     case 'glass': return <AuroraGlassFrame {...props}/>;
     default: return <MaterialFrame {...props}/>;

@@ -1,58 +1,66 @@
-# Industrial Flat — Integration
+# Gaming theme integration
 
-This patch intentionally does **not** modify coordinator-owned shared files. Two small shared integration edits are required.
+Shared integration **is required**, but this patch intentionally does not modify shared files because theme work is happening in parallel.
 
-## 1. Route `flat` to the dedicated renderer
+The new theme file exports:
 
-File: `src/widgets/renderers/WidgetVisuals.tsx`
+- `GamingVisualRenderer`
+- `GamingFrame`
 
-Add this import next to the Material renderer import:
+Apply only the following small dispatcher changes.
+
+## 1. `src/widgets/renderers/WidgetVisuals.tsx`
+
+Add this import next to the Material theme renderer import:
 
 ```tsx
-import { FlatVisualRenderer } from '../themes/FlatVisuals';
+import { GamingVisualRenderer } from '../themes/GamingVisuals';
 ```
 
-Then add the `flat` early return in `WidgetVisualRenderer` immediately after the Material early return:
+Then, at the start of `WidgetVisualRenderer`, immediately after the existing Material branch, add:
+
+```tsx
+if (props.theme.id === 'gaming') return <GamingVisualRenderer {...props} />;
+```
+
+Resulting dispatcher start:
 
 ```tsx
 export function WidgetVisualRenderer(props: Props) {
   if (props.theme.id === 'material') return <MaterialVisualRenderer {...props} />;
-  if (props.theme.id === 'flat') return <FlatVisualRenderer {...props} />;
-
+  if (props.theme.id === 'gaming') return <GamingVisualRenderer {...props} />;
   const v = props.def.visual;
-  // existing fallback/theme rendering continues unchanged...
+  // existing shared renderer continues unchanged...
 }
 ```
 
-The early return is important: it isolates Industrial Flat from the older scattered `theme.id === 'flat'` branches in the generic renderer without requiring a risky shared-file cleanup during parallel theme work.
+## 2. `src/widgets/core/WidgetFrame.tsx`
 
-## 2. Update only the visible theme label
+Add this import:
 
-File: `src/widgets/core/themeTokens.ts`
-
-Keep the stable ID exactly as `flat`, but change the display label:
-
-```diff
- flat: {
-   id: 'flat',
--  label: 'Flat',
-+  label: 'Industrial Flat',
+```tsx
+import { GamingFrame as GamingThemeFrame } from '../themes/GamingVisuals';
 ```
 
-No token rewrite is required for this patch; the existing flat frame/token plumbing remains compatible.
+In the existing theme switch, replace only the `gaming` case:
 
-## Screenshot QA
-
-PowerShell commands requested by the project:
-
-```powershell
-$env:WIDGET_QA_THEME="flat"
-npm run screenshots:full
-
-$env:WIDGET_QA_THEME="flat"
-npm run screenshots
+```tsx
+case 'gaming': return <GamingThemeFrame {...props}/>;
 ```
 
-If your local scripts require an explicit Chromium executable, set `PLAYWRIGHT_CHROME_PATH` according to your existing project setup before running them.
+So that section becomes:
 
-Inspect every generated `flat` category and the QA overflow diagnostics before merging.
+```tsx
+switch (props.theme.id) {
+  case 'flat': return <FlatFrame {...props}/>;
+  case 'minimal': return <MinimalFrame {...props}/>;
+  case 'gaming': return <GamingThemeFrame {...props}/>;
+  case 'ios': return <IOSFrame {...props}/>;
+  case 'glass': return <GlassFrame {...props}/>;
+  default: return <MaterialFrame {...props}/>;
+}
+```
+
+The old shared-file `GamingFrame` implementation can remain temporarily unused to keep this merge minimal. A coordinator may remove it later after all parallel theme branches are merged.
+
+No changes are needed in `registry.ts`, `types.ts`, `themeTokens.ts`, `App.tsx`, or `styles.css`.
