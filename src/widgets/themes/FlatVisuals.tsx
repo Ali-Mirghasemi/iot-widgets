@@ -89,7 +89,7 @@ function ScaleBar({ value, max = 100, setpoint, tone = 'active' }: { value:numbe
   const pct=clamp(value/Math.max(1,max),0,1)*100; const set=clamp((setpoint ?? max*.7)/Math.max(1,max),0,1)*100; const color=toneColor(tone);
   return <Box sx={{ position:'relative', height:24, pt:'8px' }}>
     <Box sx={{ height:8, bgcolor:C.face2, border:`1px solid ${C.line}`, position:'relative', overflow:'hidden' }}><Box sx={{ width:`${pct}%`, height:'100%', bgcolor:color }} /></Box>
-    <Box sx={{ position:'absolute', left:`${set}%`, top:2, width:1, height:20, bgcolor:C.ink, transform:'translateX(-.5px)' }} />
+    <Box sx={{ position:'absolute', left:`${set}%`, top:2, width:'1px', height:20, bgcolor:C.ink, transform:'translateX(-.5px)' }} />
     <Box sx={{ position:'absolute', left:`calc(${set}% - 3px)`, top:0, width:0, height:0, borderLeft:'3px solid transparent', borderRight:'3px solid transparent', borderTop:`5px solid ${C.ink}` }} />
   </Box>;
 }
@@ -202,7 +202,7 @@ function Donut({ def, locale, size }: Props) {
 }
 function Heatmap({ size }: Props) {
   const p=profile(size); const flat=heat.flat();
-  return <Box sx={{height:'100%',display:'grid',gridTemplateRows:'auto minmax(0,1fr) auto',gap:.55,direction:'ltr'}}><Box sx={{display:'flex',justifyContent:'space-between'}}><Typography sx={{fontSize:8.5,fontWeight:900,color:C.muted}}>LOAD MATRIX</Typography><Typography sx={{fontSize:8.5,color:C.muted}}>LOW → HIGH</Typography></Box><Box sx={{minHeight:0,display:'grid',gridTemplateColumns:`repeat(${heat[0].length},1fr)`,gridTemplateRows:`repeat(${heat.length},1fr)`,gap:p.large?4:2}}>{flat.map((v,i)=>{const tone=v>84?C.amber:v>62?'#4f837b':v>38?'#8fb4ae':'#d6e1df'; const border=v>84?C.amber:v>62?'#416e68':v>38?'#759c96':C.line; return <Box key={i} sx={{bgcolor:tone,border:`1px solid ${border}`}}/>})}</Box><Box sx={{display:'flex',justifyContent:'space-between',fontSize:8,color:C.muted}}><span>MON</span><span>WED</span><span>FRI</span><span>SUN</span></Box></Box>;
+  return <Box sx={{height:'100%',display:'grid',gridTemplateRows:'auto minmax(0,1fr) auto',gap:.55,direction:'ltr'}}><Box sx={{display:'flex',justifyContent:'space-between'}}><Typography sx={{fontSize:8.5,fontWeight:900,color:C.muted}}>LOAD MATRIX</Typography><Typography sx={{fontSize:8.5,color:C.muted}}>LOW → HIGH</Typography></Box><Box sx={{minHeight:0,display:'grid',gridTemplateColumns:`repeat(${heat[0].length},1fr)`,gridTemplateRows:`repeat(${heat.length},1fr)`,gap:p.large?4:2}}>{flat.map((v,i)=>{const tone=v>.84?C.amber:v>.62?'#4f837b':v>.38?'#8fb4ae':'#d6e1df'; const border=v>.84?C.amber:v>.62?'#416e68':v>.38?'#759c96':C.line; return <Box key={i} sx={{bgcolor:tone,border:`1px solid ${border}`}}/>})}</Box><Box sx={{display:'flex',justifyContent:'space-between',fontSize:8,color:C.muted}}><span>MON</span><span>WED</span><span>FRI</span><span>SUN</span></Box></Box>;
 }
 function TimelineVisual({ size }: Props) {
   const p=profile(size); const rows=[['PUMP-01',['run','run','run','warn','run','run']],['VALVE-02',['run','run','off','off','run','alarm']],['FAN-03',['run','run','run','run','run','run']]];
