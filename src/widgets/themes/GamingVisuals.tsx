@@ -581,17 +581,30 @@ function HudSlider({ def, locale, size }: VisualProps) {
   const p = profile(size);
   const [value, setValue] = useState(n(def.mock.value, 65));
   const unit = s(def.mock.unit, '%');
-  return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 1.1, direction: 'ltr', px: .4 }}>
+  const trace = [value - 22, value - 17, value - 19, value - 12, value - 9, value - 11, value - 6, value - 3, value - 4, value]
+    .map(v => clamp(v, 0, 100));
+  const slider = <Slider min={0} max={100} value={value} onChange={(_, v) => setValue(v as number)} sx={{
+    py: 1,
+    color: HUD.cyan,
+    '& .MuiSlider-rail': { height: 5, opacity: 1, bgcolor: 'rgba(25,247,255,.09)', borderRadius: 0 },
+    '& .MuiSlider-track': { height: 5, border: 'none', borderRadius: 0, boxShadow: `0 0 12px ${HUD.cyan}22` },
+    '& .MuiSlider-thumb': { width: 16, height: 24, borderRadius: 0, bgcolor: HUD.bg0, border: `1px solid ${HUD.cyan}`, '&:before': { boxShadow: 'none' } },
+  }} />;
+
+  if (!p.large) return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 1.1, direction: 'ltr', px: .4 }}>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 1 }}><Box><HudLabel>{locale === 'fa' ? 'مقدار هدف' : 'COMMAND LEVEL'}</HudLabel><Readout value={value} unit={unit} compact={p.compact} /></Box><HudLabel tone={HUD.green}>ARMED</HudLabel></Box>
-    <Slider min={0} max={100} value={value} onChange={(_, v) => setValue(v as number)} sx={{
-      py: 1,
-      color: HUD.cyan,
-      '& .MuiSlider-rail': { height: 5, opacity: 1, bgcolor: 'rgba(25,247,255,.09)', borderRadius: 0 },
-      '& .MuiSlider-track': { height: 5, border: 'none', borderRadius: 0, boxShadow: `0 0 12px ${HUD.cyan}22` },
-      '& .MuiSlider-thumb': { width: 16, height: 24, borderRadius: 0, bgcolor: HUD.bg0, border: `1px solid ${HUD.cyan}`, '&:before': { boxShadow: 'none' } },
-    }} />
-    <TickRail value={value} max={100} segments={p.large ? 18 : 12} height={p.compact ? 8 : 10} />
-    {p.large && <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .8 }}><MiniStat label="MIN" value="0" /><MiniStat label="MAX" value="100" /></Box>}
+    {slider}
+    <TickRail value={value} max={100} segments={12} height={p.compact ? 8 : 10} />
+  </Box>;
+
+  return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto auto auto minmax(0,1fr)', gap: 1, direction: 'ltr', px: .25 }}>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 1 }}><Box><HudLabel>{locale === 'fa' ? 'مقدار هدف / خروجی فرمان' : 'COMMAND LEVEL / OUTPUT'}</HudLabel><Readout value={value} unit={unit} /></Box><Box sx={{ textAlign: 'right' }}><HudLabel tone={HUD.green}>ARMED</HudLabel><Typography sx={{ mt: .35, fontFamily: 'inherit', fontSize: 11, color: HUD.muted }}>CH / AO-02</Typography></Box></Box>
+    {slider}
+    <TickRail value={value} max={100} segments={18} height={10} />
+    <Box sx={{ minHeight: 0, display: 'grid', gridTemplateColumns: 'minmax(140px,.72fr) minmax(0,1.28fr)', gap: 1 }}>
+      <Box sx={{ display: 'grid', gridTemplateRows: 'repeat(3,auto)', alignContent: 'center', gap: .75 }}><MiniStat label="MIN / MAX" value="0 / 100" /><MiniStat label="SLEW LIMIT" value="12 %/s" tone={HUD.cyan} /><MiniStat label="FEEDBACK" value={`${value}${unit}`} tone={HUD.green} /></Box>
+      <Box sx={{ minHeight: 0, borderLeft: `1px solid ${HUD.borderSoft}`, pl: 1, display: 'grid', gridTemplateRows: 'auto minmax(0,1fr) auto', gap: .35 }}><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><HudLabel>command trace</HudLabel><HudLabel tone={HUD.dim}>60 SEC</HudLabel></Box><Box sx={{ minHeight: 0 }}><HudSparkline values={trace} height="100%" fill showDots /></Box><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><HudLabel tone={HUD.dim}>T−60</HudLabel><HudLabel tone={HUD.green}>TARGET LOCK</HudLabel><HudLabel tone={HUD.dim}>NOW</HudLabel></Box></Box>
+    </Box>
   </Box>;
 }
 
@@ -606,11 +619,16 @@ function InputControl({ def, locale, size }: VisualProps) {
   const numeric = Number(value);
   const valid = Number.isFinite(numeric);
   const pct = valid ? clamp(((numeric - 10) / 30) * 100, 0, 100) : 0;
+  const processValue = valid ? numeric - 0.7 : 0;
+  const setpointTrace = valid ? [21.2, 21.4, 21.5, 21.7, 21.8, 21.9, 22.0, processValue, numeric] : [21.2, 21.4, 21.5, 21.7, 21.8, 21.9];
   return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto auto auto minmax(0,1fr)', gap: 1, direction: 'ltr' }}>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}><Box><HudLabel>{locale === 'fa' ? 'ورودی دستی / محلی' : 'MANUAL SETPOINT / LOCAL'}</HudLabel><Typography sx={{ mt: .2, fontFamily: 'inherit', fontSize: 18, fontWeight: 740 }}>CONTROL REGISTER SP-01</Typography></Box><HudLabel tone={valid ? HUD.green : HUD.red}>{valid ? 'VALID' : 'INVALID'}</HudLabel></Box>
     {field}
     <Box><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><HudLabel>10 {unit}</HudLabel><HudLabel tone={HUD.cyan}>{valid ? `${numeric.toFixed(1)} ${unit}` : '--'}</HudLabel><HudLabel>40 {unit}</HudLabel></Box><Box sx={{ mt: .6 }}><TickRail value={pct} max={100} segments={18} height={12} /></Box></Box>
-    <Box sx={{ minHeight: 0, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: .75, alignContent: 'end' }}><MiniStat label="PREVIOUS" value={`21.8 ${unit}`} /><MiniStat label="DEADBAND" value={`±0.5 ${unit}`} /><MiniStat label="SOURCE" value="LOCAL" tone={HUD.green} /></Box>
+    <Box sx={{ minHeight: 0, display: 'grid', gridTemplateColumns: 'minmax(150px,.74fr) minmax(0,1.26fr)', gap: 1 }}>
+      <Box sx={{ display: 'grid', alignContent: 'center', gap: .75 }}><MiniStat label="PREVIOUS" value={`21.8 ${unit}`} /><MiniStat label="DEADBAND" value={`±0.5 ${unit}`} /><MiniStat label="SOURCE" value="LOCAL" tone={HUD.green} /><MiniStat label="READBACK" value={valid ? `${processValue.toFixed(1)} ${unit}` : '--'} tone={valid ? HUD.cyan : HUD.red} /></Box>
+      <Box sx={{ minHeight: 0, borderLeft: `1px solid ${HUD.borderSoft}`, pl: 1, display: 'grid', gridTemplateRows: 'auto minmax(0,1fr) auto', gap: .35 }}><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><HudLabel>setpoint / process trace</HudLabel><HudLabel tone={valid ? HUD.green : HUD.red}>{valid ? 'TRACKING' : 'INPUT FAULT'}</HudLabel></Box><Box sx={{ minHeight: 0 }}><HudSparkline values={setpointTrace} height="100%" fill color={valid ? HUD.cyan : HUD.red} showDots /></Box><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><HudLabel tone={HUD.dim}>PREV</HudLabel><HudLabel tone={HUD.green}>{valid ? `Δ ${(numeric - processValue).toFixed(1)} ${unit}` : 'NO DATA'}</HudLabel><HudLabel tone={HUD.dim}>TARGET</HudLabel></Box></Box>
+    </Box>
   </Box>;
 }
 
