@@ -795,7 +795,7 @@ function AlarmIndicator({ def, locale, size }: VisualProps) {
   </Box>;
 }
 
-function GamingVisualRenderer(props: VisualProps) {
+export function GamingVisualRenderer(props: VisualProps) {
   const v = props.def.visual;
   if (v === 'metric') return <Metric {...props} />;
   if (v === 'battery') return <Battery {...props} />;
