@@ -538,8 +538,52 @@ function ColorControl({ locale, size }: Props) {
   const [on, setOn] = useState(true);
   const preview = on ? `hsl(${hue} 82% ${Math.max(28, brightness / 1.6)}%)` : '#A1A1A6';
   const presets = [0, 35, 90, 150, 205, 275, 320];
+  const compactSliderSx = {
+    ...iosSliderContainSx,
+    py: .45,
+    height: 4,
+    '& .MuiSlider-thumb': { width: 15, height: 15 },
+    '& .MuiSlider-track': { height: 3, border: 0 },
+    '& .MuiSlider-rail': { height: 3, opacity: .2 },
+  };
+
+  // 2x1 needs a genuinely horizontal composition. Stacking two default MUI
+  // sliders leaves too little vertical room and clips the brightness thumb.
+  if (p.wide && !p.large) return <Box sx={{
+    height: '100%',
+    minHeight: 0,
+    overflow: 'hidden',
+    display: 'grid',
+    gridTemplateColumns: 'minmax(178px,.92fr) minmax(0,1.08fr)',
+    gap: 1.4,
+    alignItems: 'center',
+    direction: 'ltr',
+  }}>
+    <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: .75 }}>
+      <Box onClick={() => setOn(v => !v)} sx={{ cursor: 'pointer', height: 50, flex: '0 0 auto', borderRadius: '14px', bgcolor: preview, position: 'relative', overflow: 'hidden', border: '1px solid rgba(60,60,67,.08)', boxShadow: on ? `0 7px 18px hsl(${hue} 70% 45% / .14)` : 'none' }}>
+        <Box sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(110deg,rgba(255,255,255,.24),transparent 46%)' }} />
+        <Typography sx={{ position: 'absolute', left: 9, bottom: 7, fontSize: 10, lineHeight: 1, fontWeight: 750, color: '#fff' }}>{on ? 'ON' : 'OFF'}</Typography>
+        <Typography sx={{ position: 'absolute', right: 9, bottom: 7, fontSize: 10, lineHeight: 1, fontWeight: 650, color: 'rgba(255,255,255,.9)' }}>{brightness}%</Typography>
+      </Box>
+      <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(${presets.length},1fr)`, gap: .35, flex: '0 0 auto' }}>
+        {presets.map(v => <Box key={v} onClick={() => { setHue(v); setOn(true); }} sx={{ cursor: 'pointer', width: 17, height: 17, borderRadius: '50%', bgcolor: `hsl(${v} 82% 55%)`, border: hue === v ? '2px solid #fff' : '2px solid transparent', boxShadow: hue === v ? `0 0 0 2px ${C.blue}` : 'none', justifySelf: 'center' }} />)}
+      </Box>
+    </Box>
+    <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: .7 }}>
+      <Box sx={{ minWidth: 0 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: .1 }}><MicroLabel>{localeText(locale, 'Color', 'رنگ')}</MicroLabel><MicroLabel>{hue}°</MicroLabel></Box>
+        <Slider min={0} max={360} value={hue} onChange={(_, v) => setHue(v as number)} size="small" sx={{ ...compactSliderSx, color: C.blue }} />
+      </Box>
+      <Box sx={{ minWidth: 0 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: .1 }}><MicroLabel>{localeText(locale, 'Brightness', 'روشنایی')}</MicroLabel><MicroLabel>{brightness}%</MicroLabel></Box>
+        <Slider min={5} max={100} value={brightness} onChange={(_, v) => setBrightness(v as number)} size="small" sx={{ ...compactSliderSx, color: C.orange }} />
+      </Box>
+    </Box>
+  </Box>;
+
   return <Box sx={{ height: '100%', minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: p.compact ? .8 : 1, direction: 'ltr' }}><Box onClick={() => setOn(v => !v)} sx={{ cursor: 'pointer', height: p.large ? 76 : p.compact ? 54 : 62, flex: '0 0 auto', borderRadius: '16px', bgcolor: preview, position: 'relative', overflow: 'hidden', border: '1px solid rgba(60,60,67,.08)', boxShadow: on ? `0 8px 22px hsl(${hue} 70% 45% / .16)` : 'none' }}><Box sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(110deg,rgba(255,255,255,.24),transparent 46%)' }} /><Typography sx={{ position: 'absolute', left: 10, bottom: 8, fontSize: 10.5, fontWeight: 750, color: '#fff' }}>{on ? 'ON' : 'OFF'}</Typography><Typography sx={{ position: 'absolute', right: 10, bottom: 8, fontSize: 10.5, fontWeight: 650, color: 'rgba(255,255,255,.9)' }}>{brightness}%</Typography></Box><Box sx={{ display: 'grid', gridTemplateColumns: `repeat(${presets.length},1fr)`, gap: .55, flex: '0 0 auto' }}>{presets.map(v => <Box key={v} onClick={() => { setHue(v); setOn(true); }} sx={{ cursor: 'pointer', aspectRatio: '1', maxHeight: 24, borderRadius: '50%', bgcolor: `hsl(${v} 82% 55%)`, border: hue === v ? '2px solid #fff' : '2px solid transparent', boxShadow: hue === v ? `0 0 0 2px ${C.blue}` : 'none', justifySelf: 'center', width: p.compact ? 19 : 23 }} />)}</Box><Box sx={{ flex: '0 0 auto' }}><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><MicroLabel>{localeText(locale, 'Color', 'رنگ')}</MicroLabel><MicroLabel>{hue}°</MicroLabel></Box><Slider min={0} max={360} value={hue} onChange={(_, v) => setHue(v as number)} size="small" sx={{ ...iosSliderContainSx, py: .55, color: C.blue }} /></Box>{!p.compact && <Box sx={{ flex: '0 0 auto' }}><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><MicroLabel>{localeText(locale, 'Brightness', 'روشنایی')}</MicroLabel><MicroLabel>{brightness}%</MicroLabel></Box><Slider min={5} max={100} value={brightness} onChange={(_, v) => setBrightness(v as number)} size="small" sx={{ ...iosSliderContainSx, py: .55, color: C.orange }} /></Box>}</Box>;
 }
+
 
 function DirectionControl({ locale, size }: Props) {
   const p = sizeProfile(size);
