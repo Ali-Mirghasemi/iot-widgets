@@ -12,6 +12,11 @@ type TableMode = 'table' | 'measurement-list' | 'alarms' | 'events' | 'logs';
 const n = (v: unknown, f = 0) => typeof v === 'number' ? v : f;
 const s = (v: unknown, f = '') => typeof v === 'string' ? v : f;
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+function hexRgb(hex: string): [number, number, number] {
+    const value = hex.replace('#', '');
+    if (!/^[0-9a-f]{6}$/i.test(value)) return [0, 0, 0];
+    return [parseInt(value.slice(0, 2), 16), parseInt(value.slice(2, 4), 16), parseInt(value.slice(4, 6), 16)];
+}
 const tr = (locale: Locale, en: string, fa: string) => locale === 'fa' ? fa : en;
 function profile(size: WidgetSize) {
     const [w, h] = size.split('x').map(Number);
@@ -340,8 +345,100 @@ function GlassInput({ def, locale, size }: Props) { const p = profile(size), [va
 function GlassThermostat({ def, locale, size }: Props) { const p = profile(size), [target, setTarget] = useState(n(def.mock.value, 22)); const circle = <Box sx={{ width: p.large ? 164 : p.compact ? 122 : 142, height: p.large ? 164 : p.compact ? 122 : 142, borderRadius: '50%', display: 'grid', placeItems: 'center', position: 'relative', background: 'radial-gradient(circle at 38% 30%,rgba(255,255,255,.16),rgba(125,211,252,.055) 48%,rgba(255,255,255,.015) 70%)', border: '1px solid rgba(255,255,255,.15)', boxShadow: 'inset 0 0 38px rgba(125,211,252,.07)' }}><Box sx={{ textAlign: 'center' }}><Typography sx={{ fontSize: p.large ? 36 : 31, fontWeight: 830, lineHeight: .9 }}>{target}°</Typography><Typography sx={{ mt: .35, fontSize: 9.5, color: C.muted }}>{tr(locale, 'SETPOINT', 'هدف')}</Typography></Box><Box sx={{ position: 'absolute', left: 12, right: 12, bottom: 14, display: 'flex', justifyContent: 'space-between' }}><Box component="button" onClick={() => setTarget(v => clamp(v - 1, 10, 35))} sx={{ border: 0, width: 28, height: 28, borderRadius: '50%', color: '#fff', background: 'rgba(255,255,255,.08)', cursor: 'pointer' }}>−</Box><Box component="button" onClick={() => setTarget(v => clamp(v + 1, 10, 35))} sx={{ border: 0, width: 28, height: 28, borderRadius: '50%', color: '#fff', background: 'rgba(255,255,255,.08)', cursor: 'pointer' }}>+</Box></Box></Box>; if (p.compact)
     return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center' }}>{circle}</Box>; if (!p.large)
     return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: 'auto 1fr', alignItems: 'center', gap: 1.3, direction: 'ltr' }}>{circle}<Box><StatusText>{tr(locale, 'Heating idle', 'گرمایش آماده')}</StatusText><Box sx={{ mt: .8, display: 'grid', gap: .6 }}><MiniStat label={tr(locale, 'Room', 'اتاق')} value="21.6 °C"/><MiniStat label={tr(locale, 'Target', 'هدف')} value={`${target} °C`} accent/></Box></Box></Box>; return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: '190px 1fr', gap: 1.3, alignItems: 'center', direction: 'ltr' }}>{circle}<Box><Typography sx={{ fontSize: 20, fontWeight: 820 }}>{tr(locale, 'Climate setpoint', 'تنظیم دما')}</Typography><Box sx={{ mt: .7 }}><StatusText>{tr(locale, 'Room stable', 'دمای اتاق پایدار')}</StatusText></Box><Box sx={{ mt: 1, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: .7 }}><MiniStat label={tr(locale, 'Room', 'اتاق')} value="21.6 °C"/><MiniStat label={tr(locale, 'Target', 'هدف')} value={`${target} °C`} accent/><MiniStat label={tr(locale, 'Humidity', 'رطوبت')} value="46%"/></Box><GlassPlate sx={{ mt: 1, p: .8, height: 82 }}><LuminousChart values={[21.0, 21.2, 21.5, 21.4, 21.6, 21.7, 21.6, 21.6]} color={C.blue} fill/></GlassPlate></Box></Box>; }
-function GlassColor({ locale, size }: Props) { const p = profile(size), colors = ['#22d3ee', '#60a5fa', '#a78bfa', '#f472b6', '#fb7185', '#fbbf24', '#34d399'], [color, setColor] = useState(colors[2]), [brightness, setBrightness] = useState(72); return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: p.large ? 'auto auto auto minmax(0,1fr)' : 'auto auto 1fr', gap: .85, direction: 'ltr' }}><Box sx={{ height: p.large ? 76 : 48, borderRadius: '13px', background: `radial-gradient(circle at 35% 25%,rgba(255,255,255,.65),transparent 18%), linear-gradient(100deg,${color},${color}55)`, boxShadow: `inset 0 0 22px rgba(255,255,255,.14),0 0 24px ${color}35`, border: '1px solid rgba(255,255,255,.15)' }}/><Box sx={{ display: 'grid', gridTemplateColumns: `repeat(${colors.length},1fr)`, gap: .55 }}>{colors.map(c => <Box key={c} onClick={() => setColor(c)} sx={{ height: p.large ? 26 : 22, borderRadius: '7px', bgcolor: c, cursor: 'pointer', border: c === color ? '2px solid rgba(255,255,255,.9)' : '1px solid rgba(255,255,255,.12)', boxShadow: c === color ? `0 0 12px ${c}77` : 'none' }}/>)}</Box><Box><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ fontSize: 9.5, color: C.muted }}>{tr(locale, 'Brightness', 'روشنایی')}</Typography><Typography sx={{ fontSize: 9.5, color: C.muted }}>{brightness}%</Typography></Box><Slider value={brightness} onChange={(_, v) => setBrightness(v as number)} sx={{ color, py: .6, '& .MuiSlider-thumb': { width: 15, height: 15, boxShadow: `0 0 14px ${color}` } }}/></Box>{p.large && <GlassPlate sx={{ p: .8, minHeight: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .8, alignItems: 'center' }}><MiniStat label="HEX" value={color.toUpperCase()} accent/><MiniStat label={tr(locale, 'Mode', 'حالت')} value={tr(locale, 'Ambient', 'محیطی')}/></GlassPlate>}</Box>; }
-function GlassDirection({ locale, size }: Props) { const p = profile(size), [dir, setDir] = useState('STOP'), buttons = [['↑', 'UP'], ['←', 'LEFT'], ['■', 'STOP'], ['→', 'RIGHT'], ['↓', 'DOWN']], keySize = p.large ? 62 : p.compact ? 42 : 48, gap = p.large ? .75 : .5; return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: p.large ? 'minmax(0,1fr) auto' : '1fr', gap: .9 }}><Box sx={{ display: 'grid', placeItems: 'center' }}><GlassPlate sx={{ p: p.large ? 1.25 : .8, borderRadius: p.large ? '18px' : '14px' }}><Box sx={{ display: 'grid', gridTemplateColumns: `repeat(3,${keySize}px)`, gridTemplateRows: `repeat(3,${keySize}px)`, gap }}>{buttons.map(([glyph, name]) => { const pos = name === 'UP' ? { gridColumn: 2, gridRow: 1 } : name === 'LEFT' ? { gridColumn: 1, gridRow: 2 } : name === 'STOP' ? { gridColumn: 2, gridRow: 2 } : name === 'RIGHT' ? { gridColumn: 3, gridRow: 2 } : { gridColumn: 2, gridRow: 3 }; const active = dir === name; return <Box component="button" key={name} onClick={() => setDir(name)} aria-label={name} sx={{ ...pos, borderRadius: p.large ? '15px' : '11px', border: `1px solid ${active ? 'rgba(125,211,252,.48)' : 'rgba(214,246,255,.10)'}`, background: active ? 'linear-gradient(145deg,rgba(125,211,252,.22),rgba(196,181,253,.13))' : 'linear-gradient(145deg,rgba(255,255,255,.045),rgba(3,18,31,.24))', color: active ? C.blue : '#eefaff', cursor: 'pointer', fontSize: p.large ? 25 : 18, boxShadow: active ? `0 0 16px ${C.blue}2d, inset 0 1px 0 rgba(255,255,255,.08)` : 'inset 0 1px 0 rgba(255,255,255,.035)' }}>{glyph}</Box>; })}</Box></GlassPlate></Box>{p.large && <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .7 }}><MiniStat label={tr(locale, 'Last command', 'آخرین فرمان')} value={dir} accent/><MiniStat label={tr(locale, 'Latency', 'تأخیر')} value="84 ms"/></Box>}</Box>; }
+function GlassColor({ locale, size }: Props) {
+    const p = profile(size);
+    const colors = ['#22d3ee', '#60a5fa', '#a78bfa', '#f472b6', '#fb7185', '#fbbf24', '#34d399'];
+    const [color, setColor] = useState(colors[2]);
+    const [brightness, setBrightness] = useState(72);
+    const [r, g, b] = useMemo(() => hexRgb(color), [color]);
+    const channels: Array<[string, number, string]> = [['R', r, '#fb7185'], ['G', g, '#5eead4'], ['B', b, '#7dd3fc']];
+    const effective = channels.map(([name, value, hue]) => [name, Math.round(value * brightness / 100), hue] as const);
+
+    const preview = <Box sx={{
+        height: p.large ? 76 : 48,
+        borderRadius: '13px',
+        background: `radial-gradient(circle at 35% 25%,rgba(255,255,255,.65),transparent 18%), linear-gradient(100deg,${color},${color}55)`,
+        boxShadow: `inset 0 0 22px rgba(255,255,255,.14),0 0 24px ${color}35`,
+        border: '1px solid rgba(255,255,255,.15)',
+    }}/>;
+    const swatches = <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(${colors.length},1fr)`, gap: .55 }}>
+      {colors.map(c => <Box key={c} onClick={() => setColor(c)} sx={{
+          height: p.large ? 26 : 22, borderRadius: '7px', bgcolor: c, cursor: 'pointer',
+          border: c === color ? '2px solid rgba(255,255,255,.9)' : '1px solid rgba(255,255,255,.12)',
+          boxShadow: c === color ? `0 0 12px ${c}77` : 'none',
+      }}/>) }
+    </Box>;
+    const dimmer = <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+        <Typography sx={{ fontSize: 9.5, color: C.muted }}>{tr(locale, 'Brightness', 'روشنایی')}</Typography>
+        <Typography sx={{ fontSize: 9.5, color: C.muted }}>{brightness}%</Typography>
+      </Box>
+      <Slider value={brightness} onChange={(_, v) => setBrightness(v as number)} sx={{ color, py: .6, '& .MuiSlider-thumb': { width: 15, height: 15, boxShadow: `0 0 14px ${color}` } }}/>
+    </Box>;
+
+    if (!p.large) return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto auto 1fr', gap: .85, direction: 'ltr' }}>
+      {preview}
+      {swatches}
+      {dimmer}
+    </Box>;
+
+    return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: '76px auto auto minmax(96px,1fr)', gap: .85, direction: 'ltr' }}>
+      {preview}
+      {swatches}
+      {dimmer}
+      <GlassPlate sx={{ p: .85, minHeight: 0, display: 'grid', gridTemplateColumns: 'minmax(0,1.35fr) minmax(132px,.65fr)', gap: .9 }}>
+        <Box sx={{ minHeight: 0, display: 'grid', gridTemplateRows: 'auto repeat(3,minmax(0,1fr))', gap: .38 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography sx={{ fontSize: 10.2, fontWeight: 780 }}>{tr(locale, 'Output channels', 'کانال‌های خروجی')}</Typography>
+            <Typography sx={{ fontSize: 8.8, color: C.faint }}>PWM · {brightness}%</Typography>
+          </Box>
+          {effective.map(([name, value, hue]) => <Box key={name} sx={{ display: 'grid', gridTemplateColumns: '16px minmax(0,1fr) 32px', gap: .55, alignItems: 'center' }}>
+            <Typography sx={{ fontSize: 9.5, fontWeight: 820, color: hue }}>{name}</Typography>
+            <Box sx={{ height: 7, borderRadius: '999px', overflow: 'hidden', background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.05)' }}>
+              <Box sx={{ height: '100%', width: `${Math.max(3, value / 255 * 100)}%`, borderRadius: 'inherit', background: `linear-gradient(90deg,${hue}88,${hue})`, boxShadow: `0 0 12px ${hue}55` }}/>
+            </Box>
+            <Typography sx={{ fontSize: 9, color: C.muted, textAlign: 'right' }}>{value}</Typography>
+          </Box>)}
+        </Box>
+        <Box sx={{ minHeight: 0, display: 'grid', gridTemplateRows: '1fr 1fr', gap: .55 }}>
+          <MiniStat label="HEX" value={color.toUpperCase()} accent/>
+          <MiniStat label={tr(locale, 'Mode', 'حالت')} value={tr(locale, 'Ambient', 'محیطی')}/>
+        </Box>
+      </GlassPlate>
+    </Box>;
+}
+function GlassDirection({ locale, size }: Props) {
+    const p = profile(size);
+    const [dir, setDir] = useState('STOP');
+    const buttons = [['↑', 'UP'], ['←', 'LEFT'], ['■', 'STOP'], ['→', 'RIGHT'], ['↓', 'DOWN']];
+    const keySize = p.large ? 62 : p.wide ? 40 : p.compact ? 42 : 46;
+    const gap = p.large ? .75 : p.wide ? .42 : .5;
+    const platePad = p.large ? 1.25 : p.wide ? .55 : .8;
+    return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: p.large ? 'minmax(0,1fr) auto' : '1fr', gap: .9 }}>
+      <Box sx={{ minHeight: 0, display: 'grid', placeItems: 'center' }}>
+        <GlassPlate sx={{ p: platePad, borderRadius: p.large ? '18px' : '14px' }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(3,${keySize}px)`, gridTemplateRows: `repeat(3,${keySize}px)`, gap }}>
+            {buttons.map(([glyph, name]) => {
+                const pos = name === 'UP' ? { gridColumn: 2, gridRow: 1 } : name === 'LEFT' ? { gridColumn: 1, gridRow: 2 } : name === 'STOP' ? { gridColumn: 2, gridRow: 2 } : name === 'RIGHT' ? { gridColumn: 3, gridRow: 2 } : { gridColumn: 2, gridRow: 3 };
+                const active = dir === name;
+                return <Box component="button" key={name} onClick={() => setDir(name)} aria-label={name} sx={{
+                    ...pos,
+                    borderRadius: p.large ? '15px' : '11px',
+                    border: `1px solid ${active ? 'rgba(125,211,252,.48)' : 'rgba(214,246,255,.10)'}`,
+                    background: active ? 'linear-gradient(145deg,rgba(125,211,252,.22),rgba(196,181,253,.13))' : 'linear-gradient(145deg,rgba(255,255,255,.045),rgba(3,18,31,.24))',
+                    color: active ? C.blue : '#eefaff', cursor: 'pointer', fontSize: p.large ? 25 : 18,
+                    boxShadow: active ? `0 0 16px ${C.blue}2d, inset 0 1px 0 rgba(255,255,255,.08)` : 'inset 0 1px 0 rgba(255,255,255,.035)',
+                }}>{glyph}</Box>;
+            })}
+          </Box>
+        </GlassPlate>
+      </Box>
+      {p.large && <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .7 }}>
+        <MiniStat label={tr(locale, 'Last command', 'آخرین فرمان')} value={dir} accent/>
+        <MiniStat label={tr(locale, 'Latency', 'تأخیر')} value="84 ms"/>
+      </Box>}
+    </Box>;
+}
 function rowsFor(mode: TableMode) { if (mode === 'measurement-list')
     return [['24.8 °C', '09:44'], ['24.7 °C', '09:43'], ['24.9 °C', '09:42'], ['24.6 °C', '09:41'], ['24.8 °C', '09:40']]; if (mode === 'alarms')
     return [['High temp', 'Critical', '09:42'], ['Door open', 'Warning', '09:37'], ['Battery low', 'Info', '08:54'], ['Smoke', 'Normal', '08:12']]; if (mode === 'events')
@@ -352,14 +449,110 @@ function GlassTable({ locale, mode, size }: Props & {
     mode: TableMode;
 }) { const p = profile(size), rows = rowsFor(mode), maxRows = p.large ? rows.length : Math.min(4, rows.length), visible = rows.slice(0, maxRows); return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: p.large ? 'auto minmax(0,1fr) auto' : 'auto minmax(0,1fr)', gap: .7, direction: 'ltr' }}><Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><StatusText>{mode === 'alarms' ? tr(locale, '2 require attention', '۲ مورد نیازمند بررسی') : tr(locale, 'Live feed', 'داده زنده')}</StatusText><Typography sx={{ fontSize: 9, color: C.faint }}>{rows.length} ROWS</Typography></Box><GlassPlate sx={{ minHeight: 0, overflow: 'hidden', p: .35, display: 'grid', gridTemplateRows: p.large ? `repeat(${visible.length},minmax(34px,1fr))` : `repeat(${visible.length},auto)`, alignContent: 'stretch' }}>{visible.map((row, i) => <Box key={i} sx={{ display: 'grid', gridTemplateColumns: `repeat(${row.length},minmax(0,1fr))`, gap: .6, alignItems: 'center', px: .8, py: p.large ? .55 : .6, borderBottom: i < visible.length - 1 ? '1px solid rgba(255,255,255,.065)' : 'none', background: mode === 'alarms' && i === 0 ? 'linear-gradient(90deg,rgba(251,113,133,.10),transparent)' : i % 2 ? 'rgba(255,255,255,.012)' : 'transparent' }}>{row.map((cell, j) => <Typography key={j} sx={{ fontSize: p.large ? 11.2 : 10, fontWeight: j === 0 ? 760 : 650, color: j === 1 ? statusColor(cell) : j === 0 ? '#f7fbff' : C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: j === row.length - 1 ? 'right' : 'left' }}>{cell}</Typography>)}</Box>)}</GlassPlate>{p.large && <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: .65 }}><MiniStat label={tr(locale, 'Healthy', 'سالم')} value={mode === 'alarms' ? '2 clear' : '4 online'} accent/><MiniStat label={tr(locale, 'Attention', 'نیازمند بررسی')} value={mode === 'alarms' ? '2 active' : '1 warn'}/><MiniStat label={tr(locale, 'Refresh', 'به‌روزرسانی')} value="LIVE · 2s"/></Box>}</Box>; }
 function GlassClock({ locale, size }: Props) { const p = profile(size); return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: p.large ? '1fr auto' : '1fr', placeItems: 'center', gap: 1, textAlign: 'center', direction: 'ltr' }}><Box><Typography sx={{ fontSize: p.large ? 68 : p.compact ? 40 : 52, fontWeight: 330, letterSpacing: '-.065em', lineHeight: .9, textShadow: '0 10px 28px rgba(0,0,0,.2)' }}>09:44</Typography><Typography sx={{ mt: .7, fontSize: p.large ? 13 : 10.5, color: C.muted }}>{locale === 'fa' ? 'چهارشنبه، ۱۵ مهر ۱۴۰۵' : 'Wednesday, Oct 7'}</Typography></Box>{p.large && <Box sx={{ width: '100%', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: .7 }}><MiniStat label="SITE" value="Factory A"/><MiniStat label="TZ" value="UTC+03:30" accent/><MiniStat label="SYNC" value="NTP · 12 ms"/></Box>}</Box>; }
-function GlassText({ locale, size }: Props) { const p = profile(size); if (p.compact)
-    return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', direction: locale === 'fa' ? 'rtl' : 'ltr', textAlign: locale === 'fa' ? 'right' : 'left' }}><Typography sx={{ fontSize: 17, fontWeight: 820 }}>{tr(locale, 'Server room status', 'وضعیت اتاق سرور')}</Typography><Typography sx={{ mt: .7, fontSize: 10.5, lineHeight: 1.65, color: C.muted, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{tr(locale, 'All sensors are within normal range. Latest telemetry arrived less than a minute ago.', 'همه سنسورها در محدوده عادی هستند. آخرین داده کمتر از یک دقیقه قبل دریافت شده است.')}</Typography></Box>; return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto auto minmax(0,1fr)', gap: .85, direction: locale === 'fa' ? 'rtl' : 'ltr', textAlign: locale === 'fa' ? 'right' : 'left' }}><Box><Typography sx={{ fontSize: p.large ? 22 : 18, fontWeight: 830 }}>{tr(locale, 'Server room status', 'وضعیت اتاق سرور')}</Typography><Typography sx={{ mt: .45, fontSize: 11, lineHeight: 1.7, color: C.muted }}>{tr(locale, 'All sensors are within their normal ranges. Latest telemetry was received less than a minute ago.', 'همه سنسورها در محدوده عادی هستند. آخرین بسته داده کمتر از یک دقیقه قبل دریافت شده است.')}</Typography></Box><Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .7, direction: 'ltr' }}><MiniStat label="SENSORS" value="12 online" accent/><MiniStat label="LAST UPDATE" value="38 sec"/></Box><GlassPlate sx={{ p: .8, minHeight: 0, direction: 'ltr' }}>{[['Temperature', '24.8 °C', C.success], ['Humidity', '46%', C.success], ['CO₂', '742 ppm', C.warning]].map(([name, val, color], i) => <Box key={String(name)} sx={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 1, alignItems: 'center', py: .55, borderBottom: i < 2 ? '1px solid rgba(255,255,255,.07)' : 'none' }}><Box sx={{ display: 'flex', alignItems: 'center', gap: .55 }}><Box sx={{ width: 5, height: 5, borderRadius: '50%', bgcolor: color }}/><Typography sx={{ fontSize: 10.5, fontWeight: 700 }}>{name}</Typography></Box><Typography sx={{ fontSize: 10.5, fontWeight: 800, color: C.muted }}>{val}</Typography></Box>)}</GlassPlate></Box>; }
+function GlassText({ locale, size }: Props) {
+    const p = profile(size);
+    const rtl = locale === 'fa';
+    const sensors: Array<[string, string, string]> = [
+        [tr(locale, 'Temperature', 'دما'), '24.8 °C', C.success],
+        [tr(locale, 'Humidity', 'رطوبت'), '46%', C.success],
+        ['CO₂', '742 ppm', C.warning],
+    ];
+    const sensorList = <GlassPlate sx={{ p: .65, minHeight: 0, direction: 'ltr', display: 'grid', gridTemplateRows: 'repeat(3,minmax(0,1fr))' }}>
+      {sensors.map(([name, val, color], i) => <Box key={name} sx={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 1, alignItems: 'center', px: .15, py: .35, borderBottom: i < 2 ? '1px solid rgba(255,255,255,.07)' : 'none' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: .55, minWidth: 0 }}>
+          <Box sx={{ width: 5, height: 5, flex: '0 0 auto', borderRadius: '50%', bgcolor: color }}/>
+          <Typography sx={{ fontSize: 10.4, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', direction: rtl ? 'rtl' : 'ltr' }}>{name}</Typography>
+        </Box>
+        <Typography sx={{ fontSize: 10.4, fontWeight: 800, color: C.muted, whiteSpace: 'nowrap' }}>{val}</Typography>
+      </Box>)}
+    </GlassPlate>;
+
+    if (p.compact) return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', direction: rtl ? 'rtl' : 'ltr', textAlign: rtl ? 'right' : 'left' }}>
+      <Typography sx={{ fontSize: 17, fontWeight: 820 }}>{tr(locale, 'Server room status', 'وضعیت اتاق سرور')}</Typography>
+      <Typography sx={{ mt: .7, fontSize: 10.5, lineHeight: 1.65, color: C.muted, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{tr(locale, 'All sensors are within normal range. Latest telemetry arrived less than a minute ago.', 'همه سنسورها در محدوده عادی هستند. آخرین داده کمتر از یک دقیقه قبل دریافت شده است.')}</Typography>
+    </Box>;
+
+    if (p.wide && !p.large) return <Box sx={{ height: '100%', minHeight: 0, display: 'grid', gridTemplateColumns: 'minmax(0,1.08fr) minmax(210px,.92fr)', gap: .85, direction: rtl ? 'rtl' : 'ltr', textAlign: rtl ? 'right' : 'left' }}>
+      <Box sx={{ minWidth: 0, display: 'grid', alignContent: 'center', gap: .7 }}>
+        <Box>
+          <Typography sx={{ fontSize: 18, fontWeight: 830 }}>{tr(locale, 'Server room status', 'وضعیت اتاق سرور')}</Typography>
+          <Typography sx={{ mt: .35, fontSize: 10.4, lineHeight: 1.55, color: C.muted, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{tr(locale, 'All sensors are within their normal ranges. Latest telemetry was received less than a minute ago.', 'همه سنسورها در محدوده عادی هستند. آخرین بسته داده کمتر از یک دقیقه قبل دریافت شده است.')}</Typography>
+        </Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .55, direction: 'ltr' }}>
+          <MiniStat label="SENSORS" value="12 online" accent/>
+          <MiniStat label="LAST UPDATE" value="38 sec"/>
+        </Box>
+      </Box>
+      {sensorList}
+    </Box>;
+
+    return <Box sx={{ height: '100%', minHeight: 0, display: 'grid', gridTemplateRows: 'auto auto minmax(126px,1fr)', gap: .85, direction: rtl ? 'rtl' : 'ltr', textAlign: rtl ? 'right' : 'left' }}>
+      <Box>
+        <Typography sx={{ fontSize: 22, fontWeight: 830 }}>{tr(locale, 'Server room status', 'وضعیت اتاق سرور')}</Typography>
+        <Typography sx={{ mt: .45, fontSize: 11, lineHeight: 1.7, color: C.muted }}>{tr(locale, 'All sensors are within their normal ranges. Latest telemetry was received less than a minute ago.', 'همه سنسورها در محدوده عادی هستند. آخرین بسته داده کمتر از یک دقیقه قبل دریافت شده است.')}</Typography>
+      </Box>
+      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .7, direction: 'ltr' }}>
+        <MiniStat label="SENSORS" value="12 online" accent/>
+        <MiniStat label="LAST UPDATE" value="38 sec"/>
+      </Box>
+      {sensorList}
+    </Box>;
+}
 function GlassImage({ size }: Props) { const p = profile(size); return <Box sx={{ height: '100%', minHeight: 0, borderRadius: '14px', position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg,#07101f,#1b2740 48%,#31415c)', border: '1px solid rgba(255,255,255,.13)' }}><Box sx={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 72% 26%,rgba(255,255,255,.28),transparent 18%),linear-gradient(180deg,transparent 55%,rgba(2,8,23,.62))' }}/><Box sx={{ position: 'absolute', left: '13%', right: '13%', bottom: '13%', height: p.large ? '54%' : '44%', border: '1px solid rgba(255,255,255,.30)', borderRadius: '52% 52% 12% 12%', boxShadow: 'inset 0 0 30px rgba(125,211,252,.05)' }}/><Box sx={{ position: 'absolute', left: 9, top: 9 }}><StatusText color={C.danger}>REC · LIVE</StatusText></Box><Box sx={{ position: 'absolute', left: 10, bottom: 9, right: 10, display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ fontSize: 9.5, color: '#fff', fontWeight: 700 }}>Camera 04 · 09:44:12</Typography>{p.large && <Typography sx={{ fontSize: 9, color: C.muted }}>1920×1080 · 18 fps</Typography>}</Box></Box>; }
-function GlassIframe({ locale, size }: Props) { const p = profile(size); return <Box sx={{ height: '100%', border: '1px solid rgba(255,255,255,.13)', borderRadius: '14px', overflow: 'hidden', background: 'rgba(3,13,29,.25)', display: 'grid', gridTemplateRows: '28px 1fr' }}><Box sx={{ px: .8, display: 'flex', alignItems: 'center', gap: .45, borderBottom: '1px solid rgba(255,255,255,.08)', background: 'rgba(255,255,255,.035)' }}>{[C.danger, C.warning, C.success].map(c => <Box key={c} sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: c }}/>)}{p.large && <Typography sx={{ ml: .6, fontSize: 8.5, color: C.faint, direction: 'ltr' }}>embedded-app.local/ops</Typography>}</Box>{!p.large ? <Box sx={{ display: 'grid', placeItems: 'center', textAlign: 'center', px: 2 }}><Box><Typography sx={{ fontSize: 14, fontWeight: 820 }}>{tr(locale, 'External content', 'محتوای خارجی')}</Typography><Typography sx={{ mt: .35, fontSize: 9.5, color: C.muted }}>iframe / HTML canvas / app</Typography></Box></Box> : <Box sx={{ minHeight: 0, display: 'grid', gridTemplateColumns: '72px 1fr', direction: 'ltr' }}><Box sx={{ borderRight: '1px solid rgba(255,255,255,.07)', p: .7, display: 'grid', alignContent: 'start', gap: .45 }}>{['Overview', 'Devices', 'Rules', 'Logs'].map((x, i) => <Box key={x} sx={{ px: .6, py: .5, borderRadius: '7px', fontSize: 8.5, fontWeight: i === 0 ? 800 : 650, color: i === 0 ? C.blue : C.muted, background: i === 0 ? 'rgba(125,211,252,.08)' : 'transparent' }}>{x}</Box>)}</Box><Box sx={{ p: .8, minWidth: 0, display: 'grid', gridTemplateRows: 'auto auto minmax(0,1fr)', gap: .7 }}><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ fontSize: 11, fontWeight: 820 }}>{tr(locale, 'Embedded operations', 'نمای عملیاتی')}</Typography><StatusText>LIVE</StatusText></Box><Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: .55 }}><MiniStat label="ONLINE" value="18" accent/><MiniStat label="ALARMS" value="2"/><MiniStat label="LATENCY" value="84 ms"/></Box><GlassPlate sx={{ p: .6, minHeight: 0 }}><LuminousChart values={[32, 38, 35, 48, 51, 46, 58, 62, 60, 72, 68, 76]} color={C.blue} fill/></GlassPlate></Box></Box>}</Box>; }
+function GlassIframe({ locale, size }: Props) {
+    const p = profile(size);
+    const browserBar = <Box sx={{ px: .8, display: 'flex', alignItems: 'center', gap: .45, borderBottom: '1px solid rgba(255,255,255,.08)', background: 'rgba(255,255,255,.035)', direction: 'ltr' }}>
+      {[C.danger, C.warning, C.success].map(c => <Box key={c} sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: c }}/>) }
+      {(p.large || p.wide) && <Typography sx={{ ml: .6, fontSize: 8.5, color: C.faint, direction: 'ltr', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>embedded-app.local/ops</Typography>}
+    </Box>;
+
+    const shell = (body: ReactNode) => <Box sx={{ height: '100%', minHeight: 0, border: '1px solid rgba(255,255,255,.13)', borderRadius: '14px', overflow: 'hidden', background: 'rgba(3,13,29,.25)', display: 'grid', gridTemplateRows: '28px minmax(0,1fr)' }}>
+      {browserBar}{body}
+    </Box>;
+
+    if (!p.large && !p.wide) return shell(<Box sx={{ display: 'grid', placeItems: 'center', textAlign: 'center', px: 2 }}>
+      <Box>
+        <Typography sx={{ fontSize: 14, fontWeight: 820 }}>{tr(locale, 'External content', 'محتوای خارجی')}</Typography>
+        <Typography sx={{ mt: .35, fontSize: 9.5, color: C.muted }}>iframe / HTML canvas / app</Typography>
+      </Box>
+    </Box>);
+
+    if (!p.large && p.wide) return shell(<Box sx={{ minHeight: 0, p: .72, display: 'grid', gridTemplateColumns: 'minmax(0,.92fr) minmax(0,1.08fr)', gap: .7, direction: 'ltr' }}>
+      <Box sx={{ minWidth: 0, display: 'grid', alignContent: 'center', gap: .55 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: .6, alignItems: 'center' }}>
+          <Typography sx={{ fontSize: 11.5, fontWeight: 820, direction: locale === 'fa' ? 'rtl' : 'ltr' }}>{tr(locale, 'Embedded operations', 'نمای عملیاتی')}</Typography>
+          <StatusText>LIVE</StatusText>
+        </Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .5 }}>
+          <MiniStat label="ONLINE" value="18" accent/>
+          <MiniStat label="LATENCY" value="84 ms"/>
+        </Box>
+      </Box>
+      <GlassPlate sx={{ p: .5, minHeight: 0 }}><LuminousChart values={[32, 38, 35, 48, 51, 46, 58, 62, 60, 72, 68, 76]} color={C.blue} fill/></GlassPlate>
+    </Box>);
+
+    return shell(<Box sx={{ minHeight: 0, display: 'grid', gridTemplateColumns: '72px 1fr', direction: 'ltr' }}>
+      <Box sx={{ borderRight: '1px solid rgba(255,255,255,.07)', p: .7, display: 'grid', alignContent: 'start', gap: .45 }}>
+        {['Overview', 'Devices', 'Rules', 'Logs'].map((x, i) => <Box key={x} sx={{ px: .6, py: .5, borderRadius: '7px', fontSize: 8.5, fontWeight: i === 0 ? 800 : 650, color: i === 0 ? C.blue : C.muted, background: i === 0 ? 'rgba(125,211,252,.08)' : 'transparent' }}>{x}</Box>)}
+      </Box>
+      <Box sx={{ p: .8, minWidth: 0, display: 'grid', gridTemplateRows: 'auto auto minmax(0,1fr)', gap: .7 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Typography sx={{ fontSize: 11, fontWeight: 820 }}>{tr(locale, 'Embedded operations', 'نمای عملیاتی')}</Typography>
+          <StatusText>LIVE</StatusText>
+        </Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: .55 }}>
+          <MiniStat label="ONLINE" value="18" accent/><MiniStat label="ALARMS" value="2"/><MiniStat label="LATENCY" value="84 ms"/>
+        </Box>
+        <GlassPlate sx={{ p: .6, minHeight: 0 }}><LuminousChart values={[32, 38, 35, 48, 51, 46, 58, 62, 60, 72, 68, 76]} color={C.blue} fill/></GlassPlate>
+      </Box>
+    </Box>);
+}
 function GlassScada({ locale, size }: Props) {
     const p = profile(size);
-    const mimic = <GlassPlate sx={{ minHeight: 0, p: .4, position: 'relative', overflow: 'hidden' }}>
-      <svg viewBox="0 0 560 220" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+    const mimic = <GlassPlate sx={{ minHeight: 0, p: .4, position: 'relative', overflow: 'hidden', display: 'grid', gridTemplateRows: p.large ? 'auto minmax(0,1fr)' : '1fr' }}>
+      {p.large && <Box sx={{ px: .55, pt: .35, pb: .15, display: 'flex', justifyContent: 'space-between', alignItems: 'center', direction: locale === 'fa' ? 'rtl' : 'ltr' }}><StatusText>{tr(locale, 'Process healthy', 'فرایند عادی')}</StatusText><Typography sx={{ fontSize: 8.8, color: C.faint, direction: 'ltr' }}>AUTO · LOOP 12</Typography></Box>}
+      <Box sx={{ minHeight: 0, overflow: 'hidden' }}>
+      <svg viewBox={p.veryTall ? "0 36 560 154" : "0 0 560 220"} width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
         <defs>
           <marker id="glass-flow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill={C.blue}/></marker>
         </defs>
@@ -382,7 +575,7 @@ function GlassScada({ locale, size }: Props) {
         <text x="184" y="84" textAnchor="middle" fill="rgba(226,241,247,.58)" fontSize="10">18.4 L/min</text>
         <text x="338" y="84" textAnchor="middle" fill="rgba(226,241,247,.58)" fontSize="10">2.6 bar</text>
       </svg>
-      {p.large && <Box sx={{ position: 'absolute', left: 10, top: 9 }}><StatusText>{tr(locale, 'Process healthy', 'فرایند عادی')}</StatusText></Box>}
+      </Box>
     </GlassPlate>;
 
     if (!p.large) return <Box sx={{ height: '100%', direction: 'ltr' }}>{mimic}</Box>;
