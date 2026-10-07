@@ -1,64 +1,63 @@
-# Minimal Mono — Integration
+# Cupertino (`ios`) Integration
 
-Shared integration is required only to route theme ID `minimal` to the new isolated renderer.
+Shared integration is required, but the shared files are intentionally **not** included in this patch because theme work is happening in parallel.
 
-Do **not** rename the stable theme ID.
+## 1. Route iOS visuals to the dedicated renderer
 
-## Required change
+File: `src/widgets/renderers/WidgetVisuals.tsx`
 
-Edit:
+Add this import with the other theme renderer imports:
 
-`src/widgets/renderers/WidgetVisuals.tsx`
-
-### 1. Add this import next to the Material renderer import
-
-```ts
-import { MinimalVisualRenderer } from '../themes/MinimalVisuals';
+```tsx
+import { IOSVisualRenderer } from '../themes/IOSVisuals';
 ```
 
-### 2. Add this dispatcher branch immediately after the Material branch
+Then, at the start of `WidgetVisualRenderer`, before the Material/default or generic-theme rendering path, add:
 
-Current:
+```tsx
+if (props.theme.id === 'ios') return <IOSVisualRenderer {...props} />;
+```
 
-```ts
+For example:
+
+```tsx
 export function WidgetVisualRenderer(props: Props) {
+  if (props.theme.id === 'ios') return <IOSVisualRenderer {...props} />;
   if (props.theme.id === 'material') return <MaterialVisualRenderer {...props} />;
-  const v = props.def.visual;
+  // existing renderer logic continues unchanged...
+}
 ```
 
-Replace that opening with:
+Do not rename the `ios` theme ID or any widget ID. No registry/type/token change is required for this patch.
 
-```ts
-export function WidgetVisualRenderer(props: Props) {
-  if (props.theme.id === 'material') return <MaterialVisualRenderer {...props} />;
-  if (props.theme.id === 'minimal') return <MinimalVisualRenderer {...props} />;
-  const v = props.def.visual;
+## 2. Route iOS widgets to the dedicated frame
+
+File: `src/widgets/core/WidgetFrame.tsx`
+
+Add:
+
+```tsx
+import { IOSFrame as IOSThemeFrame } from '../themes/IOSFrame';
 ```
 
-No other shared renderer edits are required. The older scattered `theme.id === 'minimal'` branches may remain temporarily because this early return bypasses them. They can be removed later during shared-renderer cleanup by the coordinator.
+Then change only the existing `ios` switch branch to:
 
-## Optional display-name cleanup
-
-The shared token currently labels the theme as `Minimal`. If the coordinator wants the UI to match the working name used for this pass, change only the display label in `src/widgets/core/themeTokens.ts`:
-
-```ts
-minimal: {
-  id: 'minimal',
-  label: 'Minimal Mono',
+```tsx
+case 'ios': return <IOSThemeFrame {...props}/>;
 ```
 
-This is optional and does not affect persistence/API compatibility.
+The existing in-file legacy `IOSFrame` can remain temporarily; once all parallel work is merged and verified, the coordinator may remove that dead implementation as a cleanup-only change. Its removal is not required for this patch to work.
 
-## QA commands
+## QA after integration
 
 PowerShell:
 
 ```powershell
-$env:WIDGET_QA_THEME="minimal"
+$env:WIDGET_QA_THEME="ios"
 npm run screenshots:full
 
-$env:WIDGET_QA_THEME="minimal"
+$env:WIDGET_QA_THEME="ios"
 npm run screenshots
 ```
 
-Then inspect all generated Minimal screenshots for metrics, controls, charts, location, tables, and display.
+Inspect every generated Cupertino sheet for metrics, controls, charts, location, tables, and display, at every supported size, in both English and Persian where the QA route supports locale switching.
