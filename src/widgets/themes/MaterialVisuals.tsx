@@ -59,12 +59,19 @@ function Progress({ value, max = 100, theme, tone }: { value: number; max?: numb
   </Box>;
 }
 
-function HistoryStrip({ values, theme, active = '#16a34a', warning = '#d97706', danger = '#dc2626' }: { values: number[]; theme: WidgetThemeTokens; active?: string; warning?: string; danger?: string }) {
+function HistoryStrip({ values, theme, active = '#16a34a', warning = '#d97706', danger = '#dc2626', height = 8 }: { values: number[]; theme: WidgetThemeTokens; active?: string; warning?: string; danger?: string; height?: number }) {
   return <Box sx={{ display:'grid', gridTemplateColumns:`repeat(${values.length},minmax(0,1fr))`, gap:.38 }}>
-    {values.map((v,i)=><Box key={i} sx={{ height:8, borderRadius:.65, bgcolor:v>=2?danger:v===1?warning:v===0?active:`${theme.muted}45` }} />)}
+    {values.map((v,i)=><Box key={i} sx={{ height, borderRadius:.65, bgcolor:v>=2?danger:v===1?warning:v===0?active:`${theme.muted}45` }} />)}
   </Box>;
 }
 
+function StateHistoryPanel({ title, values, theme, active, warning, danger, rightText = '24h', footer }: { title: string; values: number[]; theme: WidgetThemeTokens; active?: string; warning?: string; danger?: string; rightText?: string; footer?: string }) {
+  return <Box sx={{ minHeight:0, height:'100%', border:`1px solid ${theme.border}`, borderRadius:1.5, p:1, bgcolor:'#fbfcff', display:'grid', gridTemplateRows:'auto minmax(24px,1fr) auto', gap:.75 }}>
+    <Box sx={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:1 }}><Typography sx={{fontSize:9.8,color:theme.muted}}>{title}</Typography><Typography sx={{fontSize:9.8,fontWeight:800,color:active ?? theme.muted}}>{rightText}</Typography></Box>
+    <Box sx={{ alignSelf:'center' }}><HistoryStrip values={values} theme={theme} active={active} warning={warning} danger={danger} height={22}/></Box>
+    <Box sx={{ display:'flex', justifyContent:'space-between', color:theme.muted }}><Typography sx={{fontSize:9}}>00:00</Typography><Typography sx={{fontSize:9}}>{footer ?? 'now'}</Typography></Box>
+  </Box>;
+}
 function ChartSvg({ values = spark, color, fill = false, minHeight = 60 }: { values?: number[]; color: string; fill?: boolean; minHeight?: number }) {
   const points = useMemo(() => {
     const min = Math.min(...values);
@@ -179,13 +186,13 @@ function MaterialGauge({ def, theme, locale, size }: Props) {
 
   if (p.compact) {
     return <Box sx={{ height:'100%', display:'grid', placeItems:'center', direction:'ltr' }}>
-      <RadialGauge value={value} max={max} unit={unit} theme={theme} size={108} tone={tone}/>
+      <RadialGauge value={value} max={max} unit={unit} theme={theme} size={118} tone={tone}/>
     </Box>;
   }
 
   if (p.wide && !p.large) {
-    return <Box sx={{ height:'100%', display:'grid', gridTemplateColumns:'118px minmax(0,1fr)', gap:1.3, alignItems:'center', direction:'ltr' }}>
-      <RadialGauge value={value} max={max} unit={unit} theme={theme} size={108} tone={tone}/>
+    return <Box sx={{ height:'100%', display:'grid', gridTemplateColumns:'126px minmax(0,1fr)', gap:1.3, alignItems:'center', direction:'ltr' }}>
+      <RadialGauge value={value} max={max} unit={unit} theme={theme} size={116} tone={tone}/>
       <Box sx={{ minWidth:0 }}>
         <ToneBadge text={stateText} tone={state} theme={theme}/>
         <Box sx={{ mt:.85, display:'flex', justifyContent:'space-between', alignItems:'baseline' }}>
@@ -199,9 +206,9 @@ function MaterialGauge({ def, theme, locale, size }: Props) {
   }
 
   const history = spark.map(v => Math.max(0, Math.min(max, (v / 100) * max)));
-  return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'auto minmax(78px,1fr) auto', gap:1, direction:'ltr' }}>
-    <Box sx={{ display:'grid', gridTemplateColumns:'160px minmax(0,1fr)', alignItems:'center', gap:1.4 }}>
-      <Box sx={{ display:'grid', placeItems:'center' }}><RadialGauge value={value} max={max} unit={unit} theme={theme} size={154} tone={tone}/></Box>
+  return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'auto minmax(92px,1fr) auto', gap:1, direction:'ltr' }}>
+    <Box sx={{ display:'grid', gridTemplateColumns:'164px minmax(0,1fr)', alignItems:'center', gap:1.4 }}>
+      <Box sx={{ display:'grid', placeItems:'center' }}><RadialGauge value={value} max={max} unit={unit} theme={theme} size={158} tone={tone}/></Box>
       <Box sx={{ minWidth:0 }}>
         <ToneBadge text={stateText} tone={state} theme={theme}/>
         <Box sx={{ mt:.9, display:'flex', justifyContent:'space-between', alignItems:'baseline' }}>
@@ -217,7 +224,7 @@ function MaterialGauge({ def, theme, locale, size }: Props) {
     </Box>
     <Box sx={{ minHeight:0, border:`1px solid ${theme.border}`, borderRadius:1.5, p:.85, bgcolor:'#fbfcff' }}>
       <Box sx={{ display:'flex', justifyContent:'space-between', mb:.3 }}><Typography sx={{ fontSize:9.8, color:theme.muted }}>{label(locale,'24h operating trend','روند ۲۴ ساعت')}</Typography><Typography sx={{ fontSize:9.8, color:theme.muted }}>24h</Typography></Box>
-      <ChartSvg values={history} color={tone} fill minHeight={68}/>
+      <ChartSvg values={history} color={tone} fill minHeight={80}/>
     </Box>
     <Box sx={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:.7 }}>
       <StatBox label={label(locale,'Minimum','کمینه')} value={`0${unit}`} theme={theme}/>
@@ -226,7 +233,6 @@ function MaterialGauge({ def, theme, locale, size }: Props) {
     </Box>
   </Box>;
 }
-
 
 function BatteryShape({ value, theme, width = 128, height = 58 }: { value: number; theme: WidgetThemeTokens; width?: number; height?: number }) {
   const level = value < 20 ? '#dc2626' : value < 45 ? '#d97706' : theme.accent;
@@ -310,17 +316,16 @@ function MaterialBoolean({ def, theme, locale, size }: Props) {
   const color = on ? '#16a34a' : '#64748b';
   const history = on ? [0,0,0,0,-1,0,0,0] : [-1,-1,-1,0,-1,-1,-1,-1];
 
-  if (p.compact) return <Box sx={{ height:'100%', display:'grid', placeItems:'center' }}><Box onClick={()=>setOn(v=>!v)} sx={{ cursor:'pointer', textAlign:'center' }}><Box sx={{ width:60,height:60,mx:'auto',borderRadius:1.5,bgcolor:`${color}0c`,border:`1px solid ${color}20`,display:'grid',placeItems:'center' }}><Icon sx={{fontSize:28,color}}/></Box><Typography sx={{ mt:.65,fontSize:13,fontWeight:850,color }}>{text}</Typography></Box></Box>;
+  if (p.compact) return <Box sx={{ height:'100%', display:'grid', placeItems:'center' }}><Box onClick={()=>setOn(v=>!v)} sx={{ cursor:'pointer', textAlign:'center' }}><Box sx={{ width:66,height:66,mx:'auto',borderRadius:1.5,bgcolor:`${color}0c`,border:`1px solid ${color}20`,display:'grid',placeItems:'center' }}><Icon sx={{fontSize:31,color}}/></Box><Typography sx={{ mt:.65,fontSize:13,fontWeight:850,color }}>{text}</Typography></Box></Box>;
 
-  if (!p.large) return <Box sx={{ height:'100%', display:'grid', gridTemplateColumns:'96px 1fr', alignItems:'center', gap:1.4 }}><Box onClick={()=>setOn(v=>!v)} sx={{cursor:'pointer',display:'grid',placeItems:'center'}}><Box sx={{ width:72,height:72,borderRadius:1.75,bgcolor:`${color}0c`,border:`1px solid ${color}20`,display:'grid',placeItems:'center' }}><Icon sx={{fontSize:32,color}}/></Box></Box><Box><ToneBadge text={text} tone={on?'success':'neutral'} theme={theme}/><Typography sx={{ mt:.75,fontSize:10.5,color:theme.muted }}>{label(locale,'Click state to toggle demo','برای تغییر وضعیت نمونه کلیک کنید')}</Typography></Box></Box>;
+  if (!p.large) return <Box sx={{ height:'100%', display:'grid', gridTemplateColumns:'102px 1fr', alignItems:'center', gap:1.4 }}><Box onClick={()=>setOn(v=>!v)} sx={{cursor:'pointer',display:'grid',placeItems:'center'}}><Box sx={{ width:76,height:76,borderRadius:1.75,bgcolor:`${color}0c`,border:`1px solid ${color}20`,display:'grid',placeItems:'center' }}><Icon sx={{fontSize:35,color}}/></Box></Box><Box><ToneBadge text={text} tone={on?'success':'neutral'} theme={theme}/><Typography sx={{ mt:.75,fontSize:10.5,color:theme.muted }}>{label(locale,'Click state to toggle demo','برای تغییر وضعیت نمونه کلیک کنید')}</Typography></Box></Box>;
 
-  return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'auto auto minmax(58px,1fr)', gap:1.05 }}>
+  return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'auto auto minmax(86px,1fr)', gap:1.05 }}>
     <Box sx={{ display:'grid', gridTemplateColumns:'112px 1fr', gap:1.4, alignItems:'center' }}><Box onClick={()=>setOn(v=>!v)} sx={{ cursor:'pointer', display:'grid', placeItems:'center' }}><Box sx={{ width:92,height:92,borderRadius:2,bgcolor:`${color}0c`,border:`1px solid ${color}20`,display:'grid',placeItems:'center' }}><Icon sx={{fontSize:44,color}}/></Box></Box><Box><ToneBadge text={text} tone={on?'success':'neutral'} theme={theme}/><Typography sx={{ mt:.7,fontSize:20,fontWeight:850 }}>{on?label(locale,'Device operating normally','دستگاه در حال کار عادی است'):label(locale,'Device is inactive','دستگاه غیرفعال است')}</Typography><Typography sx={{ mt:.35,fontSize:10.5,color:theme.muted }}>{label(locale,'Tap the state icon to toggle the demo.','برای تغییر وضعیت نمونه روی آیکون کلیک کنید.')}</Typography></Box></Box>
     <Box sx={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:.7 }}><StatBox label={label(locale,'Since','از زمان')} value="09:14" theme={theme}/><StatBox label={label(locale,'Uptime','آپ‌تایم')} value="18h 42m" theme={theme}/><StatBox label={label(locale,'Packets','بسته‌ها')} value="1,284" theme={theme} accent/></Box>
-    <Box sx={{ alignSelf:'end', border:`1px solid ${theme.border}`, borderRadius:1.5, p:.9, bgcolor:'#fbfcff' }}><Box sx={{ display:'flex',justifyContent:'space-between',mb:.55 }}><Typography sx={{fontSize:9.8,color:theme.muted}}>{label(locale,'Recent availability','دسترس‌پذیری اخیر')}</Typography><Typography sx={{fontSize:9.8,fontWeight:800,color}}>98.7%</Typography></Box><HistoryStrip values={history} theme={theme} active={color}/></Box>
+    <StateHistoryPanel title={label(locale,'Recent availability','دسترس‌پذیری اخیر')} values={history} theme={theme} active={color} rightText="98.7%" />
   </Box>;
 }
-
 
 function MaterialAlarm({ def, theme, locale, size }: Props) {
   const p = profile(size);
@@ -331,18 +336,17 @@ function MaterialAlarm({ def, theme, locale, size }: Props) {
   const state = active ? label(locale,'Alarm active','هشدار فعال') : label(locale,'Normal','عادی');
   const tone = active ? (severity === 'critical' ? 'danger' : 'warning') : 'success';
 
-  if (p.compact) return <Box sx={{ height:'100%', display:'grid', placeItems:'center' }}><Box sx={{ textAlign:'center' }}><Box sx={{ width:64,height:64,mx:'auto',borderRadius:1.75,display:'grid',placeItems:'center',bgcolor:`${color}0c`,border:`1px solid ${color}20` }}><Icon sx={{fontSize:32,color}}/></Box><Typography sx={{ mt:.65,fontSize:12.5,fontWeight:850,color }}>{state}</Typography></Box></Box>;
+  if (p.compact) return <Box sx={{ height:'100%', display:'grid', placeItems:'center' }}><Box sx={{ textAlign:'center' }}><Box sx={{ width:70,height:70,mx:'auto',borderRadius:1.75,display:'grid',placeItems:'center',bgcolor:`${color}0c`,border:`1px solid ${color}20` }}><Icon sx={{fontSize:35,color}}/></Box><Typography sx={{ mt:.65,fontSize:12.5,fontWeight:850,color }}>{state}</Typography></Box></Box>;
 
-  if (!p.large) return <Box sx={{ height:'100%', display:'grid', gridTemplateColumns:'104px 1fr', alignItems:'center', gap:1.4 }}><Box sx={{display:'grid',placeItems:'center'}}><Box sx={{ width:78,height:78,borderRadius:2,display:'grid',placeItems:'center',bgcolor:`${color}0c`,border:`1px solid ${color}20` }}><Icon sx={{fontSize:37,color}}/></Box></Box><Box><ToneBadge text={state} tone={tone} theme={theme}/><Typography sx={{ mt:.75,fontSize:11,color:theme.muted }}>{active?label(locale,'Immediate attention required','نیازمند بررسی فوری'):label(locale,'Sensor is reporting normal state','سنسور وضعیت عادی گزارش می‌کند')}</Typography></Box></Box>;
+  if (!p.large) return <Box sx={{ height:'100%', display:'grid', gridTemplateColumns:'108px 1fr', alignItems:'center', gap:1.4 }}><Box sx={{display:'grid',placeItems:'center'}}><Box sx={{ width:82,height:82,borderRadius:2,display:'grid',placeItems:'center',bgcolor:`${color}0c`,border:`1px solid ${color}20` }}><Icon sx={{fontSize:39,color}}/></Box></Box><Box><ToneBadge text={state} tone={tone} theme={theme}/><Typography sx={{ mt:.75,fontSize:11,color:theme.muted }}>{active?label(locale,'Immediate attention required','نیازمند بررسی فوری'):label(locale,'Sensor is reporting normal state','سنسور وضعیت عادی گزارش می‌کند')}</Typography></Box></Box>;
 
   const timeline = active ? [0,0,1,0,2,1,0,2] : [0,0,0,-1,0,0,0,0];
-  return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'auto auto minmax(58px,1fr)', gap:1.05 }}>
+  return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'auto auto minmax(86px,1fr)', gap:1.05 }}>
     <Box sx={{ display:'grid', gridTemplateColumns:'112px 1fr', gap:1.4, alignItems:'center' }}><Box sx={{display:'grid',placeItems:'center'}}><Box sx={{ width:92,height:92,borderRadius:2,display:'grid',placeItems:'center',bgcolor:`${color}0c`,border:`1px solid ${color}20` }}><Icon sx={{fontSize:46,color}}/></Box></Box><Box><ToneBadge text={state} tone={tone} theme={theme}/><Typography sx={{ mt:.7,fontSize:20,fontWeight:850 }}>{active?label(locale,'Immediate attention required','نیازمند بررسی فوری'):label(locale,'Area is clear','محدوده در وضعیت عادی است')}</Typography><Typography sx={{ mt:.35,fontSize:10.5,color:theme.muted }}>{active?label(locale,'Review the alarm source and acknowledge after inspection.','منبع هشدار را بررسی و پس از بازدید تأیید کنید.'):label(locale,'No active safety condition is detected.','هیچ وضعیت ایمنی فعالی تشخیص داده نشده است.')}</Typography></Box></Box>
     <Box sx={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:.7 }}><StatBox label={label(locale,'Last event','آخرین رخداد')} value={active?'09:42':'Yesterday'} theme={theme}/><StatBox label={label(locale,'Zone','زون')} value="Floor 2" theme={theme}/><StatBox label={label(locale,'Severity','شدت')} value={active?severity.toUpperCase():'CLEAR'} theme={theme} accent/></Box>
-    <Box sx={{ alignSelf:'end', border:`1px solid ${theme.border}`, borderRadius:1.5, p:.9, bgcolor:'#fbfcff' }}><Box sx={{ display:'flex',justifyContent:'space-between',mb:.55 }}><Typography sx={{fontSize:9.8,color:theme.muted}}>{label(locale,'Recent event history','تاریخچه رخداد اخیر')}</Typography><Typography sx={{fontSize:9.8,color:theme.muted}}>24h</Typography></Box><HistoryStrip values={timeline} theme={theme} active="#16a34a" warning="#d97706" danger="#dc2626"/></Box>
+    <StateHistoryPanel title={label(locale,'Recent event history','تاریخچه رخداد اخیر')} values={timeline} theme={theme} active="#16a34a" warning="#d97706" danger="#dc2626" rightText="24h" footer={label(locale,'now','اکنون')} />
   </Box>;
 }
-
 
 function MaterialLineChart({ def, theme, size }: Props) {
   const p = profile(size);
@@ -439,7 +443,9 @@ function MaterialMap({ theme, size }: Props) {
 function MaterialCoordinates({ def, theme, locale, size }: Props) {
   const p = profile(size);
   const lat=s(def.mock.lat,'35.7219° N'); const lng=s(def.mock.lng,'51.3347° E'); const accuracy=s(def.mock.accuracy,'4.2 m');
-  if (!p.large) return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'repeat(3,1fr)', gap:.6, alignContent:'center', direction:'ltr' }}><StatBox label="LAT" value={lat} theme={theme}/><StatBox label="LNG" value={lng} theme={theme}/><StatBox label={label(locale,'Accuracy','دقت')} value={accuracy} theme={theme} accent/></Box>;
+  if (!p.large) return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'repeat(3,1fr)', alignContent:'center', direction:'ltr', borderTop:`1px solid ${theme.border}`, borderBottom:`1px solid ${theme.border}` }}>
+    {[['LAT',lat],['LNG',lng],[label(locale,'Accuracy','دقت'),accuracy]].map(([k,v],i)=><Box key={k} sx={{ display:'grid', gridTemplateColumns:'72px 1fr', alignItems:'center', gap:1, px:.8, borderBottom:i<2?`1px solid ${theme.border}`:'none' }}><Typography sx={{fontSize:9.5,color:theme.muted,fontWeight:800,letterSpacing:.3}}>{k}</Typography><Typography sx={{fontSize:12.5,fontWeight:850,color:i===2?theme.accent:theme.foreground}}>{v}</Typography></Box>)}
+  </Box>;
   return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'minmax(0,1fr) auto', gap:1, direction:'ltr' }}>
     <Box sx={{ minHeight:0, borderRadius:1.5, border:`1px solid ${theme.border}`, bgcolor:'#f7f8fb', position:'relative', overflow:'hidden' }}>
       <svg viewBox="0 0 420 220" width="100%" height="100%" preserveAspectRatio="none">
@@ -467,22 +473,26 @@ function MaterialCompass({ def, theme, locale, size }: Props) {
   const CompassFace = ({dia}:{dia:number}) => {
     const pointerAngle=value-90; const rad=pointerAngle*Math.PI/180; const radius=dia*.36; const cx=dia/2; const cy=dia/2; const px=cx+Math.cos(rad)*radius; const py=cy+Math.sin(rad)*radius;
     return <Box sx={{ width:dia,height:dia,borderRadius:'50%',border:`1px solid ${theme.border}`,bgcolor:'#fbfcff',position:'relative',display:'grid',placeItems:'center',boxShadow:'inset 0 0 0 8px #fff' }}>
+      <Box sx={{position:'absolute',inset:14,borderRadius:'50%',border:'1px dashed #d9deea'}}/>
       {['N','E','S','W'].map((x,i)=><Typography key={x} sx={{ position:'absolute',fontSize:11,color:x==='N'?theme.accent:theme.muted,fontWeight:x==='N'?850:650,top:i===0?8:i===2?undefined:'50%',bottom:i===2?8:undefined,left:i===3?10:i===1?undefined:'50%',right:i===1?10:undefined,transform:i===0||i===2?'translateX(-50%)':i===1||i===3?'translateY(-50%)':undefined }}>{x}</Typography>)}
       <Box sx={{ position:'absolute',left:px-6,top:py-6,width:12,height:12,transform:`rotate(${value}deg)`,color:theme.accent }}><Box sx={{ width:0,height:0,borderLeft:'6px solid transparent',borderRight:'6px solid transparent',borderBottom:`12px solid ${theme.accent}` }}/></Box>
-      <Box sx={{ width:dia>180?92:72,height:dia>180?62:50,borderRadius:1.5,bgcolor:'#fff',border:`1px solid ${theme.border}`,display:'grid',placeItems:'center',textAlign:'center',boxShadow:'0 4px 12px rgba(15,23,42,.04)' }}><Box><Typography sx={{fontSize:dia>180?32:25,fontWeight:850,lineHeight:1}}>{value}°</Typography><Typography sx={{fontSize:9.5,color:theme.muted,mt:.25}}>{cardinal}</Typography></Box></Box>
+      <Box sx={{ width:dia>180?96:72,height:dia>180?64:50,borderRadius:1.5,bgcolor:'#fff',border:`1px solid ${theme.border}`,display:'grid',placeItems:'center',textAlign:'center',boxShadow:'0 4px 12px rgba(15,23,42,.04)' }}><Box><Typography sx={{fontSize:dia>180?34:25,fontWeight:850,lineHeight:1}}>{value}°</Typography><Typography sx={{fontSize:9.5,color:theme.muted,mt:.25}}>{cardinal}</Typography></Box></Box>
     </Box>;
   };
-  if(!p.large) return <Box sx={{height:'100%',display:'grid',placeItems:'center',direction:'ltr'}}><CompassFace dia={p.compact?116:146}/></Box>;
+  if(!p.large) return <Box sx={{height:'100%',display:'grid',placeItems:'center',direction:'ltr'}}><CompassFace dia={p.compact?124:158}/></Box>;
   return <Box sx={{height:'100%',display:'grid',gridTemplateRows:'minmax(0,1fr) auto',gap:1,direction:'ltr'}}>
-    <Box sx={{minHeight:0,display:'grid',placeItems:'center'}}><CompassFace dia={220}/></Box>
+    <Box sx={{minHeight:0,display:'grid',placeItems:'center'}}><CompassFace dia={252}/></Box>
     <Box sx={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:.7}}><StatBox label={label(locale,'Heading','جهت')} value={`${value}°`} theme={theme} accent/><StatBox label={label(locale,'Direction','جهت اصلی')} value={cardinal} theme={theme}/><StatBox label={label(locale,'Accuracy','دقت')} value="±2°" theme={theme}/></Box>
   </Box>;
 }
 
-function MaterialButton({ theme, locale, size }: Props) {
-  const p=profile(size); const [sent,setSent]=useState(false);
+function MaterialButton({ def, theme, locale, size }: Props) {
+  const p=profile(size); const [sent,setSent]=useState(false); const Icon=def.icon;
   const trigger=()=>{setSent(true);setTimeout(()=>setSent(false),1100)};
-  if (p.compact) return <Box sx={{ height:'100%',display:'grid',placeItems:'center' }}><Box sx={{ textAlign:'center' }}><Button variant="contained" onClick={trigger} sx={{ borderRadius:1.25,textTransform:'none',fontWeight:800,px:2.1,boxShadow:'none' }}>{label(locale,'Send command','ارسال فرمان')}</Button><Typography sx={{ mt:.7,fontSize:10.5,color:sent?'#16a34a':theme.muted }}>{sent?label(locale,'Queued','در صف ارسال'):label(locale,'Ready','آماده')}</Typography></Box></Box>;
+  if (p.compact) return <Box sx={{ height:'100%',display:'grid',gridTemplateRows:'1fr auto',gap:.9 }}>
+    <Box sx={{display:'grid',gridTemplateColumns:'54px 1fr',gap:1,alignItems:'center'}}><Box sx={{width:54,height:54,borderRadius:1.5,bgcolor:`${theme.accent}0c`,border:`1px solid ${theme.accent}20`,display:'grid',placeItems:'center',color:theme.accent}}><Icon sx={{fontSize:26}}/></Box><Box><ToneBadge text={sent?label(locale,'Queued','در صف'):label(locale,'Ready','آماده')} tone={sent?'success':'neutral'} theme={theme}/><Typography sx={{mt:.55,fontSize:10.5,color:theme.muted}}>RPC · 5s timeout</Typography></Box></Box>
+    <Button fullWidth variant="contained" onClick={trigger} sx={{ height:36,borderRadius:1.25,textTransform:'none',fontWeight:800,boxShadow:'none' }}>{label(locale,'Send command','ارسال فرمان')}</Button>
+  </Box>;
   if (!p.large) return <Box sx={{ height:'100%',display:'grid',gridTemplateColumns:'1fr 142px',alignItems:'center',gap:1.4 }}><Box><Typography sx={{ fontSize:18,fontWeight:850 }}>{label(locale,'Device command','فرمان دستگاه')}</Typography><Typography sx={{ mt:.35,fontSize:11,color:theme.muted }}>{label(locale,'Send a predefined RPC/downlink action to this device.','ارسال فرمان از پیش تعریف‌شده به دستگاه.')}</Typography></Box><Box sx={{ textAlign:'center' }}><Button fullWidth variant="contained" onClick={trigger} sx={{ borderRadius:1.25,textTransform:'none',fontWeight:800,boxShadow:'none' }}>{label(locale,'Send command','ارسال فرمان')}</Button><Typography sx={{ mt:.6,fontSize:10.5,color:sent?'#16a34a':theme.muted }}>{sent?label(locale,'Command queued','فرمان در صف قرار گرفت'):label(locale,'Ready','آماده')}</Typography></Box></Box>;
   return <Box sx={{ height:'100%',display:'grid',gridTemplateRows:'auto auto minmax(74px,1fr) auto',gap:1 }}>
     <Box><Typography sx={{ fontSize:22,fontWeight:850 }}>{label(locale,'Device command','فرمان دستگاه')}</Typography><Typography sx={{ mt:.35,fontSize:11,color:theme.muted }}>{label(locale,'Send a predefined RPC/downlink action to this device.','ارسال فرمان از پیش تعریف‌شده به دستگاه.')}</Typography></Box>
@@ -492,24 +502,25 @@ function MaterialButton({ theme, locale, size }: Props) {
   </Box>;
 }
 
-
 function MaterialSwitch({ def, theme, locale, size }: Props) {
-  const p=profile(size); const [checked,setChecked]=useState(Boolean(def.mock.value ?? true));
+  const p=profile(size); const [checked,setChecked]=useState(Boolean(def.mock.value ?? true)); const Icon=def.icon;
   const semantic = def.id === 'door-lock'
     ? { on:label(locale,'Locked','قفل'), off:label(locale,'Unlocked','باز'), action:label(locale,'Door access','دسترسی درب'), running:label(locale,'Secured','ایمن') }
     : def.id === 'siren'
       ? { on:label(locale,'Beacon active','چراغ هشدار فعال'), off:label(locale,'Beacon standby','چراغ هشدار آماده'), action:label(locale,'Safety output','خروجی ایمنی'), running:label(locale,'Attention','هشدار') }
       : { on:label(locale,'Output enabled','خروجی فعال'), off:label(locale,'Output disabled','خروجی غیرفعال'), action:label(locale,'Relay output','خروجی رله'), running:label(locale,'Running','در حال کار') };
   const stateText = checked ? semantic.on : semantic.off;
-  if(p.compact) return <Box sx={{ height:'100%',display:'grid',placeItems:'center' }}><Box sx={{ textAlign:'center' }}><Switch checked={checked} onChange={(_,v)=>setChecked(v)} sx={{ transform:'scale(1.22)','& .MuiSwitch-switchBase.Mui-checked':{color:theme.accent},'& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track':{backgroundColor:theme.accent} }}/><Typography sx={{ mt:.5,fontSize:14.5,fontWeight:850,color:checked?theme.accent:theme.muted }}>{stateText}</Typography></Box></Box>;
+  if(p.compact) return <Box sx={{ height:'100%',display:'grid',gridTemplateRows:'1fr auto',gap:.8 }}>
+    <Box sx={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:1}}><Box sx={{width:56,height:56,borderRadius:1.5,bgcolor:checked?`${theme.accent}0c`:'#f8fafc',border:`1px solid ${checked?`${theme.accent}20`:theme.border}`,display:'grid',placeItems:'center',color:checked?theme.accent:theme.muted}}><Icon sx={{fontSize:28}}/></Box><Switch checked={checked} onChange={(_,v)=>setChecked(v)} sx={{ transform:'scale(1.18)','& .MuiSwitch-switchBase.Mui-checked':{color:theme.accent},'& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track':{backgroundColor:theme.accent} }}/></Box>
+    <Box><Typography sx={{fontSize:14.5,fontWeight:850,color:checked?theme.accent:theme.foreground}}>{stateText}</Typography><Typography sx={{mt:.15,fontSize:10,color:theme.muted}}>{semantic.action}</Typography></Box>
+  </Box>;
   if(!p.large) return <Box sx={{ height:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',gap:1.4 }}><Box><Typography sx={{ fontSize:20,fontWeight:850 }}>{stateText}</Typography><Typography sx={{ mt:.3,fontSize:11,color:theme.muted }}>{semantic.action}</Typography></Box><Switch checked={checked} onChange={(_,v)=>setChecked(v)} sx={{ transform:'scale(1.35)','& .MuiSwitch-switchBase.Mui-checked':{color:theme.accent},'& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track':{backgroundColor:theme.accent} }}/></Box>;
-  return <Box sx={{ height:'100%',display:'grid',gridTemplateRows:'auto auto minmax(62px,1fr)',gap:1.05 }}>
+  return <Box sx={{ height:'100%',display:'grid',gridTemplateRows:'auto auto minmax(86px,1fr)',gap:1.05 }}>
     <Box sx={{ display:'flex',alignItems:'center',justifyContent:'space-between',gap:2 }}><Box><Typography sx={{fontSize:26,fontWeight:850}}>{stateText}</Typography><Typography sx={{mt:.3,fontSize:11,color:theme.muted}}>{semantic.action}</Typography><Box sx={{mt:.8}}><ToneBadge text={checked?semantic.running:label(locale,'Stopped','متوقف')} tone={checked?'success':'neutral'} theme={theme}/></Box></Box><Switch checked={checked} onChange={(_,v)=>setChecked(v)} sx={{ transform:'scale(1.7)','& .MuiSwitch-switchBase.Mui-checked':{color:theme.accent},'& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track':{backgroundColor:theme.accent} }}/></Box>
     <Box sx={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:.7}}><StatBox label={label(locale,'Last change','آخرین تغییر')} value="09:42" theme={theme}/><StatBox label={label(locale,'Source','منبع')} value="Dashboard" theme={theme}/><StatBox label={label(locale,'State','وضعیت')} value={checked?'ON':'OFF'} theme={theme} accent/></Box>
-    <Box sx={{ alignSelf:'end',border:`1px solid ${theme.border}`,borderRadius:1.5,p:.9,bgcolor:'#fbfcff' }}><Box sx={{display:'flex',justifyContent:'space-between',mb:.55}}><Typography sx={{fontSize:9.8,color:theme.muted}}>{label(locale,'Recent state history','تاریخچه وضعیت اخیر')}</Typography><Typography sx={{fontSize:9.8,color:theme.muted}}>24h</Typography></Box><HistoryStrip values={checked?[0,0,0,-1,0,0,0,0]:[-1,-1,0,-1,-1,-1,0,-1]} theme={theme} active={theme.accent}/></Box>
+    <StateHistoryPanel title={label(locale,'Recent state history','تاریخچه وضعیت اخیر')} values={checked?[0,0,0,-1,0,0,0,0]:[-1,-1,0,-1,-1,-1,0,-1]} theme={theme} active={theme.accent} />
   </Box>;
 }
-
 
 function MaterialSlider({ def, theme, locale, size }: Props) {
   const p=profile(size); const [value,setValue]=useState(n(def.mock.value,65)); const unit=s(def.mock.unit,'%');
@@ -525,7 +536,8 @@ function MaterialSlider({ def, theme, locale, size }: Props) {
 function MaterialInput({ def, theme, locale, size }: Props) {
   const p=profile(size); const [value,setValue]=useState(String(def.mock.value??'22.5')); const [applied,setApplied]=useState(false);
   const unit=s(def.mock.unit,'');
-  if(!p.large) return <Box sx={{ height:'100%',display:'flex',alignItems:'center',justifyContent:'center' }}><TextField value={value} onChange={e=>setValue(e.target.value)} label={label(locale,'Target value','مقدار هدف')} size="small" fullWidth inputProps={{dir:'ltr'}} sx={{ '& .MuiOutlinedInput-root':{borderRadius:1.25},'& .MuiOutlinedInput-notchedOutline':{borderColor:theme.border} }}/></Box>;
+  if(p.compact) return <Box sx={{height:'100%',display:'grid',gridTemplateRows:'auto auto',gap:1,alignContent:'center'}}><Box sx={{display:'flex',justifyContent:'space-between',alignItems:'baseline'}}><Box><Typography sx={{fontSize:9.5,color:theme.muted}}>{label(locale,'Current','فعلی')}</Typography><Typography sx={{mt:.2,fontSize:18,fontWeight:850,direction:'ltr'}}>{def.mock.value ?? '22.5'}{unit}</Typography></Box><ToneBadge text={label(locale,'Setpoint','نقطه تنظیم')} tone="neutral" theme={theme}/></Box><TextField value={value} onChange={e=>setValue(e.target.value)} label={label(locale,'Target value','مقدار هدف')} size="small" fullWidth inputProps={{dir:'ltr'}} sx={{ '& .MuiOutlinedInput-root':{borderRadius:1.25},'& .MuiOutlinedInput-notchedOutline':{borderColor:theme.border} }}/></Box>;
+  if(!p.large) return <Box sx={{ height:'100%',display:'grid',gridTemplateColumns:'1fr 104px',gap:1,alignItems:'center' }}><TextField value={value} onChange={e=>setValue(e.target.value)} label={label(locale,'Target value','مقدار هدف')} size="small" fullWidth inputProps={{dir:'ltr'}} sx={{ '& .MuiOutlinedInput-root':{borderRadius:1.25},'& .MuiOutlinedInput-notchedOutline':{borderColor:theme.border} }}/><Box><Typography sx={{fontSize:9.5,color:theme.muted}}>{label(locale,'Current','فعلی')}</Typography><Typography sx={{mt:.25,fontSize:18,fontWeight:850,direction:'ltr'}}>{def.mock.value ?? '22.5'}{unit}</Typography></Box></Box>;
   return <Box sx={{ height:'100%',display:'grid',gridTemplateRows:'auto auto minmax(82px,1fr) auto',gap:1.05 }}>
     <Box sx={{ display:'grid',gridTemplateColumns:'1fr 120px',gap:.8,alignItems:'end' }}><TextField value={value} onChange={e=>{setValue(e.target.value);setApplied(false)}} label={label(locale,'Target value','مقدار هدف')} size="small" fullWidth inputProps={{dir:'ltr'}} sx={{ '& .MuiOutlinedInput-root':{borderRadius:1.25},'& .MuiOutlinedInput-notchedOutline':{borderColor:theme.border} }}/><Button variant="contained" onClick={()=>setApplied(true)} sx={{ height:40,borderRadius:1.25,textTransform:'none',fontWeight:800,boxShadow:'none' }}>{label(locale,'Apply','اعمال')}</Button></Box>
     <Box sx={{ display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:.7 }}><StatBox label={label(locale,'Current','فعلی')} value={`${def.mock.value ?? '22.5'}${unit}`} theme={theme}/><StatBox label={label(locale,'Pending','در انتظار')} value={`${value}${unit}`} theme={theme} accent/><StatBox label={label(locale,'Allowed','مجاز')} value="16–30°C" theme={theme}/></Box>
@@ -533,7 +545,6 @@ function MaterialInput({ def, theme, locale, size }: Props) {
     <Typography sx={{fontSize:10.5,color:applied?'#16a34a':theme.muted}}>{applied?label(locale,'Command queued successfully','فرمان با موفقیت در صف قرار گرفت'):label(locale,'Enter a value, review it, then apply.','مقدار را وارد، بررسی و سپس اعمال کنید.')}</Typography>
   </Box>;
 }
-
 
 function MaterialThermostat({ def, theme, locale, size }: Props) {
   const p=profile(size); const [value,setValue]=useState(n(def.mock.value,22));
@@ -598,9 +609,10 @@ function MaterialClock({ theme, locale, size }: Props) {
   if(p.compact) return <Box sx={{height:'100%',display:'grid',placeItems:'center',textAlign:'center'}}><Box><Typography sx={{fontSize:40,fontWeight:500,letterSpacing:'-.055em',direction:'ltr'}}>09:44</Typography><Typography sx={{mt:.35,fontSize:10.5,color:theme.muted}}>{locale==='fa'?'چهارشنبه، ۱۵ مهر':'Wednesday, Oct 7'}</Typography></Box></Box>;
   if(p.wide && !p.large) return <Box sx={{height:'100%',display:'grid',gridTemplateColumns:'1fr 1fr',alignItems:'center',gap:1.5,direction:'ltr'}}><Box><Typography sx={{fontSize:50,fontWeight:480,letterSpacing:'-.06em'}}>09:44</Typography><Typography sx={{fontSize:10.5,color:theme.muted}}>UTC +03:30</Typography></Box><Box sx={{borderLeft:`1px solid ${theme.border}`,pl:1.5}}><Typography sx={{fontSize:15,fontWeight:850}}>{locale==='fa'?'چهارشنبه':'Wednesday'}</Typography><Typography sx={{mt:.3,fontSize:11,color:theme.muted}}>{locale==='fa'?'۱۵ مهر ۱۴۰۵':'October 7, 2026'}</Typography><Box sx={{mt:.8}}><ToneBadge text="NTP synced" tone="success" theme={theme}/></Box></Box></Box>;
   if(!p.large) return <Box sx={{height:'100%',display:'grid',placeItems:'center',textAlign:'center'}}><Box><Typography sx={{fontSize:48,fontWeight:500,letterSpacing:'-.055em',direction:'ltr'}}>09:44</Typography><Typography sx={{mt:.35,fontSize:11,color:theme.muted}}>{locale==='fa'?'چهارشنبه، ۱۵ مهر ۱۴۰۵':'Wednesday, Oct 7'}</Typography></Box></Box>;
-  return <Box sx={{height:'100%',display:'grid',gridTemplateRows:'1fr auto',gap:1.1}}>
-    <Box sx={{display:'grid',placeItems:'center',textAlign:'center'}}><Box><Typography sx={{fontSize:64,fontWeight:450,letterSpacing:'-.06em',direction:'ltr'}}>09:44</Typography><Typography sx={{mt:.35,fontSize:14,fontWeight:750}}>{locale==='fa'?'چهارشنبه، ۱۵ مهر ۱۴۰۵':'Wednesday, October 7'}</Typography><Box sx={{mt:1}}><ToneBadge text="UTC +03:30" tone="neutral" theme={theme}/></Box></Box></Box>
-    <Box sx={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:.7,direction:'ltr'}}><StatBox label={label(locale,'Timezone','منطقه زمانی')} value="Local" theme={theme}/><StatBox label={label(locale,'Sync','همگام‌سازی')} value="NTP OK" theme={theme} accent/><StatBox label={label(locale,'Drift','انحراف')} value="< 12 ms" theme={theme}/></Box>
+  return <Box sx={{height:'100%',display:'grid',gridTemplateRows:'minmax(0,1fr) auto auto',gap:1.05,direction:'ltr'}}>
+    <Box sx={{minHeight:0,display:'grid',gridTemplateColumns:'1.25fr .75fr',alignItems:'center',gap:1.6}}><Box><Typography sx={{fontSize:72,fontWeight:450,letterSpacing:'-.065em',lineHeight:.95}}>09:44</Typography><Typography sx={{mt:.65,fontSize:14,fontWeight:800}}>{locale==='fa'?'چهارشنبه، ۱۵ مهر ۱۴۰۵':'Wednesday, October 7'}</Typography><Typography sx={{mt:.35,fontSize:10.5,color:theme.muted}}>Local time · UTC +03:30</Typography></Box><Box sx={{borderLeft:`1px solid ${theme.border}`,pl:1.5,display:'grid',gap:.8}}><ToneBadge text="NTP synced" tone="success" theme={theme}/><Box><Typography sx={{fontSize:9.5,color:theme.muted}}>NEXT SYNC</Typography><Typography sx={{mt:.2,fontSize:15,fontWeight:850}}>10:00</Typography></Box><Box><Typography sx={{fontSize:9.5,color:theme.muted}}>DAY</Typography><Typography sx={{mt:.2,fontSize:15,fontWeight:850}}>280 / 365</Typography></Box></Box></Box>
+    <Box sx={{border:`1px solid ${theme.border}`,borderRadius:1.5,p:.9,bgcolor:'#fbfcff'}}><Box sx={{display:'flex',justifyContent:'space-between',mb:.55}}><Typography sx={{fontSize:9.8,color:theme.muted}}>{label(locale,'Day progress','پیشرفت روز')}</Typography><Typography sx={{fontSize:9.8,fontWeight:800}}>40.6%</Typography></Box><Progress value={9.73} max={24} theme={theme}/><Box sx={{mt:.5,display:'flex',justifyContent:'space-between',color:theme.muted}}><Typography sx={{fontSize:9}}>00</Typography><Typography sx={{fontSize:9}}>12</Typography><Typography sx={{fontSize:9}}>24</Typography></Box></Box>
+    <Box sx={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:.7}}><StatBox label={label(locale,'Timezone','منطقه زمانی')} value="Local" theme={theme}/><StatBox label={label(locale,'Sync','همگام‌سازی')} value="NTP OK" theme={theme} accent/><StatBox label={label(locale,'Drift','انحراف')} value="< 12 ms" theme={theme}/></Box>
   </Box>;
 }
 
@@ -612,10 +624,10 @@ function MaterialText({ theme, locale, size }: Props) {
     [label(locale,'Humidity','رطوبت'),'46%','#16a34a'],
     [label(locale,'Door','درب'),label(locale,'Closed','بسته'),'#16a34a'],
   ];
-  return <Box sx={{ height:'100%',display:'grid',gridTemplateRows:'auto auto 1fr',gap:1.1,direction:locale==='fa'?'rtl':'ltr',textAlign:locale==='fa'?'right':'left' }}>
+  return <Box sx={{ height:'100%',display:'grid',gridTemplateRows:'auto auto minmax(0,1fr)',gap:1.1,direction:locale==='fa'?'rtl':'ltr',textAlign:locale==='fa'?'right':'left' }}>
     <Box><Typography sx={{ fontSize:23,fontWeight:850 }}>{label(locale,'Server room status','وضعیت اتاق سرور')}</Typography><Typography sx={{ mt:.55,fontSize:12,color:theme.muted,lineHeight:1.75 }}>{label(locale,'All sensors are within their normal ranges. Latest telemetry was received less than a minute ago.','همه سنسورها در محدوده عادی هستند. آخرین بسته داده کمتر از یک دقیقه قبل دریافت شده است.')}</Typography></Box>
     <Box sx={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:.7,direction:'ltr' }}><StatBox label="SENSORS" value="12 online" theme={theme} accent/><StatBox label="LAST UPDATE" value="38 sec" theme={theme}/></Box>
-    <Box sx={{ alignSelf:'end',border:`1px solid ${theme.border}`,borderRadius:1.25,overflow:'hidden',direction:'ltr' }}>{checks.map(([name,value,color],i)=><Box key={name} sx={{ display:'grid',gridTemplateColumns:'1fr auto',gap:1,alignItems:'center',px:1,py:.7,borderBottom:i<checks.length-1?`1px solid ${theme.border}`:'none' }}><Box sx={{ display:'flex',alignItems:'center',gap:.65 }}><Box sx={{ width:7,height:7,borderRadius:'50%',bgcolor:color }}/><Typography sx={{ fontSize:11,fontWeight:700 }}>{name}</Typography></Box><Typography sx={{ fontSize:11,fontWeight:800,color:theme.muted }}>{value}</Typography></Box>)}</Box>
+    <Box sx={{ minHeight:0,border:`1px solid ${theme.border}`,borderRadius:1.25,overflow:'hidden',direction:'ltr',display:'grid',gridTemplateRows:'repeat(3,1fr)' }}>{checks.map(([name,value,color],i)=><Box key={name} sx={{ display:'grid',gridTemplateColumns:'1fr auto',gap:1,alignItems:'center',px:1.15,minHeight:0,borderBottom:i<checks.length-1?`1px solid ${theme.border}`:'none',bgcolor:i===0?'#fbfcff':'#fff' }}><Box sx={{ display:'flex',alignItems:'center',gap:.7 }}><Box sx={{ width:8,height:8,borderRadius:'50%',bgcolor:color }}/><Box><Typography sx={{ fontSize:11.5,fontWeight:800 }}>{name}</Typography><Typography sx={{mt:.15,fontSize:9.5,color:theme.muted}}>{label(locale,'Within configured range','در محدوده تنظیم‌شده')}</Typography></Box></Box><Typography sx={{ fontSize:12,fontWeight:850,color:theme.foreground }}>{value}</Typography></Box>)}</Box>
   </Box>;
 }
 
@@ -626,7 +638,8 @@ function MaterialImage({ theme, size }: Props) {
 
 function MaterialIframe({ theme, locale, size }: Props) {
   const p=profile(size);
-  if(!p.large) return <Box sx={{ height:'100%',border:`1px solid ${theme.border}`,borderRadius:1.5,overflow:'hidden',bgcolor:'#fbfcff',display:'grid',gridTemplateRows:'28px 1fr' }}><Box sx={{ px:1,display:'flex',alignItems:'center',gap:.45,borderBottom:`1px solid ${theme.border}`,bgcolor:'#f5f7fb' }}>{[0,1,2].map(i=><Box key={i} sx={{ width:6,height:6,borderRadius:'50%',bgcolor:i===0?'#ef4444':i===1?'#f59e0b':'#22c55e' }}/>)}</Box><Box sx={{ display:'grid',placeItems:'center',textAlign:'center',px:2 }}><Box><Typography sx={{ fontSize:14,fontWeight:850 }}>{label(locale,'External content','محتوای خارجی')}</Typography><Typography sx={{ mt:.4,fontSize:10.5,color:theme.muted }}>iframe / embedded app / HTML canvas</Typography></Box></Box></Box>;
+  if(p.compact) return <Box sx={{ height:'100%',border:`1px solid ${theme.border}`,borderRadius:1.5,overflow:'hidden',bgcolor:'#fbfcff',display:'grid',gridTemplateRows:'26px 1fr' }}><Box sx={{ px:1,display:'flex',alignItems:'center',gap:.45,borderBottom:`1px solid ${theme.border}`,bgcolor:'#f5f7fb' }}>{[0,1,2].map(i=><Box key={i} sx={{ width:6,height:6,borderRadius:'50%',bgcolor:i===0?'#ef4444':i===1?'#f59e0b':'#22c55e' }}/>)}</Box><Box sx={{ display:'grid',placeItems:'center',textAlign:'center',px:2 }}><Box><Typography sx={{ fontSize:14,fontWeight:850 }}>{label(locale,'External content','محتوای خارجی')}</Typography><Typography sx={{ mt:.4,fontSize:10.5,color:theme.muted }}>iframe / HTML canvas</Typography></Box></Box></Box>;
+  if(p.wide && !p.large) return <Box sx={{height:'100%',border:`1px solid ${theme.border}`,borderRadius:1.5,overflow:'hidden',bgcolor:'#fff',display:'grid',gridTemplateRows:'28px 1fr'}}><Box sx={{px:1,display:'flex',alignItems:'center',gap:.45,borderBottom:`1px solid ${theme.border}`,bgcolor:'#f5f7fb'}}>{[0,1,2].map(i=><Box key={i} sx={{width:6,height:6,borderRadius:'50%',bgcolor:i===0?'#ef4444':i===1?'#f59e0b':'#22c55e'}}/>)}<Typography sx={{ml:1,fontSize:9,color:theme.muted}}>embedded-app.local</Typography></Box><Box sx={{p:.9,display:'grid',gridTemplateColumns:'110px 1fr',gap:.9,minHeight:0}}><Box sx={{display:'grid',alignContent:'start',gap:.5}}><ToneBadge text="LIVE" tone="success" theme={theme}/><Typography sx={{fontSize:11,fontWeight:850}}>{label(locale,'Operations','عملیات')}</Typography><Typography sx={{fontSize:9.5,color:theme.muted}}>18 online · 2 alarms</Typography></Box><Box sx={{minHeight:0,border:`1px solid ${theme.border}`,borderRadius:1,p:.45,bgcolor:'#fbfcff'}}><ChartSvg values={[32,38,35,48,51,46,58,62,60,72,68,76]} color={theme.accent} fill minHeight={58}/></Box></Box></Box>;
   return <Box sx={{ height:'100%',border:`1px solid ${theme.border}`,borderRadius:1.5,overflow:'hidden',bgcolor:'#fff',display:'grid',gridTemplateRows:'30px 1fr' }}>
     <Box sx={{ px:1,display:'flex',alignItems:'center',gap:.45,borderBottom:`1px solid ${theme.border}`,bgcolor:'#f5f7fb' }}>{[0,1,2].map(i=><Box key={i} sx={{width:6,height:6,borderRadius:'50%',bgcolor:i===0?'#ef4444':i===1?'#f59e0b':'#22c55e'}}/>)}<Typography sx={{ml:1,fontSize:9.5,color:theme.muted}}>embedded-app.local/dashboard</Typography></Box>
     <Box sx={{minHeight:0,display:'grid',gridTemplateColumns:'74px 1fr'}}><Box sx={{borderRight:`1px solid ${theme.border}`,bgcolor:'#f8fafc',p:.8,display:'grid',alignContent:'start',gap:.55}}>{['Overview','Devices','Rules','Logs'].map((x,i)=><Box key={x} sx={{px:.7,py:.55,borderRadius:.8,bgcolor:i===0?`${theme.accent}10`:'transparent',color:i===0?theme.accent:theme.muted,fontSize:9,fontWeight:i===0?800:650}}>{x}</Box>)}</Box><Box sx={{minWidth:0,p:1,display:'grid',gridTemplateRows:'auto auto minmax(0,1fr)',gap:.8}}><Box sx={{display:'flex',justifyContent:'space-between',alignItems:'center'}}><Typography sx={{fontSize:12,fontWeight:850}}>{label(locale,'Embedded operations view','نمای عملیاتی جاسازی‌شده')}</Typography><ToneBadge text="LIVE" tone="success" theme={theme}/></Box><Box sx={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:.6}}><StatBox label="ONLINE" value="18" theme={theme} accent/><StatBox label="ALARMS" value="2" theme={theme}/><StatBox label="LATENCY" value="84 ms" theme={theme}/></Box><Box sx={{minHeight:0,border:`1px solid ${theme.border}`,borderRadius:1,p:.7,bgcolor:'#fbfcff'}}><ChartSvg values={[32,38,35,48,51,46,58,62,60,72,68,76]} color={theme.accent} fill minHeight={82}/></Box></Box></Box>
@@ -635,8 +648,7 @@ function MaterialIframe({ theme, locale, size }: Props) {
 
 function MaterialScada({ theme, size }: Props) {
   const p=profile(size);
-  return <Box sx={{ height:'100%',minHeight:0,display:'grid',gridTemplateRows:p.large?'minmax(0,1fr) auto':'1fr',gap:1,direction:'ltr' }}>
-    <Box sx={{ minHeight:0,position:'relative',border:p.large?`1px solid ${theme.border}`:'none',borderRadius:p.large?1.5:0,bgcolor:p.large?'#fbfcff':'transparent',overflow:'hidden' }}><svg viewBox="0 0 560 220" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+  const main = <Box sx={{ minHeight:0,position:'relative',border:p.large?`1px solid ${theme.border}`:'none',borderRadius:p.large?1.5:0,bgcolor:p.large?'#fbfcff':'transparent',overflow:'hidden' }}><svg viewBox="0 0 560 220" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
       <defs><marker id="flowArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill={theme.accent}/></marker></defs>
       <rect x="18" y="48" width="126" height="128" rx="10" fill={`${theme.accent}0e`} stroke={theme.border}/><text x="81" y="91" textAnchor="middle" fill={theme.foreground} fontSize="15" fontWeight="700">TANK 01</text><text x="81" y="124" textAnchor="middle" fill={theme.accent} fontSize="28" fontWeight="800">63%</text><text x="81" y="147" textAnchor="middle" fill={theme.muted} fontSize="11">1,260 L</text>
       <line x1="144" y1="112" x2="224" y2="112" stroke="#1f2937" strokeWidth="7"/><line x1="165" y1="112" x2="212" y2="112" stroke={theme.accent} strokeWidth="2" markerEnd="url(#flowArrow)"/>
@@ -645,9 +657,14 @@ function MaterialScada({ theme, size }: Props) {
       <rect x="380" y="64" width="154" height="96" rx="10" fill={`${theme.accent}0c`} stroke={theme.border}/><text x="457" y="103" textAnchor="middle" fill={theme.foreground} fontSize="14" fontWeight="700">VALVE V-02</text><text x="457" y="132" textAnchor="middle" fill={theme.accent} fontSize="15" fontWeight="800">OPEN · 82%</text>
       <text x="184" y="80" textAnchor="middle" fill={theme.muted} fontSize="10">18.4 L/min</text><text x="338" y="80" textAnchor="middle" fill={theme.muted} fontSize="10">2.6 bar</text>
       {p.large&&<><circle cx="162" cy="112" r="3" fill={theme.accent}/><circle cx="326" cy="112" r="3" fill={theme.accent}/><text x="81" y="193" textAnchor="middle" fill={theme.muted} fontSize="9">LEVEL SENSOR</text><text x="260" y="176" textAnchor="middle" fill={theme.muted} fontSize="9">MOTOR M-01</text><text x="457" y="178" textAnchor="middle" fill={theme.muted} fontSize="9">ACTUATOR</text></>}
-    </svg></Box>
-    {p.large&&<Box sx={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:.7}}><StatBox label="FLOW" value="18.4 L/min" theme={theme} accent/><StatBox label="PRESSURE" value="2.6 bar" theme={theme}/><StatBox label="PUMP" value="1.82 A" theme={theme}/><StatBox label="VALVE" value="OPEN" theme={theme}/></Box>}
+    </svg></Box>;
+  if(!p.large) return <Box sx={{height:'100%',direction:'ltr'}}>{main}</Box>;
+  if(p.h>=3) return <Box sx={{height:'100%',minHeight:0,display:'grid',gridTemplateRows:'minmax(210px,.72fr) minmax(104px,.28fr) auto',gap:1,direction:'ltr'}}>
+    {main}
+    <Box sx={{minHeight:0,display:'grid',gridTemplateColumns:'1fr 1fr',gap:.8}}><Box sx={{border:`1px solid ${theme.border}`,borderRadius:1.5,p:.8,bgcolor:'#fbfcff',minHeight:0}}><Box sx={{display:'flex',justifyContent:'space-between',mb:.3}}><Typography sx={{fontSize:9.5,color:theme.muted}}>FLOW TREND</Typography><Typography sx={{fontSize:9.5,fontWeight:800}}>18.4 L/min</Typography></Box><ChartSvg values={[14,15,15.8,16.2,17.4,17,18.1,18.4]} color={theme.accent} fill minHeight={70}/></Box><Box sx={{border:`1px solid ${theme.border}`,borderRadius:1.5,p:.8,bgcolor:'#fbfcff',minHeight:0}}><Box sx={{display:'flex',justifyContent:'space-between',mb:.3}}><Typography sx={{fontSize:9.5,color:theme.muted}}>PRESSURE TREND</Typography><Typography sx={{fontSize:9.5,fontWeight:800}}>2.6 bar</Typography></Box><ChartSvg values={[2.1,2.2,2.25,2.4,2.35,2.5,2.55,2.6]} color={theme.accent2} fill minHeight={70}/></Box></Box>
+    <Box sx={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:.7}}><StatBox label="FLOW" value="18.4 L/min" theme={theme} accent/><StatBox label="PRESSURE" value="2.6 bar" theme={theme}/><StatBox label="PUMP" value="1.82 A" theme={theme}/><StatBox label="VALVE" value="OPEN" theme={theme}/></Box>
   </Box>;
+  return <Box sx={{ height:'100%',minHeight:0,display:'grid',gridTemplateRows:'minmax(0,1fr) auto',gap:1,direction:'ltr' }}>{main}<Box sx={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:.7}}><StatBox label="FLOW" value="18.4 L/min" theme={theme} accent/><StatBox label="PRESSURE" value="2.6 bar" theme={theme}/><StatBox label="PUMP" value="1.82 A" theme={theme}/><StatBox label="VALVE" value="OPEN" theme={theme}/></Box></Box>;
 }
 
 export function MaterialVisualRenderer(props: Props) {
