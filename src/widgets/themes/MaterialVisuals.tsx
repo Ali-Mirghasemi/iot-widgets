@@ -15,6 +15,12 @@ type Profile = ReturnType<typeof profile>;
 const n = (value: unknown, fallback = 0) => typeof value === 'number' ? value : fallback;
 const s = (value: unknown, fallback = '') => typeof value === 'string' ? value : fallback;
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+const unitValue = (value: number | string, unit: string) => {
+  if (!unit) return String(value);
+  if (unit === '%' || unit.startsWith('°') || unit.startsWith(' ')) return `${value}${unit}`;
+  return `${value} ${unit}`;
+};
+const gaugeStepValue = (value: number, max: number) => max <= 10 ? Number(value.toFixed(1)) : Math.round(value);
 
 function profile(size: WidgetSize) {
   const [w, h] = size.split('x').map(Number);
@@ -218,8 +224,8 @@ function MaterialGauge({ def, theme, locale, size }: Props) {
         </Box>
         <Progress value={value} max={max} theme={theme} tone={tone}/>
         <Box sx={{ mt:.9, display:'grid', gridTemplateColumns:'1fr 1fr', gap:.7 }}>
-          <StatBox label={label(locale,'Warning','هشدار')} value={`${Math.round(max*.75)}${unit}`} theme={theme}/>
-          <StatBox label={label(locale,'Critical','بحرانی')} value={`${Math.round(max*.9)}${unit}`} theme={theme}/>
+          <StatBox label={label(locale,'Warning','هشدار')} value={unitValue(gaugeStepValue(max*.75, max), unit)} theme={theme}/>
+          <StatBox label={label(locale,'Critical','بحرانی')} value={unitValue(gaugeStepValue(max*.9, max), unit)} theme={theme}/>
         </Box>
       </Box>
     </Box>
@@ -228,9 +234,9 @@ function MaterialGauge({ def, theme, locale, size }: Props) {
       <ChartSvg values={history} color={tone} fill minHeight={80}/>
     </Box>
     <Box sx={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:.7 }}>
-      <StatBox label={label(locale,'Minimum','کمینه')} value={`0${unit}`} theme={theme}/>
-      <StatBox label={label(locale,'Current','فعلی')} value={`${value}${unit}`} theme={theme} accent/>
-      <StatBox label={label(locale,'Maximum','بیشینه')} value={`${max}${unit}`} theme={theme}/>
+      <StatBox label={label(locale,'Minimum','کمینه')} value={unitValue(0, unit)} theme={theme}/>
+      <StatBox label={label(locale,'Current','فعلی')} value={unitValue(value, unit)} theme={theme} accent/>
+      <StatBox label={label(locale,'Maximum','بیشینه')} value={unitValue(max, unit)} theme={theme}/>
     </Box>
   </Box>;
 }
