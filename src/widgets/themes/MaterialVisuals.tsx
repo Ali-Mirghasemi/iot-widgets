@@ -101,31 +101,33 @@ function MaterialMetric({ def, theme, locale, size }: Props) {
   const tone = positive ? 'success' : 'warning';
 
   if (p.compact) {
-    return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'auto auto minmax(34px,1fr)', gap:.65, direction:'ltr' }}>
-      <Box sx={{ display:'flex', alignItems:'baseline', gap:.55 }}>
-        <Typography sx={{ fontSize:34, lineHeight:.94, fontWeight:850, letterSpacing:'-.05em' }}>{value}</Typography>
-        <Typography sx={{ fontSize:12, fontWeight:750, color:theme.muted }}>{unit}</Typography>
+    return <Box sx={{ height:'100%', minHeight:0, overflow:'hidden', display:'grid', gridTemplateRows:'auto auto minmax(0,1fr)', gap:.45, direction:'ltr' }}>
+      <Box sx={{ display:'flex', alignItems:'baseline', gap:.5, minHeight:0 }}>
+        <Typography sx={{ fontSize:32, lineHeight:.9, fontWeight:850, letterSpacing:'-.05em' }}>{value}</Typography>
+        <Typography sx={{ fontSize:11.5, fontWeight:750, color:theme.muted }}>{unit}</Typography>
       </Box>
-      <Box><ToneBadge text={`${positive ? '↑' : '↓'} ${Math.abs(trend)}% · 24h`} tone={tone} theme={theme} /></Box>
-      <Box sx={{ minHeight:0, mt:.1, borderTop:`1px solid ${theme.border}`, pt:.45 }}>
-        <ChartSvg values={values} color={theme.accent} fill minHeight={34} />
+      <Box sx={{ minHeight:0 }}><ToneBadge text={`${positive ? '↑' : '↓'} ${Math.abs(trend)}% · 24h`} tone={tone} theme={theme} /></Box>
+      <Box sx={{ minHeight:0, overflow:'hidden', borderTop:`1px solid ${theme.border}`, pt:.35 }}>
+        <ChartSvg values={values} color={theme.accent} fill minHeight={0} />
       </Box>
     </Box>;
   }
 
   if (p.wide && !p.large) {
-    return <Box sx={{ height:'100%', display:'grid', gridTemplateColumns:'minmax(132px,.85fr) minmax(0,1.4fr)', gap:1.4, direction:'ltr', alignItems:'stretch' }}>
-      <Box sx={{ minWidth:0, display:'flex', flexDirection:'column', justifyContent:'center' }}>
-        <Typography sx={{ fontSize:38, lineHeight:.92, fontWeight:850, letterSpacing:'-.05em' }}>{value}<Box component="span" sx={{ ml:.55, fontSize:13, color:theme.muted, fontWeight:750 }}>{unit}</Box></Typography>
-        <Box sx={{ mt:1 }}><ToneBadge text={`${positive ? '↑' : '↓'} ${Math.abs(trend)}%`} tone={tone} theme={theme} /></Box>
-        <Box sx={{ mt:1.05 }}><Progress value={value} max={max} theme={theme} /></Box>
+    return <Box sx={{ height:'100%', minHeight:0, overflow:'hidden', display:'grid', gridTemplateColumns:'minmax(122px,.72fr) minmax(0,1.5fr)', gap:1.05, direction:'ltr', alignItems:'stretch' }}>
+      <Box sx={{ minWidth:0, minHeight:0, display:'grid', alignContent:'center', gap:.65, pr:.15 }}>
+        <Typography sx={{ fontSize:33, lineHeight:.9, fontWeight:850, letterSpacing:'-.05em', whiteSpace:'nowrap' }}>
+          {value}<Box component="span" sx={{ ml:.5, fontSize:12, color:theme.muted, fontWeight:750 }}>{unit}</Box>
+        </Typography>
+        <Box><ToneBadge text={`${positive ? '↑' : '↓'} ${Math.abs(trend)}%`} tone={tone} theme={theme} /></Box>
+        <Progress value={value} max={max} theme={theme} />
       </Box>
-      <Box sx={{ minWidth:0, borderLeft:`1px solid ${theme.border}`, pl:1.35, display:'flex', flexDirection:'column' }}>
-        <Box sx={{ display:'flex', justifyContent:'space-between', color:theme.muted, mb:.2 }}>
-          <Typography sx={{ fontSize:10.5 }}>{label(locale,'24h trend','روند ۲۴ ساعت')}</Typography>
-          <Typography sx={{ fontSize:10.5 }}>now</Typography>
+      <Box sx={{ minWidth:0, minHeight:0, overflow:'hidden', borderLeft:`1px solid ${theme.border}`, pl:1.05, display:'grid', gridTemplateRows:'auto minmax(0,1fr)', gap:.2 }}>
+        <Box sx={{ display:'flex', justifyContent:'space-between', color:theme.muted }}>
+          <Typography sx={{ fontSize:9.8 }}>{label(locale,'24h trend','روند ۲۴ ساعت')}</Typography>
+          <Typography sx={{ fontSize:9.8 }}>{label(locale,'now','اکنون')}</Typography>
         </Box>
-        <Box sx={{ flex:1, minHeight:0 }}><ChartSvg values={values} color={theme.accent} fill minHeight={52} /></Box>
+        <Box sx={{ minHeight:0, overflow:'hidden' }}><ChartSvg values={values} color={theme.accent} fill minHeight={0} /></Box>
       </Box>
     </Box>;
   }
@@ -133,28 +135,27 @@ function MaterialMetric({ def, theme, locale, size }: Props) {
   const minValue = Math.round(value * .82 * 10) / 10;
   const avgValue = Math.round(value * .96 * 10) / 10;
   const peakValue = Math.round(value * 1.12 * 10) / 10;
-  return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'auto auto minmax(120px,1fr)', gap:1.15, direction:'ltr' }}>
+  return <Box sx={{ height:'100%', minHeight:0, overflow:'hidden', display:'grid', gridTemplateRows:'auto auto minmax(0,1fr)', gap:1.05, direction:'ltr' }}>
     <Box sx={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:1 }}>
       <Box>
         <Typography sx={{ fontSize:44, lineHeight:.9, fontWeight:850, letterSpacing:'-.05em' }}>{value}<Box component="span" sx={{ ml:.6, fontSize:14, color:theme.muted, fontWeight:750 }}>{unit}</Box></Typography>
-        <Box sx={{ mt:.9 }}><ToneBadge text={`${positive ? '↑' : '↓'} ${Math.abs(trend)}% · ${label(locale,'vs previous 24h','نسبت به ۲۴ ساعت قبل')}`} tone={tone} theme={theme} /></Box>
+        <Box sx={{ mt:.8 }}><ToneBadge text={`${positive ? '↑' : '↓'} ${Math.abs(trend)}% · ${label(locale,'vs previous 24h','نسبت به ۲۴ ساعت قبل')}`} tone={tone} theme={theme} /></Box>
       </Box>
       <Box sx={{ minWidth:116 }}>
-        <Typography sx={{ fontSize:10.5, color:theme.muted, mb:.7 }}>{label(locale,'Current range','بازه فعلی')}</Typography>
+        <Typography sx={{ fontSize:10.5, color:theme.muted, mb:.65 }}>{label(locale,'Current range','بازه فعلی')}</Typography>
         <Progress value={value} max={max} theme={theme} />
       </Box>
     </Box>
-    <Box sx={{ display:'grid', gridTemplateColumns:'repeat(3,minmax(0,1fr))', gap:.75 }}>
+    <Box sx={{ display:'grid', gridTemplateColumns:'repeat(3,minmax(0,1fr))', gap:.7 }}>
       <StatBox label={label(locale,'Min','کمینه')} value={`${minValue}${unit}`} theme={theme} />
       <StatBox label={label(locale,'Average','میانگین')} value={`${avgValue}${unit}`} theme={theme} accent />
       <StatBox label={label(locale,'Peak','بیشینه')} value={`${peakValue}${unit}`} theme={theme} />
     </Box>
-    <Box sx={{ minHeight:0, border:`1px solid ${theme.border}`, borderRadius:1.5, p:1, bgcolor:'#fbfcff' }}>
-      <ChartSvg values={values} color={theme.accent} fill minHeight={112} />
+    <Box sx={{ minHeight:0, overflow:'hidden', border:`1px solid ${theme.border}`, borderRadius:1.5, p:.9, bgcolor:'#fbfcff' }}>
+      <ChartSvg values={values} color={theme.accent} fill minHeight={0} />
     </Box>
   </Box>;
 }
-
 
 function RadialGauge({ value, max, unit, theme, size, tone }: { value: number; max: number; unit: string; theme: WidgetThemeTokens; size: number; tone: string }) {
   const pct = clamp(value / Math.max(1, max), 0, 1);
@@ -274,7 +275,7 @@ function MaterialSignal({ def, theme, locale, size }: Props) {
   if (p.wide && !p.large) return <Box sx={{ height:'100%', display:'grid', gridTemplateColumns:'120px 1fr', gap:1.4, alignItems:'center', direction:'ltr' }}><Box sx={{ display:'grid', placeItems:'center' }}><Bars big/></Box><Box><Typography sx={{ fontSize:31, fontWeight:850 }}>{value} dBm</Typography><Typography sx={{ mt:.3, fontSize:11, color:theme.muted }}>{network}</Typography><Box sx={{ mt:.8 }}><ToneBadge text={quality} tone={barsOn>=3?'success':'warning'} theme={theme}/></Box></Box></Box>;
 
   const signalHistory=[-76,-74,-78,-70,-68,-72,-67,-65,-69,-66,-64,-67];
-  return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'auto minmax(76px,1fr)', gap:1.05, direction:'ltr' }}>
+  return <Box sx={{ height:'100%', minHeight:0, overflow:'hidden', display:'grid', gridTemplateRows:'auto minmax(0,1fr)', gap:1.0, direction:'ltr' }}>
     <Box sx={{ display:'grid', gridTemplateColumns:'150px minmax(0,1fr)', alignItems:'center', gap:1.4 }}>
       <Box sx={{ display:'grid', placeItems:'center' }}><Bars big/></Box>
       <Box><Typography sx={{ fontSize:36, fontWeight:850 }}>{value} dBm</Typography><Box sx={{ mt:.55 }}><ToneBadge text={quality} tone={barsOn>=3?'success':'warning'} theme={theme}/></Box><Box sx={{ mt:1, display:'grid', gridTemplateColumns:'1fr 1fr', gap:.7 }}><StatBox label="NETWORK" value="LTE" theme={theme}/><StatBox label="RSRQ" value="-10 dB" theme={theme}/><StatBox label="SINR" value="18 dB" theme={theme}/><StatBox label="CELL" value="B3" theme={theme}/></Box></Box>
@@ -304,9 +305,9 @@ function MaterialTank({ def, theme, locale, size }: Props) {
   if (p.wide && !p.large) return <Box sx={{ height:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:1.8, direction:'ltr' }}><TankShape/><Box><Typography sx={{ fontSize:34, fontWeight:850 }}>{value}%</Typography><Typography sx={{ color:theme.muted, fontSize:11 }}>{liters}</Typography><Box sx={{ mt:.8, width:150 }}><Progress value={value} theme={theme}/></Box></Box></Box>;
 
   const trend=[72,70,69,67,65,66,64,63,61,62,63,63];
-  return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'auto minmax(76px,1fr)', gap:1.05, direction:'ltr' }}>
+  return <Box sx={{ height:'100%', minHeight:0, overflow:'hidden', display:'grid', gridTemplateRows:'auto minmax(0,1fr)', gap:1.0, direction:'ltr' }}>
     <Box sx={{ display:'grid', gridTemplateColumns:'130px 1fr', alignItems:'center', gap:1.5 }}><Box sx={{ display:'grid', placeItems:'center' }}><TankShape width={88} height={126}/></Box><Box><Typography sx={{ fontSize:40, lineHeight:1, fontWeight:850 }}>{value}%</Typography><Typography sx={{ mt:.35, color:theme.muted }}>{liters} {label(locale,'stored','موجود')}</Typography><Box sx={{ mt:.9 }}><Progress value={value} theme={theme}/></Box><Box sx={{ mt:.9, display:'grid', gridTemplateColumns:'1fr 1fr', gap:.7 }}><StatBox label={label(locale,'Capacity','ظرفیت')} value="2,000 L" theme={theme}/><StatBox label={label(locale,'Available','فضای خالی')} value="740 L" theme={theme}/></Box></Box></Box>
-    <Box sx={{ minHeight:0, border:`1px solid ${theme.border}`, borderRadius:1.5, p:.85, bgcolor:'#fbfcff' }}><Box sx={{ display:'flex', justifyContent:'space-between', mb:.3 }}><Typography sx={{ fontSize:9.8, color:theme.muted }}>{label(locale,'Level trend','روند سطح')}</Typography><Typography sx={{ fontSize:9.8, color:theme.muted }}>24h</Typography></Box><ChartSvg values={trend} color={theme.accent} fill minHeight={66}/></Box>
+    <Box sx={{ minHeight:0, border:`1px solid ${theme.border}`, borderRadius:1.5, p:.85, bgcolor:'#fbfcff' }}><Box sx={{ display:'flex', justifyContent:'space-between', mb:.3 }}><Typography sx={{ fontSize:9.8, color:theme.muted }}>{label(locale,'Level trend','روند سطح')}</Typography><Typography sx={{ fontSize:9.8, color:theme.muted }}>24h</Typography></Box><ChartSvg values={trend} color={theme.accent} fill minHeight={0}/></Box>
   </Box>;
 }
 
@@ -351,38 +352,40 @@ function MaterialAlarm({ def, theme, locale, size }: Props) {
   </Box>;
 }
 
-function MaterialLineChart({ def, theme, size }: Props) {
+function MaterialLineChart({ def, theme, size, locale }: Props) {
   const p = profile(size);
   const values = (def.mock.values as number[] | undefined) ?? spark;
   const summary = s(def.mock.summary, '24.8 °C');
   const min = Math.min(...values);
+  const max = Math.max(...values);
   const avg = values.reduce((a,b)=>a+b,0) / Math.max(1, values.length);
 
   if (p.veryWide && !p.large) {
-    return <Box sx={{ height:'100%', display:'grid', gridTemplateColumns:'168px minmax(0,1fr)', gap:1.2, direction:'ltr', alignItems:'stretch' }}>
-      <Box sx={{ minWidth:0, display:'flex', flexDirection:'column', justifyContent:'center' }}>
-        <Typography sx={{ fontSize:28, fontWeight:850, lineHeight:1 }}>{summary}</Typography>
-        <Box sx={{ mt:.8 }}><ToneBadge text="24h" tone="neutral" theme={theme}/></Box>
-        <Box sx={{ mt:1, display:'grid', gridTemplateColumns:'1fr 1fr', gap:.55 }}>
-          <StatBox label="MIN" value={min.toFixed(1)} theme={theme}/>
-          <StatBox label="AVG" value={avg.toFixed(1)} theme={theme} accent/>
+    return <Box sx={{ height:'100%', minHeight:0, overflow:'hidden', display:'grid', gridTemplateColumns:'146px minmax(0,1fr)', gap:1, direction:'ltr', alignItems:'stretch' }}>
+      <Box sx={{ minWidth:0, minHeight:0, display:'grid', alignContent:'center', gap:.45 }}>
+        <Typography sx={{ fontSize:25, fontWeight:850, lineHeight:.95, whiteSpace:'nowrap' }}>{summary}</Typography>
+        <ToneBadge text="24h" tone="neutral" theme={theme}/>
+        <Box sx={{ display:'flex', gap:.75, alignItems:'baseline', flexWrap:'wrap' }}>
+          <Typography sx={{fontSize:9.2,color:theme.muted}}>{label(locale,'Min','کمینه')} <Box component="span" sx={{fontWeight:800,color:theme.foreground}}>{min.toFixed(1)}</Box></Typography>
+          <Typography sx={{fontSize:9.2,color:theme.muted}}>{label(locale,'Avg','میانگین')} <Box component="span" sx={{fontWeight:800,color:theme.accent}}>{avg.toFixed(1)}</Box></Typography>
+          <Typography sx={{fontSize:9.2,color:theme.muted}}>{label(locale,'Max','بیشینه')} <Box component="span" sx={{fontWeight:800,color:theme.foreground}}>{max.toFixed(1)}</Box></Typography>
         </Box>
       </Box>
-      <Box sx={{ minWidth:0, borderLeft:`1px solid ${theme.border}`, pl:1.2, display:'grid', gridTemplateRows:'minmax(0,1fr) auto', gap:.45 }}>
-        <Box sx={{ minHeight:0 }}><ChartSvg values={values} color={theme.accent} fill={def.visual === 'area'} minHeight={74}/></Box>
-        <Box sx={{ display:'flex', justifyContent:'space-between', color:theme.muted }}>{['00','06','12','18','24'].map(t=><Typography key={t} sx={{fontSize:9}}>{t}</Typography>)}</Box>
+      <Box sx={{ minWidth:0, minHeight:0, overflow:'hidden', borderLeft:`1px solid ${theme.border}`, pl:1, display:'grid', gridTemplateRows:'minmax(0,1fr) auto', gap:.25 }}>
+        <Box sx={{ minHeight:0, overflow:'hidden' }}><ChartSvg values={values} color={theme.accent} fill={def.visual === 'area'} minHeight={0}/></Box>
+        <Box sx={{ display:'flex', justifyContent:'space-between', color:theme.muted }}>{['00','06','12','18','24'].map(t=><Typography key={t} sx={{fontSize:8.5}}>{t}</Typography>)}</Box>
       </Box>
     </Box>;
   }
 
-  return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto minmax(0,1fr) auto', gap: .65, direction: 'ltr' }}>
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}><Typography sx={{ fontSize: p.large ? 28 : 23, fontWeight: 850 }}>{summary}</Typography><ToneBadge text="24h" tone="neutral" theme={theme} /></Box>
-    <Box sx={{ minHeight: p.wide && !p.large ? 68 : p.large ? 150 : 100 }}><ChartSvg values={values} color={theme.accent} fill={def.visual === 'area'} minHeight={p.wide && !p.large ? 68 : p.large ? 150 : 100} /></Box>
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', color: theme.muted }}><Typography sx={{ fontSize: 9.5 }}>00</Typography><Typography sx={{ fontSize: 9.5 }}>06</Typography><Typography sx={{ fontSize: 9.5 }}>12</Typography><Typography sx={{ fontSize: 9.5 }}>18</Typography><Typography sx={{ fontSize: 9.5 }}>24</Typography></Box>
+  return <Box sx={{ height:'100%', minHeight:0, overflow:'hidden', display:'grid', gridTemplateRows:'auto minmax(0,1fr) auto', gap:.55, direction:'ltr' }}>
+    <Box sx={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:1 }}><Typography sx={{ fontSize:p.large?28:23, fontWeight:850 }}>{summary}</Typography><ToneBadge text="24h" tone="neutral" theme={theme}/></Box>
+    <Box sx={{ minHeight:0, overflow:'hidden' }}><ChartSvg values={values} color={theme.accent} fill={def.visual === 'area'} minHeight={0}/></Box>
+    <Box sx={{ display:'flex', justifyContent:'space-between', color:theme.muted }}>{['00','06','12','18','24'].map(t=><Typography key={t} sx={{fontSize:9.2}}>{t}</Typography>)}</Box>
   </Box>;
 }
 
-function MaterialBar({ def, theme, size }: Props) {
+function MaterialBar({ def, theme, size, locale }: Props) {
   const p = profile(size);
   const values = (def.mock.values as number[] | undefined) ?? bars;
   const total = values.reduce((a,b)=>a+b,0);
@@ -390,54 +393,81 @@ function MaterialBar({ def, theme, size }: Props) {
   const avg = total / Math.max(1, values.length);
   const dayLabels=['M','T','W','T','F','S','S'];
 
-  const barsVisual = <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'minmax(0,1fr) auto', gap:.55 }}>
-    <Box sx={{ minHeight:0, display:'flex', alignItems:'end', gap:p.large?1:.7, px:.3 }}>{values.map((v,i)=><Box key={i} sx={{ flex:1,minWidth:0,height:`${Math.max(12,v)}%`,borderRadius:'4px 4px 1px 1px',bgcolor:i===values.length-2?theme.accent2:theme.accent,opacity:i===values.length-2?1:.72 }}/>)}</Box>
-    <Box sx={{ display:'flex',justifyContent:'space-between',color:theme.muted }}>{dayLabels.map((x,i)=><Typography key={i} sx={{fontSize:9}}>{x}</Typography>)}</Box>
+  const barsVisual = <Box sx={{ height:'100%', minHeight:0, overflow:'hidden', display:'grid', gridTemplateRows:'minmax(0,1fr) auto', gap:.35 }}>
+    <Box sx={{ minHeight:0, display:'flex', alignItems:'end', gap:p.large?1:.65, px:.25 }}>{values.map((v,i)=><Box key={i} sx={{ flex:1,minWidth:0,height:`${Math.max(12,v)}%`,borderRadius:'4px 4px 1px 1px',bgcolor:i===values.length-2?theme.accent2:theme.accent,opacity:i===values.length-2?1:.72 }}/>)}</Box>
+    <Box sx={{ display:'flex',justifyContent:'space-between',color:theme.muted }}>{dayLabels.map((x,i)=><Typography key={i} sx={{fontSize:8.5}}>{x}</Typography>)}</Box>
   </Box>;
 
-  if (p.veryWide && !p.large) return <Box sx={{ height:'100%', display:'grid', gridTemplateColumns:'170px minmax(0,1fr)', gap:1.2, direction:'ltr' }}>
-    <Box sx={{ display:'flex',flexDirection:'column',justifyContent:'center' }}><Typography sx={{fontSize:10,color:theme.muted,textTransform:'uppercase',letterSpacing:.3}}>7 day total</Typography><Typography sx={{mt:.25,fontSize:29,fontWeight:850}}>{Math.round(total)}</Typography><Box sx={{mt:.9,display:'grid',gridTemplateColumns:'1fr 1fr',gap:.55}}><StatBox label="AVG" value={avg.toFixed(1)} theme={theme}/><StatBox label="PEAK" value={String(max)} theme={theme} accent/></Box></Box>
-    <Box sx={{ minWidth:0,borderLeft:`1px solid ${theme.border}`,pl:1.2 }}>{barsVisual}</Box>
+  if (p.veryWide && !p.large) return <Box sx={{ height:'100%', minHeight:0, overflow:'hidden', display:'grid', gridTemplateColumns:'148px minmax(0,1fr)', gap:1, direction:'ltr' }}>
+    <Box sx={{ minHeight:0, display:'grid', alignContent:'center', gap:.45 }}>
+      <Typography sx={{fontSize:9.3,color:theme.muted,textTransform:'uppercase',letterSpacing:.3}}>{label(locale,'7 day total','مجموع ۷ روز')}</Typography>
+      <Typography sx={{fontSize:25,fontWeight:850,lineHeight:.95}}>{Math.round(total)}</Typography>
+      <Box sx={{display:'flex',gap:.85,flexWrap:'wrap'}}>
+        <Typography sx={{fontSize:9.2,color:theme.muted}}>{label(locale,'Avg','میانگین')} <Box component="span" sx={{fontWeight:850,color:theme.foreground}}>{avg.toFixed(1)}</Box></Typography>
+        <Typography sx={{fontSize:9.2,color:theme.muted}}>{label(locale,'Peak','بیشینه')} <Box component="span" sx={{fontWeight:850,color:theme.accent}}>{max}</Box></Typography>
+      </Box>
+    </Box>
+    <Box sx={{ minWidth:0,minHeight:0,overflow:'hidden',borderLeft:`1px solid ${theme.border}`,pl:1 }}>{barsVisual}</Box>
   </Box>;
 
-  return <Box sx={{ height:'100%',display:'grid',gridTemplateRows:'auto minmax(0,1fr)',gap:.7,direction:'ltr' }}><Box sx={{display:'flex',justifyContent:'space-between'}}><Typography sx={{fontSize:12,fontWeight:800}}>{s(def.mock.summary,'Weekly total')}</Typography><Typography sx={{fontSize:10.5,color:theme.muted}}>7d</Typography></Box>{barsVisual}</Box>;
+  return <Box sx={{ height:'100%',minHeight:0,overflow:'hidden',display:'grid',gridTemplateRows:'auto minmax(0,1fr)',gap:.55,direction:'ltr' }}><Box sx={{display:'flex',justifyContent:'space-between'}}><Typography sx={{fontSize:12,fontWeight:800}}>{s(def.mock.summary,'Weekly total')}</Typography><Typography sx={{fontSize:10,color:theme.muted}}>7d</Typography></Box>{barsVisual}</Box>;
 }
 
-function MaterialHistogram({ theme, size }: Props) {
+function MaterialHistogram({ theme, size, locale }: Props) {
   const p = profile(size);
   const values = [2,5,9,15,20,17,12,8,4,2];
-  const histogram = <Box sx={{ height:'100%',minHeight:p.large?150:88,display:'flex',alignItems:'end',gap:.25 }}>{values.map((v,i)=><Box key={i} sx={{ flex:1,height:`${v*4.5}%`,minHeight:4,bgcolor:theme.accent,opacity:.26+(v/20)*.74,borderRadius:'3px 3px 0 0' }}/>)}</Box>;
-  if (p.veryWide && !p.large) return <Box sx={{ height:'100%',display:'grid',gridTemplateColumns:'170px minmax(0,1fr)',gap:1.2,direction:'ltr' }}>
-    <Box sx={{ display:'flex',flexDirection:'column',justifyContent:'center' }}><Typography sx={{fontSize:10,color:theme.muted,textTransform:'uppercase',letterSpacing:.3}}>Distribution</Typography><Typography sx={{mt:.25,fontSize:28,fontWeight:850}}>124</Typography><Typography sx={{fontSize:10.5,color:theme.muted}}>samples</Typography><Box sx={{mt:.9,display:'grid',gridTemplateColumns:'1fr 1fr',gap:.55}}><StatBox label="MEDIAN" value="12.4" theme={theme}/><StatBox label="PEAK BIN" value="18–24" theme={theme} accent/></Box></Box>
-    <Box sx={{ minWidth:0,borderLeft:`1px solid ${theme.border}`,pl:1.2 }}>{histogram}</Box>
+  const histogram = <Box sx={{ height:'100%',minHeight:0,overflow:'hidden',display:'flex',alignItems:'end',gap:.25 }}>{values.map((v,i)=><Box key={i} sx={{ flex:1,height:`${v*4.5}%`,minHeight:4,bgcolor:theme.accent,opacity:.26+(v/20)*.74,borderRadius:'3px 3px 0 0' }}/>)}</Box>;
+  if (p.veryWide && !p.large) return <Box sx={{ height:'100%',minHeight:0,overflow:'hidden',display:'grid',gridTemplateColumns:'148px minmax(0,1fr)',gap:1,direction:'ltr' }}>
+    <Box sx={{ minHeight:0,display:'grid',alignContent:'center',gap:.4 }}>
+      <Typography sx={{fontSize:9.3,color:theme.muted,textTransform:'uppercase',letterSpacing:.3}}>{label(locale,'Distribution','توزیع')}</Typography>
+      <Box sx={{display:'flex',alignItems:'baseline',gap:.45}}><Typography sx={{fontSize:25,fontWeight:850,lineHeight:.95}}>124</Typography><Typography sx={{fontSize:9.3,color:theme.muted}}>{label(locale,'samples','نمونه')}</Typography></Box>
+      <Box sx={{display:'flex',gap:.85,flexWrap:'wrap'}}>
+        <Typography sx={{fontSize:9.2,color:theme.muted}}>{label(locale,'Median','میانه')} <Box component="span" sx={{fontWeight:850,color:theme.foreground}}>12.4</Box></Typography>
+        <Typography sx={{fontSize:9.2,color:theme.muted}}>{label(locale,'Peak bin','بازه پرتکرار')} <Box component="span" sx={{fontWeight:850,color:theme.accent}}>18–24</Box></Typography>
+      </Box>
+    </Box>
+    <Box sx={{ minWidth:0,minHeight:0,overflow:'hidden',borderLeft:`1px solid ${theme.border}`,pl:1 }}>{histogram}</Box>
   </Box>;
-  return <Box sx={{ height:'100%',display:'grid',gridTemplateRows:'auto minmax(0,1fr)',gap:.8,direction:'ltr' }}><Typography sx={{fontSize:12,fontWeight:800}}>Distribution</Typography>{histogram}</Box>;
+  return <Box sx={{ height:'100%',minHeight:0,overflow:'hidden',display:'grid',gridTemplateRows:'auto minmax(0,1fr)',gap:.6,direction:'ltr' }}><Typography sx={{fontSize:12,fontWeight:800}}>{label(locale,'Distribution','توزیع')}</Typography>{histogram}</Box>;
 }
 
 function MaterialDonut({ def, theme, locale, size }: Props) {
   const p = profile(size);
   const value = n(def.mock.value, 72);
   const c = 2 * Math.PI * 42;
-  const ringSize = p.compact ? 128 : p.large ? 170 : 148;
+  const ringSize = p.compact ? 118 : p.wide && !p.large ? 108 : p.large ? 156 : 138;
   const ring = <Box sx={{ width:ringSize, height:ringSize, position:'relative', flex:'0 0 auto' }}>
     <svg viewBox="0 0 120 120" width="100%" height="100%">
       <circle cx="60" cy="60" r="42" fill="none" stroke="#edf0f5" strokeWidth="12"/>
       <circle cx="60" cy="60" r="42" fill="none" stroke={theme.accent} strokeWidth="12" strokeLinecap="round" strokeDasharray={`${c*value/100} ${c}`} transform="rotate(-90 60 60)"/>
     </svg>
     <Box sx={{ position:'absolute', inset:0, display:'grid', placeItems:'center', textAlign:'center' }}>
-      <Box><Typography sx={{ fontSize:28,fontWeight:850 }}>{value}%</Typography><Typography sx={{ fontSize:10,color:theme.muted }}>{label(locale,'Used','مصرف')}</Typography></Box>
+      <Box><Typography sx={{ fontSize:p.compact?25:27,fontWeight:850 }}>{value}%</Typography><Typography sx={{ fontSize:9.5,color:theme.muted }}>{label(locale,'Used','مصرف')}</Typography></Box>
     </Box>
   </Box>;
-  if (!p.large) return <Box sx={{ height:'100%', display:'grid', placeItems:'center' }}>{ring}</Box>;
-  return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'minmax(0,1fr) auto', gap:1.05, direction:'ltr' }}>
-    <Box sx={{ minHeight:0, display:'grid', gridTemplateColumns:'178px 1fr', alignItems:'center', gap:1.5 }}>
-      <Box sx={{display:'grid',placeItems:'center'}}>{ring}</Box>
-      <Box sx={{display:'grid',gap:.8}}><StatBox label={label(locale,'Used','مصرف')} value={`${value}%`} theme={theme} accent/><StatBox label={label(locale,'Free','آزاد')} value={`${100-value}%`} theme={theme}/><StatBox label={label(locale,'Total','کل')} value="100%" theme={theme}/></Box>
+
+  if (p.compact) return <Box sx={{ height:'100%', minHeight:0, overflow:'hidden', display:'grid', placeItems:'center' }}>{ring}</Box>;
+
+  if (p.wide && !p.large) return <Box sx={{ height:'100%', minHeight:0, overflow:'hidden', display:'grid', gridTemplateColumns:'132px minmax(0,1fr)', gap:1.15, alignItems:'center', direction:'ltr' }}>
+    <Box sx={{display:'grid',placeItems:'center'}}>{ring}</Box>
+    <Box sx={{display:'grid',gap:.55}}>
+      <Box sx={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:1}}><Typography sx={{fontSize:9.5,color:theme.muted}}>{label(locale,'Used','مصرف')}</Typography><Typography sx={{fontSize:14,fontWeight:850,color:theme.accent}}>{value}%</Typography></Box>
+      <Progress value={value} theme={theme}/>
+      <Box sx={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:1}}><Typography sx={{fontSize:9.5,color:theme.muted}}>{label(locale,'Free','آزاد')}</Typography><Typography sx={{fontSize:13,fontWeight:800}}>{100-value}%</Typography></Box>
     </Box>
-    <Box sx={{ border:`1px solid ${theme.border}`, borderRadius:1.5, p:.9, bgcolor:'#fbfcff' }}>
-      <Box sx={{display:'flex',justifyContent:'space-between',mb:.7}}><Typography sx={{fontSize:9.8,color:theme.muted}}>{label(locale,'Allocation','تقسیم‌بندی')}</Typography><Typography sx={{fontSize:9.8,color:theme.muted}}>3 groups</Typography></Box>
-      <Box sx={{display:'grid',gridTemplateColumns:'44% 28% 28%',height:10,borderRadius:1,overflow:'hidden',gap:.25}}><Box sx={{bgcolor:theme.accent}}/><Box sx={{bgcolor:theme.accent2}}/><Box sx={{bgcolor:'#cbd5e1'}}/></Box>
-      <Box sx={{mt:.65,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:.7}}><Typography sx={{fontSize:9.5,color:theme.muted}}>Primary 44%</Typography><Typography sx={{fontSize:9.5,color:theme.muted}}>Aux 28%</Typography><Typography sx={{fontSize:9.5,color:theme.muted}}>Other 28%</Typography></Box>
+  </Box>;
+
+  if (!p.large) return <Box sx={{ height:'100%', minHeight:0, overflow:'hidden', display:'grid', placeItems:'center' }}>{ring}</Box>;
+
+  return <Box sx={{ height:'100%', minHeight:0, overflow:'hidden', display:'grid', gridTemplateRows:'minmax(0,1fr) auto', gap:.95, direction:'ltr' }}>
+    <Box sx={{ minHeight:0, display:'grid', gridTemplateColumns:'166px 1fr', alignItems:'center', gap:1.35 }}>
+      <Box sx={{display:'grid',placeItems:'center'}}>{ring}</Box>
+      <Box sx={{display:'grid',gap:.7}}><StatBox label={label(locale,'Used','مصرف')} value={`${value}%`} theme={theme} accent/><StatBox label={label(locale,'Free','آزاد')} value={`${100-value}%`} theme={theme}/><StatBox label={label(locale,'Total','کل')} value="100%" theme={theme}/></Box>
+    </Box>
+    <Box sx={{ border:`1px solid ${theme.border}`, borderRadius:1.5, p:.85, bgcolor:'#fbfcff' }}>
+      <Box sx={{display:'flex',justifyContent:'space-between',mb:.6}}><Typography sx={{fontSize:9.6,color:theme.muted}}>{label(locale,'Allocation','تقسیم‌بندی')}</Typography><Typography sx={{fontSize:9.6,color:theme.muted}}>{label(locale,'3 groups','۳ گروه')}</Typography></Box>
+      <Box sx={{display:'grid',gridTemplateColumns:'44% 28% 28%',height:9,borderRadius:1,overflow:'hidden',gap:.25}}><Box sx={{bgcolor:theme.accent}}/><Box sx={{bgcolor:theme.accent2}}/><Box sx={{bgcolor:'#cbd5e1'}}/></Box>
+      <Box sx={{mt:.55,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:.7}}><Typography sx={{fontSize:9.2,color:theme.muted}}>{label(locale,'Primary 44%','اصلی ۴۴٪')}</Typography><Typography sx={{fontSize:9.2,color:theme.muted}}>{label(locale,'Aux 28%','کمکی ۲۸٪')}</Typography><Typography sx={{fontSize:9.2,color:theme.muted}}>{label(locale,'Other 28%','سایر ۲۸٪')}</Typography></Box>
     </Box>
   </Box>;
 }
@@ -601,12 +631,30 @@ function MaterialInput({ def, theme, locale, size }: Props) {
 
 function MaterialThermostat({ def, theme, locale, size }: Props) {
   const p=profile(size); const [value,setValue]=useState(n(def.mock.value,22));
-  if(p.compact) return <Box sx={{ height:'100%',display:'grid',placeItems:'center',direction:'ltr' }}><Box sx={{ width:124,height:124,borderRadius:'50%',border:`8px solid ${theme.accent}18`,boxShadow:`inset 0 0 0 1px ${theme.border}`,display:'grid',placeItems:'center' }}><Box sx={{textAlign:'center'}}><Typography sx={{fontSize:34,fontWeight:850}}>{value}°</Typography><Typography sx={{fontSize:9.5,color:theme.muted}}>SETPOINT</Typography><Typography sx={{fontSize:9.5,color:theme.accent,fontWeight:800,mt:.25}}>AUTO</Typography></Box></Box></Box>;
-  if(!p.large) return <Box sx={{ height:'100%',display:'grid',gridTemplateColumns:'144px 1fr',alignItems:'center',gap:1.6,direction:'ltr' }}><Box sx={{width:134,height:134,borderRadius:'50%',border:`9px solid ${theme.accent}18`,boxShadow:`inset 0 0 0 1px ${theme.border}`,display:'grid',placeItems:'center'}}><Box sx={{textAlign:'center'}}><Typography sx={{fontSize:35,fontWeight:850}}>{value}°</Typography><Typography sx={{fontSize:10,color:theme.muted}}>SETPOINT</Typography></Box></Box><Box><Typography sx={{fontSize:11,color:theme.muted}}>{label(locale,'Target temperature','دمای هدف')}</Typography><Slider min={16} max={30} value={value} onChange={(_,v)=>setValue(v as number)} sx={{color:theme.accent}}/><Box sx={{mt:.7,display:'flex',gap:.6}}><ToneBadge text="AUTO" tone="accent" theme={theme}/><ToneBadge text="24.8°C room" tone="neutral" theme={theme}/></Box></Box></Box>;
-  return <Box sx={{ height:'100%',display:'grid',gridTemplateRows:'auto auto minmax(58px,1fr)',gap:1.05,direction:'ltr' }}>
-    <Box sx={{display:'grid',gridTemplateColumns:'168px 1fr',alignItems:'center',gap:1.6}}><Box sx={{width:156,height:156,borderRadius:'50%',border:`10px solid ${theme.accent}18`,boxShadow:`inset 0 0 0 1px ${theme.border}`,display:'grid',placeItems:'center'}}><Box sx={{textAlign:'center'}}><Typography sx={{fontSize:40,fontWeight:850}}>{value}°</Typography><Typography sx={{fontSize:10,color:theme.muted}}>SETPOINT</Typography></Box></Box><Box><Typography sx={{fontSize:11,color:theme.muted}}>{label(locale,'Target temperature','دمای هدف')}</Typography><Slider min={16} max={30} value={value} onChange={(_,v)=>setValue(v as number)} sx={{color:theme.accent}}/><Box sx={{mt:.8,display:'grid',gridTemplateColumns:'1fr 1fr',gap:.75}}><StatBox label={label(locale,'Room','اتاق')} value="24.8°C" theme={theme}/><StatBox label={label(locale,'Mode','حالت')} value="Auto" theme={theme} accent/></Box></Box></Box>
-    <Box sx={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:.7}}><StatBox label={label(locale,'Heating','گرمایش')} value="OFF" theme={theme}/><StatBox label={label(locale,'Fan','فن')} value="AUTO" theme={theme}/><StatBox label={label(locale,'Humidity','رطوبت')} value="46%" theme={theme}/></Box>
-    <Box sx={{alignSelf:'end',border:`1px solid ${theme.border}`,borderRadius:1.5,p:.9,bgcolor:'#fbfcff'}}><Typography sx={{fontSize:9.8,color:theme.muted,mb:.55}}>{label(locale,'Room temperature trend','روند دمای اتاق')}</Typography><ChartSvg values={[23.8,24,24.1,24.4,24.6,24.8,24.7,24.8]} color={theme.accent} fill minHeight={50}/></Box>
+
+  const dial = (dia:number) => <Box sx={{ width:dia,height:dia,borderRadius:'50%',border:`9px solid ${theme.accent}18`,boxShadow:`inset 0 0 0 1px ${theme.border}`,display:'grid',placeItems:'center',flex:'0 0 auto' }}><Box sx={{textAlign:'center'}}><Typography sx={{fontSize:dia>=130?34:30,fontWeight:850,lineHeight:1}}>{value}°</Typography><Typography sx={{fontSize:9.5,color:theme.muted,mt:.3}}>SETPOINT</Typography>{dia<130&&<Typography sx={{fontSize:9,color:theme.accent,fontWeight:800,mt:.25}}>AUTO</Typography>}</Box></Box>;
+
+  if(p.compact) return <Box sx={{ height:'100%',minHeight:0,overflow:'hidden',display:'grid',placeItems:'center',direction:'ltr' }}>{dial(118)}</Box>;
+
+  if(!p.large) return <Box sx={{ height:'100%',minHeight:0,overflow:'hidden',display:'grid',gridTemplateColumns:'132px minmax(0,1fr)',alignItems:'center',gap:1.3,direction:'ltr' }}><Box sx={{display:'grid',placeItems:'center'}}>{dial(122)}</Box><Box sx={{minWidth:0,minHeight:0,display:'grid',alignContent:'center'}}><Typography sx={{fontSize:10.5,color:theme.muted}}>{label(locale,'Target temperature','دمای هدف')}</Typography><Slider min={16} max={30} value={value} onChange={(_,v)=>setValue(v as number)} sx={{color:theme.accent,my:.15}}/><Box sx={{display:'flex',gap:.55,flexWrap:'wrap'}}><ToneBadge text="AUTO" tone="accent" theme={theme}/><ToneBadge text="24.8°C room" tone="neutral" theme={theme}/></Box></Box></Box>;
+
+  return <Box sx={{ height:'100%',minHeight:0,overflow:'hidden',display:'grid',gridTemplateRows:'134px minmax(0,1fr)',gap:.95,direction:'ltr' }}>
+    <Box sx={{ minHeight:0,display:'grid',gridTemplateColumns:'138px minmax(0,1fr)',gap:1.25,alignItems:'center' }}>
+      <Box sx={{display:'grid',placeItems:'center'}}>{dial(126)}</Box>
+      <Box sx={{minWidth:0,display:'grid',alignContent:'center',gap:.45}}>
+        <Typography sx={{fontSize:10.5,color:theme.muted}}>{label(locale,'Target temperature','دمای هدف')}</Typography>
+        <Slider min={16} max={30} value={value} onChange={(_,v)=>setValue(v as number)} sx={{color:theme.accent,my:.05}}/>
+        <Box sx={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:.55}}>
+          <StatBox label={label(locale,'Room','اتاق')} value="24.8°C" theme={theme}/>
+          <StatBox label={label(locale,'Mode','حالت')} value="Auto" theme={theme} accent/>
+          <StatBox label={label(locale,'Humidity','رطوبت')} value="46%" theme={theme}/>
+        </Box>
+      </Box>
+    </Box>
+    <Box sx={{ minHeight:0,overflow:'hidden',border:`1px solid ${theme.border}`,borderRadius:1.5,p:.85,bgcolor:'#fbfcff',display:'grid',gridTemplateRows:'auto minmax(0,1fr)',gap:.3 }}>
+      <Box sx={{display:'flex',justifyContent:'space-between',gap:1}}><Typography sx={{fontSize:9.7,color:theme.muted}}>{label(locale,'Room temperature trend','روند دمای اتاق')}</Typography><Typography sx={{fontSize:9.7,color:theme.muted}}>24h</Typography></Box>
+      <Box sx={{minHeight:0,overflow:'hidden'}}><ChartSvg values={[23.8,24,24.1,24.4,24.6,24.8,24.7,24.8]} color={theme.accent} fill minHeight={0}/></Box>
+    </Box>
   </Box>;
 }
 
@@ -623,10 +671,25 @@ function MaterialColor({ theme, locale, size }: Props) {
 
 
 function MaterialDirection({ theme, locale, size }: Props) {
-  const p=profile(size); const [active,setActive]=useState('•'); const keys=['↑','←','•','→','↓']; const button=p.compact?48:p.large?70:58;
-  const pad=<Box sx={{display:'grid',gridTemplateColumns:`repeat(3,${button}px)`,gridTemplateRows:`repeat(3,${button}px)`,gap:p.large?.8:.55}}>{keys.map((k,i)=>{const pos=[2,4,5,6,8][i];return <Button key={k} onClick={()=>setActive(k)} sx={{gridColumn:((pos-1)%3)+1,gridRow:Math.floor((pos-1)/3)+1,minWidth:0,width:button,height:button,p:0,borderRadius:1.25,border:`1px solid ${active===k?theme.accent:theme.border}`,color:active===k?'#fff':theme.foreground,bgcolor:active===k?theme.accent:'#fff',fontSize:p.large?20:16,'&:hover':{bgcolor:active===k?theme.accent:`${theme.accent}08`}}}>{k}</Button>})}</Box>;
-  if(!p.large) return <Box sx={{height:'100%',display:'grid',placeItems:'center',direction:'ltr'}}><Box>{pad}{!p.compact&&<Typography sx={{mt:.7,textAlign:'center',fontSize:10,color:theme.muted}}>{label(locale,'Last command','آخرین فرمان')}: {active}</Typography>}</Box></Box>;
-  return <Box sx={{height:'100%',display:'grid',gridTemplateColumns:'238px 1fr',gap:1.6,alignItems:'center',direction:'ltr'}}><Box sx={{display:'grid',placeItems:'center'}}>{pad}</Box><Box><ToneBadge text={label(locale,'PTZ / motion ready','کنترل حرکت آماده')} tone="success" theme={theme}/><Box sx={{mt:1,display:'grid',gap:.7}}><StatBox label={label(locale,'Last command','آخرین فرمان')} value={active} theme={theme} accent/><StatBox label={label(locale,'Speed','سرعت')} value="40%" theme={theme}/><StatBox label={label(locale,'Mode','حالت')} value="Momentary" theme={theme}/></Box><Box sx={{mt:1,border:`1px solid ${theme.border}`,borderRadius:1.5,p:.9,bgcolor:'#fbfcff'}}><Typography sx={{fontSize:9.8,color:theme.muted,mb:.55}}>{label(locale,'Command activity','فعالیت فرمان')}</Typography><HistoryStrip values={[0,-1,0,0,-1,0,0,0]} theme={theme} active={theme.accent}/></Box></Box></Box>;
+  const p=profile(size); const [active,setActive]=useState('•');
+  const keys=['↑','←','•','→','↓'];
+
+  const makePad = (button:number) => <Box sx={{display:'grid',gridTemplateColumns:`repeat(3,${button}px)`,gridTemplateRows:`repeat(3,${button}px)`,gap:.5}}>{keys.map((k,i)=>{const pos=[2,4,5,6,8][i];return <Button key={k} onClick={()=>setActive(k)} sx={{gridColumn:((pos-1)%3)+1,gridRow:Math.floor((pos-1)/3)+1,minWidth:0,width:button,height:button,p:0,borderRadius:1.15,border:`1px solid ${active===k?theme.accent:theme.border}`,color:active===k?'#fff':theme.foreground,bgcolor:active===k?theme.accent:'#fff',fontSize:button>=58?18:14,'&:hover':{bgcolor:active===k?theme.accent:`${theme.accent}08`}}}>{k}</Button>})}</Box>;
+
+  if(p.compact) return <Box sx={{height:'100%',minHeight:0,overflow:'hidden',display:'grid',placeItems:'center',direction:'ltr'}}>{makePad(43)}</Box>;
+
+  if(p.wide && !p.large) return <Box sx={{height:'100%',minHeight:0,overflow:'hidden',display:'grid',gridTemplateColumns:'132px minmax(0,1fr)',gap:1.15,alignItems:'center',direction:'ltr'}}>
+    <Box sx={{display:'grid',placeItems:'center'}}>{makePad(36)}</Box>
+    <Box sx={{minWidth:0,display:'grid',gap:.45,alignContent:'center'}}>
+      <ToneBadge text={label(locale,'Motion ready','حرکت آماده')} tone="success" theme={theme}/>
+      <Box sx={{display:'flex',justifyContent:'space-between',gap:1,alignItems:'baseline'}}><Typography sx={{fontSize:9.5,color:theme.muted}}>{label(locale,'Last command','آخرین فرمان')}</Typography><Typography sx={{fontSize:13,fontWeight:850,color:theme.accent}}>{active}</Typography></Box>
+      <Box sx={{display:'flex',justifyContent:'space-between',gap:1,alignItems:'baseline'}}><Typography sx={{fontSize:9.5,color:theme.muted}}>{label(locale,'Speed','سرعت')}</Typography><Typography sx={{fontSize:11.5,fontWeight:800}}>40%</Typography></Box>
+    </Box>
+  </Box>;
+
+  if(!p.large) return <Box sx={{height:'100%',minHeight:0,overflow:'hidden',display:'grid',placeItems:'center',direction:'ltr'}}><Box>{makePad(50)}<Typography sx={{mt:.55,textAlign:'center',fontSize:9.5,color:theme.muted}}>{label(locale,'Last command','آخرین فرمان')}: {active}</Typography></Box></Box>;
+
+  return <Box sx={{height:'100%',minHeight:0,overflow:'hidden',display:'grid',gridTemplateColumns:'224px minmax(0,1fr)',gap:1.4,alignItems:'center',direction:'ltr'}}><Box sx={{display:'grid',placeItems:'center'}}>{makePad(64)}</Box><Box sx={{minWidth:0}}><ToneBadge text={label(locale,'PTZ / motion ready','کنترل حرکت آماده')} tone="success" theme={theme}/><Box sx={{mt:.8,display:'grid',gap:.6}}><StatBox label={label(locale,'Last command','آخرین فرمان')} value={active} theme={theme} accent/><StatBox label={label(locale,'Speed','سرعت')} value="40%" theme={theme}/><StatBox label={label(locale,'Mode','حالت')} value={label(locale,'Momentary','لحظه‌ای')} theme={theme}/></Box><Box sx={{mt:.8,border:`1px solid ${theme.border}`,borderRadius:1.5,p:.8,bgcolor:'#fbfcff'}}><Typography sx={{fontSize:9.6,color:theme.muted,mb:.45}}>{label(locale,'Command activity','فعالیت فرمان')}</Typography><HistoryStrip values={[0,-1,0,0,-1,0,0,0]} theme={theme} active={theme.accent}/></Box></Box></Box>;
 }
 
 function rowColor(cell: string, theme: WidgetThemeTokens) {
