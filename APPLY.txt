@@ -1,16 +1,11 @@
-Material 3 patch v4
+Documentation patch only.
 
-Replace:
-  src/widgets/themes/MaterialVisuals.tsx
+Copy the `docs` directory into the project root.
 
-Then clear Vite cache:
-  Remove-Item -Recurse -Force .\node_modules\.vite -ErrorAction SilentlyContinue
+Adds:
+  docs/profile.md
+  docs/agents.md
+  docs/todo.md
+  docs/parallel-theme-prompt.md
 
-Run:
-  npm run dev
-
-Generate Material screenshots:
-  $env:WIDGET_QA_THEME="material"
-  npm run screenshots:full
-
-This patch is intended to be applied on top of Material patch v3.
+No source code is changed.
