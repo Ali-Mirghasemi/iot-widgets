@@ -1,4 +1,4 @@
-Material 3 patch v7
+Material 3 patch v8
 
 Scope:
   Material theme only.
@@ -6,18 +6,27 @@ Scope:
 Replace:
   src/widgets/themes/MaterialVisuals.tsx
 
-Main changes:
-  - Re-composed 3x1 time-series/area charts with KPI/stat rail instead of a stretched flat chart.
-  - Re-composed 3x1 bar and histogram charts with summary statistics.
-  - Fixed 2x1 compass vertical crowding/overflow and made metadata denser.
-  - Added heatmap intensity legend for larger sizes.
-  - Added richer 3x3 map/route composition with size-specific summary stats.
-  - Added a few map details/building blocks so large maps feel less empty.
+This pass was made from the combined EN + FA QA package.
+
+Main fixes:
+  - Fix compact/wide metric layouts that were vertically overflowing in 1x1/2x1.
+  - Fix 3x1 Time Series and Area Chart clipping.
+  - Fix 3x1 Bar Chart clipping.
+  - Fix 3x1 Histogram clipping.
+  - Fix 2x1 Donut / Pie ring clipping and add a deliberate horizontal composition.
+  - Fix 2x2 Thermostat overlap between dial/control area and trend chart.
+  - Fix 2x1 Directional Control bottom button clipping.
+  - Improve Persian labels in new/affected compositions.
+  - Reduce large tank trend intrinsic overflow.
 
 After copying:
   Remove-Item -Recurse -Force .\node_modules\.vite -ErrorAction SilentlyContinue
   npm run dev
 
-Generate Material screenshots:
+Generate Material QA:
   $env:WIDGET_QA_THEME="material"
   npm run screenshots:full
+
+For bilingual QA:
+  $env:WIDGET_QA_LOCALE="fa"
+  npm run screenshots
