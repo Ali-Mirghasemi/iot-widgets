@@ -11,7 +11,7 @@ export interface GlassFrameProps {
     locationLabel: string;
     status: string;
     lastSeen: string;
-    onInfo: () => void;
+    onInfo?: () => void;
     children: ReactNode;
 }
 const dims = (size: WidgetSize) => {
@@ -66,11 +66,11 @@ export function GlassFrame(p: GlassFrameProps) {
           {!d.compact && <Typography sx={{ mt: .22, fontSize: 9.8, lineHeight: 1.2, color: 'rgba(227,242,248,.66)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.deviceName}</Typography>}
         </Box>
       </Box>
-      <Tooltip title={rtl ? 'اطلاعات' : 'Info'}>
+      {p.onInfo && <Tooltip title={rtl ? 'اطلاعات' : 'Info'}>
         <IconButton size="small" onClick={p.onInfo} sx={{ width: 27, height: 27, color: 'rgba(235,248,252,.68)', border: '1px solid rgba(255,255,255,.10)', background: 'rgba(255,255,255,.035)', '&:hover': { background: 'rgba(255,255,255,.10)' } }}>
           <InfoOutlined sx={{ fontSize: 15 }}/>
         </IconButton>
-      </Tooltip>
+      </Tooltip>}
     </Box>
 
     {!d.compact && <Box sx={{ position: 'relative', zIndex: 2, px: 1.35, pb: .2, display: 'flex', alignItems: 'center', gap: .75, direction: rtl ? 'rtl' : 'ltr', minWidth: 0 }}>

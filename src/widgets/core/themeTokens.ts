@@ -45,7 +45,7 @@ export const widgetThemes: Record<WidgetThemeId, WidgetThemeTokens> = {
   },
   gaming: {
     id: 'gaming',
-    label: 'Gaming',
+    label: 'HUD / Cyber',
     background: '#050b16',
     surface: '#0a1220',
     foreground: '#e6fbff',
@@ -60,7 +60,7 @@ export const widgetThemes: Record<WidgetThemeId, WidgetThemeTokens> = {
   },
   ios: {
     id: 'ios',
-    label: 'iOS',
+    label: 'Cupertino',
     background: '#eef1f5',
     surface: 'rgba(255,255,255,.86)',
     foreground: '#0f172a',

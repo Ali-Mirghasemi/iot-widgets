@@ -12,7 +12,7 @@ export interface IOSFrameProps {
   locationLabel: string;
   status: string;
   lastSeen: string;
-  onInfo: () => void;
+  onInfo?: () => void;
   children: ReactNode;
 }
 
@@ -81,7 +81,7 @@ export function IOSFrame(p: IOSFrameProps) {
       </Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: .45, flex: '0 0 auto' }}>
         {!d.compact && <Box sx={{ display: 'flex', alignItems: 'center', gap: .45 }}><Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: tone }} />{d.wide && <Typography sx={{ fontSize: 9.8, color: '#8E8E93', fontWeight: 650, maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.status}</Typography>}</Box>}
-        <Tooltip title={rtl ? 'اطلاعات' : 'Info'}><IconButton size="small" onClick={p.onInfo} sx={{ width: 28, height: 28, color: '#8E8E93', bgcolor: 'rgba(118,118,128,.06)', '&:hover': { bgcolor: 'rgba(118,118,128,.12)' } }}><MoreHoriz sx={{ fontSize: 18 }} /></IconButton></Tooltip>
+        {p.onInfo && <Tooltip title={rtl ? 'اطلاعات' : 'Info'}><IconButton size="small" onClick={p.onInfo} sx={{ width: 28, height: 28, color: '#8E8E93', bgcolor: 'rgba(118,118,128,.06)', '&:hover': { bgcolor: 'rgba(118,118,128,.12)' } }}><MoreHoriz sx={{ fontSize: 18 }} /></IconButton></Tooltip>}
       </Box>
     </Box>
 

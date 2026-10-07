@@ -7,7 +7,7 @@ import { IOSFrame as IOSThemeFrame } from '../themes/IOSFrame';
 import { GlassFrame as AuroraGlassFrame } from '../themes/GlassFrame';
 import { GamingFrame as GamingThemeFrame } from '../themes/GamingVisuals';
 
-interface FrameProps {
+export interface WidgetFrameProps {
   def: WidgetDefinition;
   theme: WidgetThemeTokens;
   locale: Locale;
@@ -16,7 +16,7 @@ interface FrameProps {
   locationLabel: string;
   status: string;
   lastSeen: string;
-  onInfo: () => void;
+  onInfo?: () => void;
   children: ReactNode;
 }
 
@@ -25,7 +25,8 @@ const dims = (size: WidgetSize) => {
   return { w,h, area:w*h, compact:w*h===1, roomy:w*h>=4 || w>=3 || h>=2 };
 };
 
-function Actions({ theme, locale, onInfo, ios = false }: Pick<FrameProps,'theme'|'locale'|'onInfo'> & { ios?: boolean }) {
+function Actions({ theme, locale, onInfo, ios = false }: Pick<WidgetFrameProps,'theme'|'locale'|'onInfo'> & { ios?: boolean }) {
+  if (!onInfo) return null;
   return <Box sx={{ display:'flex', alignItems:'center', gap:.15 }}>
     <Tooltip title={locale==='fa'?'اطلاعات':'Info'}>
       <IconButton size="small" onClick={onInfo} sx={{ color:theme.muted, width:28, height:28 }}>{ios ? <MoreHoriz sx={{fontSize:18}}/> : <InfoOutlined sx={{fontSize:16}}/>}</IconButton>
@@ -42,7 +43,7 @@ function StatusDot({ theme, status }: { theme:WidgetThemeTokens; status:string }
   </Box>;
 }
 
-function MaterialFrame(p: FrameProps) {
+function MaterialFrame(p: WidgetFrameProps) {
   const d = dims(p.size);
   const Icon = p.def.icon;
   const title = p.locale === 'fa' ? p.def.titleFa : p.def.titleEn;
@@ -159,7 +160,7 @@ function MaterialFrame(p: FrameProps) {
     </Box>}
   </Box>;
 }
-function FlatFrame(p: FrameProps) {
+function FlatFrame(p: WidgetFrameProps) {
   const d=dims(p.size); const Icon=p.def.icon; const title=p.locale==='fa'?p.def.titleFa:p.def.titleEn;
   return <Box sx={{height:'100%',overflow:'hidden',position:'relative',bgcolor:'#fff',border:`1px solid ${p.theme.border}`,borderRadius:1.5,display:'grid',gridTemplateRows:d.compact?'42px 1fr':'48px 1fr 27px',boxShadow:'0 6px 16px rgba(15,118,110,.06)'}}>
     <Box sx={{display:'flex',alignItems:'stretch',borderBottom:`1px solid ${p.theme.border}`,direction:p.locale==='fa'?'rtl':'ltr'}}>
@@ -174,7 +175,7 @@ function FlatFrame(p: FrameProps) {
   </Box>;
 }
 
-function MinimalFrame(p: FrameProps) {
+function MinimalFrame(p: WidgetFrameProps) {
   const d=dims(p.size); const Icon=p.def.icon; const title=p.locale==='fa'?p.def.titleFa:p.def.titleEn;
   return <Box sx={{height:'100%',overflow:'hidden',position:'relative',bgcolor:'#fff',borderRadius:0,borderTop:'2px solid #111827',borderBottom:'1px solid #e5e7eb',display:'flex',flexDirection:'column'}}>
     <Box sx={{px:1.2,pt:1.2,pb:.35,display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:1,direction:p.locale==='fa'?'rtl':'ltr'}}>
@@ -186,7 +187,7 @@ function MinimalFrame(p: FrameProps) {
   </Box>;
 }
 
-function GamingFrame(p: FrameProps) {
+function GamingFrame(p: WidgetFrameProps) {
   const d=dims(p.size); const Icon=p.def.icon; const title=p.locale==='fa'?p.def.titleFa:p.def.titleEn;
   return <Box sx={{height:'100%',position:'relative',overflow:'hidden',clipPath:'polygon(0 12px,12px 0,calc(100% - 20px) 0,100% 20px,100% calc(100% - 12px),calc(100% - 12px) 100%,16px 100%,0 calc(100% - 16px))',background:'linear-gradient(160deg,#07111e,#020811)',color:'#e6fbff',fontFamily:'"Rajdhani",Inter,monospace',boxShadow:'0 0 0 1px rgba(25,247,255,.22),0 16px 38px rgba(2,8,23,.55)'}}>
     <Box sx={{position:'absolute',inset:1,clipPath:'inherit',border:'1px solid rgba(25,247,255,.32)',pointerEvents:'none'}}/>
@@ -203,7 +204,7 @@ function GamingFrame(p: FrameProps) {
   </Box>;
 }
 
-function IOSFrame(p: FrameProps) {
+function IOSFrame(p: WidgetFrameProps) {
   const d=dims(p.size); const Icon=p.def.icon; const title=p.locale==='fa'?p.def.titleFa:p.def.titleEn;
   return <Box sx={{height:'100%',overflow:'hidden',position:'relative',borderRadius:'28px',background:`linear-gradient(145deg,rgba(255,255,255,.96),${p.theme.accent}0c)`,border:'1px solid rgba(255,255,255,.9)',boxShadow:'0 18px 42px rgba(15,23,42,.11)',backdropFilter:'blur(20px) saturate(145%)',display:'flex',flexDirection:'column'}}>
     <Box sx={{px:1.5,pt:1.35,pb:.55,display:'flex',alignItems:'center',justifyContent:'space-between',gap:1,direction:p.locale==='fa'?'rtl':'ltr'}}>
@@ -215,7 +216,7 @@ function IOSFrame(p: FrameProps) {
   </Box>;
 }
 
-function GlassFrame(p: FrameProps) {
+function GlassFrame(p: WidgetFrameProps) {
   const d=dims(p.size); const Icon=p.def.icon; const title=p.locale==='fa'?p.def.titleFa:p.def.titleEn;
   return <Box sx={{height:'100%',overflow:'hidden',position:'relative',borderRadius:'25px',background:'linear-gradient(150deg,rgba(255,255,255,.18),rgba(255,255,255,.06))',border:'1px solid rgba(255,255,255,.24)',boxShadow:'0 20px 46px rgba(2,8,23,.28)',backdropFilter:'blur(24px) saturate(160%)',color:'#f8fafc',display:'flex',flexDirection:'column'}}>
     <Box sx={{position:'absolute',width:120,height:120,borderRadius:'50%',right:-35,top:-45,background:`${p.theme.accent}35`,filter:'blur(8px)'}}/>
@@ -229,7 +230,7 @@ function GlassFrame(p: FrameProps) {
   </Box>;
 }
 
-export function WidgetFrame(props: FrameProps) {
+export function WidgetFrame(props: WidgetFrameProps) {
   switch (props.theme.id) {
     case 'flat': return <FlatFrame {...props}/>;
     case 'minimal': return <MinimalFrame {...props}/>;

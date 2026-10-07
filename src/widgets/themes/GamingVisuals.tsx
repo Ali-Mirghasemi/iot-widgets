@@ -25,7 +25,7 @@ type FrameProps = VisualProps & {
   locationLabel: string;
   status: string;
   lastSeen: string;
-  onInfo: () => void;
+  onInfo?: () => void;
   children: ReactNode;
 };
 
@@ -911,7 +911,7 @@ export function GamingFrame(props: FrameProps) {
             <Typography sx={{ mt: .25, fontFamily: 'inherit', fontSize: p.compact ? 12.5 : 13.8, lineHeight: 1.05, fontWeight: 740, letterSpacing: titleRtl ? 0 : .25, color: HUD.fg, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', direction: titleRtl ? 'rtl' : 'ltr', textAlign: titleRtl ? 'right' : 'left' }}>{title}</Typography>
           </Box>
         </Box>
-        <Tooltip title={props.locale === 'fa' ? 'اطلاعات' : 'Info'}><IconButton size="small" onClick={props.onInfo} sx={{ color: HUD.muted, width: 25, height: 25, borderRadius: 0, '&:hover': { color: HUD.cyan, bgcolor: 'rgba(25,247,255,.06)' } }}><InfoOutlined sx={{ fontSize: 15 }} /></IconButton></Tooltip>
+        {props.onInfo && <Tooltip title={props.locale === 'fa' ? 'اطلاعات' : 'Info'}><IconButton size="small" onClick={props.onInfo} sx={{ color: HUD.muted, width: 25, height: 25, borderRadius: 0, '&:hover': { color: HUD.cyan, bgcolor: 'rgba(25,247,255,.06)' } }}><InfoOutlined sx={{ fontSize: 15 }} /></IconButton></Tooltip>}
       </Box>
 
       {showMeta && <Box sx={{ minHeight: 22, px: 1.25, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, borderBottom: `1px solid rgba(25,247,255,.06)`, direction: 'ltr' }}>

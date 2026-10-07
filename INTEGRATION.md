@@ -1,58 +1,27 @@
-# Industrial Flat — Integration
+# Integration
 
-This patch intentionally does **not** modify coordinator-owned shared files. Two small shared integration edits are required.
+The repository now exposes a package-oriented API. External React projects should use `IoTWidget` from the package root rather than copying `App.tsx` or showcase components.
 
-## 1. Route `flat` to the dedicated renderer
-
-File: `src/widgets/renderers/WidgetVisuals.tsx`
-
-Add this import next to the Material renderer import:
+Quick example:
 
 ```tsx
-import { FlatVisualRenderer } from '../themes/FlatVisuals';
+import { IoTWidget } from 'iot-widget-studio-react';
+
+<div style={{ width: 320, height: 228 }}>
+  <IoTWidget
+    widgetId="battery"
+    themeId="ios"
+    size="1x1"
+    data={{ value: 76 }}
+  />
+</div>
 ```
 
-Then add the `flat` early return in `WidgetVisualRenderer` immediately after the Material early return:
+Build/package instructions:
 
-```tsx
-export function WidgetVisualRenderer(props: Props) {
-  if (props.theme.id === 'material') return <MaterialVisualRenderer {...props} />;
-  if (props.theme.id === 'flat') return <FlatVisualRenderer {...props} />;
+- `docs/installation.md`
+- `docs/usage.md`
+- `docs/api-reference.md`
+- `docs/architecture.md`
 
-  const v = props.def.visual;
-  // existing fallback/theme rendering continues unchanged...
-}
-```
-
-The early return is important: it isolates Industrial Flat from the older scattered `theme.id === 'flat'` branches in the generic renderer without requiring a risky shared-file cleanup during parallel theme work.
-
-## 2. Update only the visible theme label
-
-File: `src/widgets/core/themeTokens.ts`
-
-Keep the stable ID exactly as `flat`, but change the display label:
-
-```diff
- flat: {
-   id: 'flat',
--  label: 'Flat',
-+  label: 'Industrial Flat',
-```
-
-No token rewrite is required for this patch; the existing flat frame/token plumbing remains compatible.
-
-## Screenshot QA
-
-PowerShell commands requested by the project:
-
-```powershell
-$env:WIDGET_QA_THEME="flat"
-npm run screenshots:full
-
-$env:WIDGET_QA_THEME="flat"
-npm run screenshots
-```
-
-If your local scripts require an explicit Chromium executable, set `PLAYWRIGHT_CHROME_PATH` according to your existing project setup before running them.
-
-Inspect every generated `flat` category and the QA overflow diagnostics before merging.
+The old theme-specific patch integration notes are no longer applicable to this integrated all-theme source tree.
