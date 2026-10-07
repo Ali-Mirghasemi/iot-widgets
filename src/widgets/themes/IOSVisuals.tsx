@@ -87,7 +87,7 @@ function Sparkline({
   }, [values]);
   const last = points.split(' ').at(-1)?.split(',') ?? ['97.5', '20'];
 
-  return <svg viewBox="0 0 100 42" preserveAspectRatio="none" width="100%" height={height} aria-hidden style={{ display: 'block', overflow: 'hidden' }}>
+  return <svg viewBox="0 0 100 42" preserveAspectRatio="none" width="100%" height={height} aria-hidden style={{ display: 'block', overflow: 'hidden', minHeight: 0, maxHeight: '100%' }}>
     {grid && <>
       <line x1="2.5" x2="97.5" y1="10" y2="10" stroke="rgba(60,60,67,.10)" strokeWidth=".45" />
       <line x1="2.5" x2="97.5" y1="24" y2="24" stroke="rgba(60,60,67,.10)" strokeWidth=".45" />
@@ -107,13 +107,13 @@ function ValueText({ value, unit, compact = false, large = false }: { value: str
     gap: .55,
     fontSize: compact ? 35 : large ? 46 : 40,
     fontWeight: 720,
-    lineHeight: 1,
+    lineHeight: 1.16,
     letterSpacing: '-.045em',
     color: C.label,
     fontVariantNumeric: 'tabular-nums',
   }}>
-    <Box component="span" sx={{ lineHeight: 1 }}>{value}</Box>
-    {!!unit && <Box component="span" sx={{ fontSize: compact ? 12 : 14, lineHeight: 1, fontWeight: 620, letterSpacing: 0, color: C.tertiary }}>{unit}</Box>}
+    <Box component="span" sx={{ lineHeight: 1.16 }}>{value}</Box>
+    {!!unit && <Box component="span" sx={{ fontSize: compact ? 12 : 14, lineHeight: 1.16, fontWeight: 620, letterSpacing: 0, color: C.tertiary }}>{unit}</Box>}
   </Typography>;
 }
 
@@ -140,13 +140,17 @@ function SectionDivider() {
 }
 
 const iosSwitchSx = {
-  '& .MuiSwitch-input': { left: 0, top: 0, width: '100%', height: '100%' },
+  '& .MuiSwitch-input': { left: '0 !important', top: '0 !important', width: '100% !important', height: '100% !important' },
   '& .MuiSwitch-switchBase.Mui-checked': { color: '#fff' },
   '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: C.green, opacity: 1 },
   '& .MuiSwitch-track': { bgcolor: '#C7C7CC', opacity: 1 },
 };
 
-const iosSliderContainSx = { boxSizing: 'border-box' as const, px: .75 };
+const iosSliderContainSx = {
+  boxSizing: 'border-box' as const,
+  width: '100%',
+  '& .MuiSlider-thumb::before': { width: '100%', height: '100%' },
+};
 
 function Metric({ def, locale, size }: Props) {
   const p = sizeProfile(size);
@@ -196,8 +200,12 @@ function Battery({ def, locale, size }: Props) {
   const remain = s(def.mock.remaining, '8h 42m');
   const tone = value < 20 ? C.red : value < 45 ? C.orange : C.green;
 
-  const battery = <Box sx={{ position: 'relative', width: p.compact ? 108 : p.tall ? 112 : 126, height: p.compact ? 48 : 54, border: '2px solid rgba(28,28,30,.78)', borderRadius: '12px', p: .45, flex: '0 0 auto', '&:after': { content: '""', position: 'absolute', right: -7, top: '31%', width: 5, height: '38%', bgcolor: 'rgba(28,28,30,.72)', borderRadius: '0 3px 3px 0' } }}>
-    <Box sx={{ height: '100%', width: `${Math.max(5, value)}%`, maxWidth: '100%', borderRadius: '7px', bgcolor: tone, transition: 'width .2s ease' }} />
+  const batteryBodyW = p.compact ? 108 : p.tall ? 112 : 126;
+  const battery = <Box sx={{ position: 'relative', width: batteryBodyW + 8, height: p.compact ? 48 : 54, flex: '0 0 auto' }}>
+    <Box sx={{ position: 'absolute', inset: '0 8px 0 0', border: '2px solid rgba(28,28,30,.78)', borderRadius: '12px', p: .45, overflow: 'hidden' }}>
+      <Box sx={{ height: '100%', width: `${Math.max(5, value)}%`, maxWidth: '100%', borderRadius: '7px', bgcolor: tone, transition: 'width .2s ease' }} />
+    </Box>
+    <Box sx={{ position: 'absolute', right: 1, top: '31%', width: 6, height: '38%', bgcolor: 'rgba(28,28,30,.72)', borderRadius: '0 3px 3px 0' }} />
   </Box>;
 
   if (p.compact) return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 1.2, direction: 'ltr' }}>
@@ -318,13 +326,14 @@ function chartSummary(def: WidgetDefinition) {
 
 function LineChartVisual({ def, locale, size }: Props) {
   const p = sizeProfile(size);
+  const slimWide = p.h === 1 && p.w >= 3;
   const values = (def.mock.values as number[] | undefined) ?? (def.visual === 'area' ? spark2 : spark);
   const last = values.at(-1) ?? 0;
   const first = values[0] ?? last;
   const delta = first === 0 ? 0 : ((last - first) / Math.abs(first)) * 100;
-  return <Box sx={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', direction: 'ltr' }}>
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}><Box><Typography sx={{ fontSize: p.large ? 29 : 24, fontWeight: 720, lineHeight: 1, letterSpacing: '-.025em' }}>{chartSummary(def)}</Typography><Typography sx={{ mt: .55, fontSize: 11, fontWeight: 680, color: delta >= 0 ? C.green : C.orange }}>{delta >= 0 ? '↑' : '↓'} {Math.abs(delta).toFixed(1)}% <Box component="span" sx={{ color: C.tertiary, fontWeight: 600 }}>· 24h</Box></Typography></Box><MicroLabel>{localeText(locale, 'Today', 'امروز')}</MicroLabel></Box>
-    <Box sx={{ flex: 1, minHeight: p.large ? 150 : 94, mt: .8, display: 'flex', alignItems: 'stretch' }}><Sparkline values={values} color={C.blue} fill={def.visual === 'area'} height="100%" grid /></Box>
+  return <Box sx={{ height: '100%', minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', direction: 'ltr' }}>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}><Box sx={{ display: slimWide ? 'flex' : 'block', alignItems: slimWide ? 'baseline' : undefined, gap: slimWide ? 1 : undefined }}><Typography sx={{ fontSize: p.large ? 29 : slimWide ? 21 : 24, fontWeight: 720, lineHeight: 1.16, letterSpacing: '-.025em' }}>{chartSummary(def)}</Typography><Typography sx={{ mt: slimWide ? 0 : .55, fontSize: 11, lineHeight: 1.2, fontWeight: 680, color: delta >= 0 ? C.green : C.orange }}>{delta >= 0 ? '↑' : '↓'} {Math.abs(delta).toFixed(1)}% <Box component="span" sx={{ color: C.tertiary, fontWeight: 600 }}>· 24h</Box></Typography></Box><MicroLabel>{localeText(locale, 'Today', 'امروز')}</MicroLabel></Box>
+    <Box sx={{ flex: 1, minHeight: slimWide ? 62 : p.large ? 150 : 94, mt: slimWide ? .35 : .8, display: 'flex', alignItems: 'stretch', overflow: 'hidden' }}><Sparkline values={values} color={C.blue} fill={def.visual === 'area'} height="100%" grid /></Box>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', color: C.tertiary, fontSize: 10, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></Box>
     {p.large && <Box sx={{ mt: 1.05 }}><SectionDivider /><Box sx={{ pt: .95, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)' }}><StatCell label={localeText(locale, 'Minimum', 'کمینه')} value={`${Math.min(...values)}`} /><StatCell label={localeText(locale, 'Average', 'میانگین')} value={`${(values.reduce((a, b) => a + b, 0) / values.length).toFixed(1)}`} /><StatCell label={localeText(locale, 'Maximum', 'بیشینه')} value={`${Math.max(...values)}`} /></Box></Box>}
   </Box>;
@@ -332,12 +341,13 @@ function LineChartVisual({ def, locale, size }: Props) {
 
 function BarVisual({ def, locale, size }: Props) {
   const p = sizeProfile(size);
+  const slimWide = p.h === 1 && p.w >= 3;
   const values = (def.mock.values as number[] | undefined) ?? bars;
   const max = Math.max(...values);
   const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-  return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', direction: 'ltr' }}>
+  return <Box sx={{ height: '100%', minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', direction: 'ltr' }}>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}><Typography sx={{ fontSize: 16, fontWeight: 720 }}>{s(def.mock.summary, localeText(locale, 'Weekly total', 'مجموع هفتگی'))}</Typography><MicroLabel>7d</MicroLabel></Box>
-    <Box sx={{ flex: 1, minHeight: p.large ? 150 : 105, mt: 1, display: 'flex', alignItems: 'flex-end', gap: p.large ? 1.05 : .75 }}>
+    <Box sx={{ flex: 1, minHeight: slimWide ? 70 : p.large ? 150 : 105, mt: slimWide ? .45 : 1, display: 'flex', alignItems: 'flex-end', gap: p.large ? 1.05 : .75, overflow: 'hidden' }}>
       {values.map((v, i) => <Box key={i} sx={{ flex: 1, height: `${Math.max(8, v / max * 100)}%`, minHeight: 8, borderRadius: '5px 5px 2px 2px', bgcolor: i === values.length - 2 ? C.green : C.blue, opacity: i === values.length - 2 ? 1 : .36 + i * .08, position: 'relative' }}>{p.large && <Typography sx={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', mb: .35, fontSize: 9.5, color: C.tertiary }}>{v}</Typography>}</Box>)}
     </Box>
     <Box sx={{ mt: .55, display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', textAlign: 'center', fontSize: 9.5, color: C.tertiary }}>{labels.map((x, i) => <span key={i}>{x}</span>)}</Box>
@@ -346,9 +356,10 @@ function BarVisual({ def, locale, size }: Props) {
 
 function Histogram({ locale, size }: Props) {
   const p = sizeProfile(size);
+  const slimWide = p.h === 1 && p.w >= 3;
   const values = [2, 5, 9, 15, 20, 17, 12, 8, 4, 2];
   const max = Math.max(...values);
-  return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', direction: 'ltr' }}><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ fontSize: 16, fontWeight: 720 }}>{localeText(locale, 'Distribution', 'توزیع')}</Typography><MicroLabel>n=94</MicroLabel></Box><Box sx={{ flex: 1, minHeight: p.large ? 155 : 108, mt: 1, display: 'flex', alignItems: 'flex-end' }}>{values.map((v, i) => <Box key={i} sx={{ flex: 1, height: `${v / max * 100}%`, minHeight: 4, bgcolor: C.blue, opacity: .2 + v / max * .8, borderLeft: i === 0 ? 0 : '1px solid rgba(255,255,255,.65)' }} />)}</Box><Box sx={{ mt: .55, display: 'flex', justifyContent: 'space-between' }}><MicroLabel>Low</MicroLabel><MicroLabel>Median</MicroLabel><MicroLabel>High</MicroLabel></Box></Box>;
+  return <Box sx={{ height: '100%', minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', direction: 'ltr' }}><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ fontSize: 16, lineHeight: 1.2, fontWeight: 720 }}>{localeText(locale, 'Distribution', 'توزیع')}</Typography><MicroLabel>n=94</MicroLabel></Box><Box sx={{ flex: 1, minHeight: slimWide ? 72 : p.large ? 155 : 108, mt: slimWide ? .45 : 1, display: 'flex', alignItems: 'flex-end', overflow: 'hidden' }}>{values.map((v, i) => <Box key={i} sx={{ flex: 1, height: `${v / max * 100}%`, minHeight: 4, bgcolor: C.blue, opacity: .2 + v / max * .8, borderLeft: i === 0 ? 0 : '1px solid rgba(255,255,255,.65)' }} />)}</Box><Box sx={{ mt: .55, display: 'flex', justifyContent: 'space-between' }}><MicroLabel>Low</MicroLabel><MicroLabel>Median</MicroLabel><MicroLabel>High</MicroLabel></Box></Box>;
 }
 
 function Donut({ def, locale, size }: Props) {
@@ -470,15 +481,15 @@ function SwitchControl({ def, locale, size }: Props) {
   const Icon = def.icon;
 
   if (p.large) return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', direction: locale === 'fa' ? 'rtl' : 'ltr' }}>
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1.2 }}><Box><MicroLabel>{localeText(locale, 'Manual output', 'خروجی دستی')}</MicroLabel><Typography sx={{ mt: .35, fontSize: 13, fontWeight: 700, color: checked ? C.green : C.tertiary }}>{checked ? localeText(locale, 'Channel energized', 'کانال فعال است') : localeText(locale, 'Channel disabled', 'کانال غیرفعال است')}</Typography></Box><Switch checked={checked} onChange={(_, v) => setChecked(v)} sx={{ ...iosSwitchSx, transform: 'scale(1.16)' }} /></Box>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1.2 }}><Box><MicroLabel>{localeText(locale, 'Manual output', 'خروجی دستی')}</MicroLabel><Typography sx={{ mt: .35, fontSize: 13, lineHeight: 1.2, fontWeight: 700, color: checked ? C.green : C.tertiary }}>{checked ? localeText(locale, 'Channel energized', 'کانال فعال است') : localeText(locale, 'Channel disabled', 'کانال غیرفعال است')}</Typography></Box><Switch checked={checked} onChange={(_, v) => setChecked(v)} sx={iosSwitchSx} /></Box>
     <Box sx={{ flex: 1, minHeight: 0, display: 'grid', placeItems: 'center', py: 1.2 }}><Box sx={{ textAlign: 'center' }}><Box sx={{ width: 92, height: 92, mx: 'auto', borderRadius: '28px', display: 'grid', placeItems: 'center', bgcolor: checked ? 'rgba(48,209,88,.10)' : C.fill, color: checked ? C.green : C.secondary, border: `1px solid ${checked ? 'rgba(48,209,88,.18)' : C.separator}` }}><Icon sx={{ fontSize: 45 }} /></Box><Typography sx={{ mt: 1.2, fontSize: 34, fontWeight: 720, lineHeight: 1 }}>{checked ? localeText(locale, 'On', 'روشن') : localeText(locale, 'Off', 'خاموش')}</Typography><Typography sx={{ mt: .65, fontSize: 11.5, color: C.tertiary }}>{checked ? localeText(locale, 'Output energized', 'خروجی فعال است') : localeText(locale, 'Output disabled', 'خروجی غیرفعال است')}</Typography></Box></Box>
     <Box sx={{ mb: 1 }}><SegmentedBar value={checked ? 100 : 0} tone={C.green} segments={8} /></Box>
     <SectionDivider /><Box sx={{ pt: 1, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1 }}><StatCell label={localeText(locale, 'State', 'وضعیت')} value={checked ? 'ON' : 'OFF'} accent={checked ? C.green : C.tertiary} /><StatCell label={localeText(locale, 'Control', 'کنترل')} value="Manual" /><StatCell label={localeText(locale, 'Last change', 'آخرین تغییر')} value="09:38" /></Box>
   </Box>;
 
   return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 1.2, direction: locale === 'fa' ? 'rtl' : 'ltr' }}>
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1.2 }}><Box sx={{ width: p.compact ? 48 : 56, height: p.compact ? 48 : 56, borderRadius: '16px', display: 'grid', placeItems: 'center', bgcolor: checked ? C.green : C.fillStrong, color: checked ? '#fff' : C.secondary }}><Icon sx={{ fontSize: p.compact ? 23 : 28 }} /></Box><Switch checked={checked} onChange={(_, v) => setChecked(v)} sx={{ ...iosSwitchSx, transform: p.compact ? 'scale(1.05)' : 'scale(1.18)' }} /></Box>
-    <Box><Typography sx={{ fontSize: p.compact ? 24 : 28, fontWeight: 720, lineHeight: 1 }}>{checked ? localeText(locale, 'On', 'روشن') : localeText(locale, 'Off', 'خاموش')}</Typography><Typography sx={{ mt: .55, fontSize: 11.5, color: C.tertiary }}>{checked ? localeText(locale, 'Output energized', 'خروجی فعال است') : localeText(locale, 'Output disabled', 'خروجی غیرفعال است')}</Typography></Box>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1.2 }}><Box sx={{ width: p.compact ? 48 : 56, height: p.compact ? 48 : 56, borderRadius: '16px', display: 'grid', placeItems: 'center', bgcolor: checked ? C.green : C.fillStrong, color: checked ? '#fff' : C.secondary }}><Icon sx={{ fontSize: p.compact ? 23 : 28 }} /></Box><Switch checked={checked} onChange={(_, v) => setChecked(v)} sx={iosSwitchSx} /></Box>
+    <Box><Typography sx={{ fontSize: p.compact ? 24 : 28, fontWeight: 720, lineHeight: 1.16 }}>{checked ? localeText(locale, 'On', 'روشن') : localeText(locale, 'Off', 'خاموش')}</Typography><Typography sx={{ mt: .55, fontSize: 11.5, color: C.tertiary }}>{checked ? localeText(locale, 'Output energized', 'خروجی فعال است') : localeText(locale, 'Output disabled', 'خروجی غیرفعال است')}</Typography></Box>
     {p.roomy && <Box><SectionDivider /><Box sx={{ pt: .9, display: 'flex', justifyContent: 'space-between' }}><MicroLabel>{localeText(locale, 'Control mode', 'حالت کنترل')}</MicroLabel><MicroLabel>Manual</MicroLabel></Box></Box>}
   </Box>;
 }
@@ -488,7 +499,7 @@ function SliderControl({ def, locale, size }: Props) {
   const [value, setValue] = useState(n(def.mock.value, 65));
   const unit = s(def.mock.unit, '%');
   const min = 0, max = 100;
-  if (p.tall) return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto 1fr auto', justifyItems: 'center', gap: 1.1, direction: 'ltr' }}><Box sx={{ textAlign: 'center' }}><ValueText value={value} unit={unit} /><MicroLabel>{localeText(locale, 'Set level', 'تنظیم سطح')}</MicroLabel></Box><Box sx={{ minHeight: 120, width: 76, borderRadius: '20px', bgcolor: C.fill, display: 'grid', placeItems: 'center', py: 1 }}><Slider orientation="vertical" min={min} max={max} value={value} onChange={(_, v) => setValue(v as number)} sx={{ height: '100%', color: C.blue, '& .MuiSlider-thumb': { width: 22, height: 22, bgcolor: '#fff', border: '1px solid rgba(60,60,67,.12)', boxShadow: '0 2px 8px rgba(0,0,0,.15)' }, '& .MuiSlider-rail': { opacity: .18 }, '& .MuiSlider-track': { border: 0 } }} /></Box><Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-between' }}><MicroLabel>0</MicroLabel><MicroLabel>100</MicroLabel></Box></Box>;
+  if (p.tall) return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto 1fr auto', justifyItems: 'center', gap: 1.1, direction: 'ltr' }}><Box sx={{ textAlign: 'center' }}><ValueText value={value} unit={unit} /><MicroLabel>{localeText(locale, 'Set level', 'تنظیم سطح')}</MicroLabel></Box><Box sx={{ minHeight: 120, width: 76, borderRadius: '20px', bgcolor: C.fill, display: 'grid', placeItems: 'center', py: 1 }}><Slider orientation="vertical" min={min} max={max} value={value} onChange={(_, v) => setValue(v as number)} sx={{ ...iosSliderContainSx, width: 'auto', height: '100%', color: C.blue, '& .MuiSlider-thumb': { width: 22, height: 22, bgcolor: '#fff', border: '1px solid rgba(60,60,67,.12)', boxShadow: '0 2px 8px rgba(0,0,0,.15)' }, '& .MuiSlider-rail': { opacity: .18 }, '& .MuiSlider-track': { border: 0 } }} /></Box><Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-between' }}><MicroLabel>0</MicroLabel><MicroLabel>100</MicroLabel></Box></Box>;
   if (p.large) return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 1.15, direction: 'ltr' }}>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}><Box><MicroLabel>{localeText(locale, 'Output level', 'سطح خروجی')}</MicroLabel><Box sx={{ mt: .7 }}><ValueText value={value} unit={unit} large /></Box></Box><Box sx={{ px: .9, py: .5, borderRadius: '10px', bgcolor: 'rgba(10,132,255,.08)' }}><MicroLabel tone={C.blue}>{localeText(locale, 'LIVE', 'زنده')}</MicroLabel></Box></Box>
     <Box sx={{ py: 1.2 }}><Slider min={min} max={max} value={value} onChange={(_, v) => setValue(v as number)} sx={{ ...iosSliderContainSx, color: C.blue, '& .MuiSlider-thumb': { width: 26, height: 26, bgcolor: '#fff', border: '1px solid rgba(60,60,67,.12)', boxShadow: '0 2px 8px rgba(0,0,0,.16)' }, '& .MuiSlider-track': { border: 0, height: 8 }, '& .MuiSlider-rail': { height: 8, opacity: .15 } }} /><Box sx={{ mt: .8, display: 'flex', justifyContent: 'space-between' }}><MicroLabel>0</MicroLabel><MicroLabel>{localeText(locale, 'Current setpoint', 'نقطه تنظیم فعلی')}</MicroLabel><MicroLabel>100</MicroLabel></Box></Box>
@@ -517,7 +528,7 @@ function Thermostat({ def, locale, size }: Props) {
   const current = 24.1;
   const adjust = (delta: number) => setValue(v => clamp(Math.round((v + delta) * 2) / 2, 16, 30));
   if (p.compact) return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', direction: 'ltr' }}><Box><Typography sx={{ fontSize: 10.5, color: C.tertiary, fontWeight: 650 }}>SET TO</Typography><Typography sx={{ mt: .3, fontSize: 40, lineHeight: .95, fontWeight: 720, letterSpacing: '-.05em' }}>{value}°</Typography><Typography sx={{ mt: .6, fontSize: 11, color: C.tertiary }}>{localeText(locale, 'Room', 'اتاق')} {current}°</Typography></Box><Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .7 }}><IconButton onClick={() => adjust(-.5)} sx={{ borderRadius: '13px', bgcolor: C.fill, color: C.blue }}><Remove /></IconButton><IconButton onClick={() => adjust(.5)} sx={{ borderRadius: '13px', bgcolor: C.fill, color: C.blue }}><Add /></IconButton></Box></Box>;
-  return <Box sx={{ height: '100%', display: p.wide && !p.large ? 'grid' : 'flex', gridTemplateColumns: p.wide && !p.large ? '150px 1fr' : undefined, flexDirection: p.wide && !p.large ? undefined : 'column', justifyContent: 'center', gap: 1.5, direction: 'ltr' }}><Box><Typography sx={{ fontSize: 10.5, color: C.tertiary, fontWeight: 650 }}>{localeText(locale, 'SETPOINT', 'دمای هدف')}</Typography><Typography sx={{ mt: .3, fontSize: p.large ? 50 : 43, fontWeight: 720, lineHeight: .9, letterSpacing: '-.05em' }}>{value}°</Typography><Typography sx={{ mt: .7, fontSize: 12, color: C.secondary }}>{localeText(locale, 'Current', 'فعلی')} {current}°</Typography></Box><Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 1 }}><Slider min={16} max={30} step={.5} value={value} onChange={(_, v) => setValue(v as number)} sx={{ color: C.orange, '& .MuiSlider-thumb': { width: 24, height: 24, bgcolor: '#fff', border: '1px solid rgba(60,60,67,.12)', boxShadow: '0 2px 8px rgba(0,0,0,.15)' }, '& .MuiSlider-track': { border: 0, height: 7 }, '& .MuiSlider-rail': { height: 7, opacity: .15 } }} /><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><MicroLabel>16°</MicroLabel><MicroLabel>{localeText(locale, 'Comfort', 'آسایش')}</MicroLabel><MicroLabel>30°</MicroLabel></Box><Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .8, mt: .35 }}><Button onClick={() => adjust(-.5)} sx={{ minWidth: 0, borderRadius: '12px', bgcolor: C.fill, color: C.blue }}><Remove /></Button><Button onClick={() => adjust(.5)} sx={{ minWidth: 0, borderRadius: '12px', bgcolor: C.fill, color: C.blue }}><Add /></Button></Box></Box>{p.large && <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1 }}><StatCell label={localeText(locale, 'Mode', 'حالت')} value="Heat" accent={C.orange} /><StatCell label={localeText(locale, 'Humidity', 'رطوبت')} value="46%" /><StatCell label={localeText(locale, 'Schedule', 'برنامه')} value="Home" /></Box>}</Box>;
+  return <Box sx={{ height: '100%', display: p.wide && !p.large ? 'grid' : 'flex', gridTemplateColumns: p.wide && !p.large ? '150px 1fr' : undefined, flexDirection: p.wide && !p.large ? undefined : 'column', justifyContent: 'center', gap: 1.5, direction: 'ltr' }}><Box><Typography sx={{ fontSize: 10.5, color: C.tertiary, fontWeight: 650 }}>{localeText(locale, 'SETPOINT', 'دمای هدف')}</Typography><Typography sx={{ mt: .3, fontSize: p.large ? 50 : 43, fontWeight: 720, lineHeight: 1.08, letterSpacing: '-.05em' }}>{value}°</Typography><Typography sx={{ mt: .7, fontSize: 12, color: C.secondary }}>{localeText(locale, 'Current', 'فعلی')} {current}°</Typography></Box><Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 1 }}><Slider min={16} max={30} step={.5} value={value} onChange={(_, v) => setValue(v as number)} sx={{ ...iosSliderContainSx, color: C.orange, '& .MuiSlider-thumb': { width: 24, height: 24, bgcolor: '#fff', border: '1px solid rgba(60,60,67,.12)', boxShadow: '0 2px 8px rgba(0,0,0,.15)' }, '& .MuiSlider-track': { border: 0, height: 7 }, '& .MuiSlider-rail': { height: 7, opacity: .15 } }} /><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><MicroLabel>16°</MicroLabel><MicroLabel>{localeText(locale, 'Comfort', 'آسایش')}</MicroLabel><MicroLabel>30°</MicroLabel></Box><Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .8, mt: .35 }}><Button onClick={() => adjust(-.5)} sx={{ minWidth: 0, borderRadius: '12px', bgcolor: C.fill, color: C.blue }}><Remove /></Button><Button onClick={() => adjust(.5)} sx={{ minWidth: 0, borderRadius: '12px', bgcolor: C.fill, color: C.blue }}><Add /></Button></Box></Box>{p.large && <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1 }}><StatCell label={localeText(locale, 'Mode', 'حالت')} value="Heat" accent={C.orange} /><StatCell label={localeText(locale, 'Humidity', 'رطوبت')} value="46%" /><StatCell label={localeText(locale, 'Schedule', 'برنامه')} value="Home" /></Box>}</Box>;
 }
 
 function ColorControl({ locale, size }: Props) {
@@ -527,7 +538,7 @@ function ColorControl({ locale, size }: Props) {
   const [on, setOn] = useState(true);
   const preview = on ? `hsl(${hue} 82% ${Math.max(28, brightness / 1.6)}%)` : '#A1A1A6';
   const presets = [0, 35, 90, 150, 205, 275, 320];
-  return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: p.compact ? .8 : 1, direction: 'ltr' }}><Box onClick={() => setOn(v => !v)} sx={{ cursor: 'pointer', height: p.large ? 76 : p.compact ? 54 : 62, borderRadius: '16px', bgcolor: preview, position: 'relative', overflow: 'hidden', border: '1px solid rgba(60,60,67,.08)', boxShadow: on ? `0 8px 22px hsl(${hue} 70% 45% / .16)` : 'none' }}><Box sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(110deg,rgba(255,255,255,.24),transparent 46%)' }} /><Typography sx={{ position: 'absolute', left: 10, bottom: 8, fontSize: 10.5, fontWeight: 750, color: '#fff' }}>{on ? 'ON' : 'OFF'}</Typography><Typography sx={{ position: 'absolute', right: 10, bottom: 8, fontSize: 10.5, fontWeight: 650, color: 'rgba(255,255,255,.9)' }}>{brightness}%</Typography></Box><Box sx={{ display: 'grid', gridTemplateColumns: `repeat(${presets.length},1fr)`, gap: .55 }}>{presets.map(v => <Box key={v} onClick={() => { setHue(v); setOn(true); }} sx={{ cursor: 'pointer', aspectRatio: '1', maxHeight: 24, borderRadius: '50%', bgcolor: `hsl(${v} 82% 55%)`, border: hue === v ? '2px solid #fff' : '2px solid transparent', boxShadow: hue === v ? `0 0 0 2px ${C.blue}` : 'none', justifySelf: 'center', width: p.compact ? 19 : 23 }} />)}</Box><Box><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><MicroLabel>{localeText(locale, 'Color', 'رنگ')}</MicroLabel><MicroLabel>{hue}°</MicroLabel></Box><Slider min={0} max={360} value={hue} onChange={(_, v) => setHue(v as number)} size="small" sx={{ py: .55, color: C.blue }} /></Box>{!p.compact && <Box><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><MicroLabel>{localeText(locale, 'Brightness', 'روشنایی')}</MicroLabel><MicroLabel>{brightness}%</MicroLabel></Box><Slider min={5} max={100} value={brightness} onChange={(_, v) => setBrightness(v as number)} size="small" sx={{ py: .55, color: C.orange }} /></Box>}</Box>;
+  return <Box sx={{ height: '100%', minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: p.compact ? .8 : 1, direction: 'ltr' }}><Box onClick={() => setOn(v => !v)} sx={{ cursor: 'pointer', height: p.large ? 76 : p.compact ? 54 : 62, flex: '0 0 auto', borderRadius: '16px', bgcolor: preview, position: 'relative', overflow: 'hidden', border: '1px solid rgba(60,60,67,.08)', boxShadow: on ? `0 8px 22px hsl(${hue} 70% 45% / .16)` : 'none' }}><Box sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(110deg,rgba(255,255,255,.24),transparent 46%)' }} /><Typography sx={{ position: 'absolute', left: 10, bottom: 8, fontSize: 10.5, fontWeight: 750, color: '#fff' }}>{on ? 'ON' : 'OFF'}</Typography><Typography sx={{ position: 'absolute', right: 10, bottom: 8, fontSize: 10.5, fontWeight: 650, color: 'rgba(255,255,255,.9)' }}>{brightness}%</Typography></Box><Box sx={{ display: 'grid', gridTemplateColumns: `repeat(${presets.length},1fr)`, gap: .55, flex: '0 0 auto' }}>{presets.map(v => <Box key={v} onClick={() => { setHue(v); setOn(true); }} sx={{ cursor: 'pointer', aspectRatio: '1', maxHeight: 24, borderRadius: '50%', bgcolor: `hsl(${v} 82% 55%)`, border: hue === v ? '2px solid #fff' : '2px solid transparent', boxShadow: hue === v ? `0 0 0 2px ${C.blue}` : 'none', justifySelf: 'center', width: p.compact ? 19 : 23 }} />)}</Box><Box sx={{ flex: '0 0 auto' }}><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><MicroLabel>{localeText(locale, 'Color', 'رنگ')}</MicroLabel><MicroLabel>{hue}°</MicroLabel></Box><Slider min={0} max={360} value={hue} onChange={(_, v) => setHue(v as number)} size="small" sx={{ ...iosSliderContainSx, py: .55, color: C.blue }} /></Box>{!p.compact && <Box sx={{ flex: '0 0 auto' }}><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><MicroLabel>{localeText(locale, 'Brightness', 'روشنایی')}</MicroLabel><MicroLabel>{brightness}%</MicroLabel></Box><Slider min={5} max={100} value={brightness} onChange={(_, v) => setBrightness(v as number)} size="small" sx={{ ...iosSliderContainSx, py: .55, color: C.orange }} /></Box>}</Box>;
 }
 
 function DirectionControl({ locale, size }: Props) {
@@ -550,6 +561,7 @@ function statusTone(cell: string, mode: TableMode) {
 
 function TableVisual({ locale, mode, size }: Props & { mode: TableMode }) {
   const p = sizeProfile(size);
+  const shortLarge = p.veryLarge && p.h === 2;
   const rows = mode === 'alarms'
     ? [['Fire sensor', 'Critical', '09:42'], ['Door open', 'Warning', '09:17'], ['Battery low', 'Info', '08:51']]
     : mode === 'logs'
@@ -565,14 +577,14 @@ function TableVisual({ locale, mode, size }: Props & { mode: TableMode }) {
   return <Box sx={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', direction: 'ltr', overflow: 'hidden' }}>
     {p.large && <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(${headings.length},minmax(0,1fr))`, gap: 1, px: .5, pb: .7 }}>{headings.map(h => <MicroLabel key={h}>{h}</MicroLabel>)}</Box>}
     <Box sx={{ borderTop: `1px solid ${C.separator}`, borderBottom: `1px solid ${C.separator}`, overflow: 'hidden' }}>{rows.map((row, i) => <Box key={i} sx={{ minHeight: p.large ? 43 : 38, display: 'grid', gridTemplateColumns: `repeat(${row.length},minmax(0,1fr))`, gap: 1, alignItems: 'center', px: .55, borderTop: i ? `1px solid ${C.separator}` : 0, bgcolor: mode === 'alarms' && i === 0 ? 'rgba(255,69,58,.055)' : 'transparent' }}>{row.map((cell, j) => <Typography key={j} sx={{ fontSize: p.large ? 12.2 : 11.2, fontWeight: j === 0 ? 700 : 600, color: j === 1 ? statusTone(cell, mode) : j === 0 ? C.label : C.tertiary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{cell}</Typography>)}</Box>)}</Box>
-    {p.veryLarge && <Box sx={{ flex: 1, minHeight: 108, display: 'grid', gridTemplateColumns: 'minmax(0,1.45fr) minmax(150px,.55fr)', gap: 1.8, alignItems: 'stretch', py: 1.2 }}><Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}><Box sx={{ display: 'flex', justifyContent: 'space-between', mb: .4 }}><MicroLabel>{contextTitle}</MicroLabel><MicroLabel>{localeText(locale, 'last hour', 'یک ساعت اخیر')}</MicroLabel></Box><Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}><Sparkline values={contextValues} color={mode === 'alarms' ? C.orange : C.blue} fill={mode !== 'alarms'} grid height="100%" /></Box></Box><Box sx={{ display: 'grid', alignContent: 'center', gap: 1.2 }}><StatCell label={localeText(locale, 'Visible rows', 'ردیف‌ها')} value={`${rows.length}`} /><StatCell label={localeText(locale, 'Refresh', 'نوسازی')} value="Live" accent={C.green} /><StatCell label={localeText(locale, 'Window', 'بازه')} value="60 min" /></Box></Box>}
+    {p.veryLarge && <Box sx={{ flex: shortLarge ? '0 0 142px' : 1, height: shortLarge ? 142 : undefined, minHeight: 0, boxSizing: 'border-box', overflow: 'hidden', display: 'grid', gridTemplateColumns: 'minmax(0,1.45fr) minmax(150px,.55fr)', gap: 1.8, alignItems: 'stretch', py: shortLarge ? .75 : 1.2 }}><Box sx={{ minWidth: 0, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}><Box sx={{ display: 'flex', justifyContent: 'space-between', mb: .4, flex: '0 0 auto' }}><MicroLabel>{contextTitle}</MicroLabel><MicroLabel>{localeText(locale, 'last hour', 'یک ساعت اخیر')}</MicroLabel></Box><Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}><Sparkline values={contextValues} color={mode === 'alarms' ? C.orange : C.blue} fill={mode !== 'alarms'} grid height="100%" /></Box></Box><Box sx={{ minHeight: 0, overflow: 'hidden', display: 'grid', alignContent: 'center', gap: shortLarge ? .7 : 1.2 }}><StatCell label={localeText(locale, 'Visible rows', 'ردیف‌ها')} value={`${rows.length}`} /><StatCell label={localeText(locale, 'Refresh', 'نوسازی')} value="Live" accent={C.green} /><StatCell label={localeText(locale, 'Window', 'بازه')} value="60 min" /></Box></Box>}
     {p.roomy && <Box sx={{ mt: 'auto', pt: .9, display: 'flex', justifyContent: 'space-between' }}><MicroLabel>{rows.length} {localeText(locale, 'items', 'مورد')}</MicroLabel><MicroLabel>{localeText(locale, 'Updated now', 'به‌روز')}</MicroLabel></Box>}
   </Box>;
 }
 
 function Clock({ locale, size }: Props) {
   const p = sizeProfile(size);
-  return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: p.wide ? 'flex-start' : 'center', textAlign: p.wide ? 'left' : 'center', direction: locale === 'fa' ? 'rtl' : 'ltr' }}><Typography sx={{ direction: 'ltr', fontSize: p.compact ? 42 : p.large ? 66 : 52, fontWeight: 300, letterSpacing: '-.055em', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>09:44</Typography><Typography sx={{ mt: .9, fontSize: p.compact ? 11.5 : 13, color: C.secondary, fontWeight: 560 }}>{localeText(locale, 'Wednesday, Oct 7', 'چهارشنبه، ۱۵ مهر ۱۴۰۵')}</Typography>{p.roomy && <Typography sx={{ mt: .6, fontSize: 10.5, color: C.tertiary }}>GMT +03:30 · {localeText(locale, 'Local site time', 'زمان محلی سایت')}</Typography>}</Box>;
+  return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: p.wide ? 'flex-start' : 'center', textAlign: p.wide ? 'left' : 'center', direction: locale === 'fa' ? 'rtl' : 'ltr' }}><Typography sx={{ direction: 'ltr', fontSize: p.compact ? 42 : p.large ? 66 : 52, fontWeight: 300, letterSpacing: '-.055em', lineHeight: 1.16, fontVariantNumeric: 'tabular-nums' }}>09:44</Typography><Typography sx={{ mt: .65, fontSize: p.compact ? 11.5 : 13, color: C.secondary, fontWeight: 560 }}>{localeText(locale, 'Wednesday, Oct 7', 'چهارشنبه، ۱۵ مهر ۱۴۰۵')}</Typography>{p.roomy && <Typography sx={{ mt: .5, fontSize: 10.5, color: C.tertiary }}>GMT +03:30 · {localeText(locale, 'Local site time', 'زمان محلی سایت')}</Typography>}</Box>;
 }
 
 function TextVisual({ locale, size }: Props) {
