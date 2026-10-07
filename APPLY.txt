@@ -1,4 +1,4 @@
-Material 3 patch v6
+Material 3 patch v7
 
 Scope:
   Material theme only.
@@ -7,13 +7,12 @@ Replace:
   src/widgets/themes/MaterialVisuals.tsx
 
 Main changes:
-  - Better 1x2 tank composition and level scale.
-  - Better 2x1 coordinates composition.
-  - Better 2x1 compass composition.
-  - Stronger compact Switch / Door Lock / Siren controls.
-  - Larger directional pad at compact and 2x1 sizes.
-  - Larger donut/ring visualization.
-  - More realistic camera snapshot visual.
+  - Re-composed 3x1 time-series/area charts with KPI/stat rail instead of a stretched flat chart.
+  - Re-composed 3x1 bar and histogram charts with summary statistics.
+  - Fixed 2x1 compass vertical crowding/overflow and made metadata denser.
+  - Added heatmap intensity legend for larger sizes.
+  - Added richer 3x3 map/route composition with size-specific summary stats.
+  - Added a few map details/building blocks so large maps feel less empty.
 
 After copying:
   Remove-Item -Recurse -Force .\node_modules\.vite -ErrorAction SilentlyContinue

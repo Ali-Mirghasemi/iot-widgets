@@ -355,6 +355,26 @@ function MaterialLineChart({ def, theme, size }: Props) {
   const p = profile(size);
   const values = (def.mock.values as number[] | undefined) ?? spark;
   const summary = s(def.mock.summary, '24.8 °C');
+  const min = Math.min(...values);
+  const avg = values.reduce((a,b)=>a+b,0) / Math.max(1, values.length);
+
+  if (p.veryWide && !p.large) {
+    return <Box sx={{ height:'100%', display:'grid', gridTemplateColumns:'168px minmax(0,1fr)', gap:1.2, direction:'ltr', alignItems:'stretch' }}>
+      <Box sx={{ minWidth:0, display:'flex', flexDirection:'column', justifyContent:'center' }}>
+        <Typography sx={{ fontSize:28, fontWeight:850, lineHeight:1 }}>{summary}</Typography>
+        <Box sx={{ mt:.8 }}><ToneBadge text="24h" tone="neutral" theme={theme}/></Box>
+        <Box sx={{ mt:1, display:'grid', gridTemplateColumns:'1fr 1fr', gap:.55 }}>
+          <StatBox label="MIN" value={min.toFixed(1)} theme={theme}/>
+          <StatBox label="AVG" value={avg.toFixed(1)} theme={theme} accent/>
+        </Box>
+      </Box>
+      <Box sx={{ minWidth:0, borderLeft:`1px solid ${theme.border}`, pl:1.2, display:'grid', gridTemplateRows:'minmax(0,1fr) auto', gap:.45 }}>
+        <Box sx={{ minHeight:0 }}><ChartSvg values={values} color={theme.accent} fill={def.visual === 'area'} minHeight={74}/></Box>
+        <Box sx={{ display:'flex', justifyContent:'space-between', color:theme.muted }}>{['00','06','12','18','24'].map(t=><Typography key={t} sx={{fontSize:9}}>{t}</Typography>)}</Box>
+      </Box>
+    </Box>;
+  }
+
   return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto minmax(0,1fr) auto', gap: .65, direction: 'ltr' }}>
     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}><Typography sx={{ fontSize: p.large ? 28 : 23, fontWeight: 850 }}>{summary}</Typography><ToneBadge text="24h" tone="neutral" theme={theme} /></Box>
     <Box sx={{ minHeight: p.wide && !p.large ? 68 : p.large ? 150 : 100 }}><ChartSvg values={values} color={theme.accent} fill={def.visual === 'area'} minHeight={p.wide && !p.large ? 68 : p.large ? 150 : 100} /></Box>
@@ -365,13 +385,33 @@ function MaterialLineChart({ def, theme, size }: Props) {
 function MaterialBar({ def, theme, size }: Props) {
   const p = profile(size);
   const values = (def.mock.values as number[] | undefined) ?? bars;
-  return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto minmax(0,1fr) auto', gap: .7, direction: 'ltr' }}><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ fontSize: 12, fontWeight: 800 }}>{s(def.mock.summary, 'Weekly total')}</Typography><Typography sx={{ fontSize: 10.5, color: theme.muted }}>7d</Typography></Box><Box sx={{ minHeight: p.large ? 150 : 82, display: 'flex', alignItems: 'end', gap: p.large ? 1 : .7, px: .3 }}>{values.map((v, i) => <Box key={i} sx={{ flex: 1, minWidth: 0, height: `${Math.max(12, v)}%`, borderRadius: '4px 4px 1px 1px', bgcolor: i === values.length - 2 ? theme.accent2 : theme.accent, opacity: i === values.length - 2 ? 1 : .72 }} />)}</Box><Box sx={{ display: 'flex', justifyContent: 'space-between', color: theme.muted }}>{['M','T','W','T','F','S','S'].map((x,i)=><Typography key={i} sx={{ fontSize: 9 }}>{x}</Typography>)}</Box></Box>;
+  const total = values.reduce((a,b)=>a+b,0);
+  const max = Math.max(...values);
+  const avg = total / Math.max(1, values.length);
+  const dayLabels=['M','T','W','T','F','S','S'];
+
+  const barsVisual = <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'minmax(0,1fr) auto', gap:.55 }}>
+    <Box sx={{ minHeight:0, display:'flex', alignItems:'end', gap:p.large?1:.7, px:.3 }}>{values.map((v,i)=><Box key={i} sx={{ flex:1,minWidth:0,height:`${Math.max(12,v)}%`,borderRadius:'4px 4px 1px 1px',bgcolor:i===values.length-2?theme.accent2:theme.accent,opacity:i===values.length-2?1:.72 }}/>)}</Box>
+    <Box sx={{ display:'flex',justifyContent:'space-between',color:theme.muted }}>{dayLabels.map((x,i)=><Typography key={i} sx={{fontSize:9}}>{x}</Typography>)}</Box>
+  </Box>;
+
+  if (p.veryWide && !p.large) return <Box sx={{ height:'100%', display:'grid', gridTemplateColumns:'170px minmax(0,1fr)', gap:1.2, direction:'ltr' }}>
+    <Box sx={{ display:'flex',flexDirection:'column',justifyContent:'center' }}><Typography sx={{fontSize:10,color:theme.muted,textTransform:'uppercase',letterSpacing:.3}}>7 day total</Typography><Typography sx={{mt:.25,fontSize:29,fontWeight:850}}>{Math.round(total)}</Typography><Box sx={{mt:.9,display:'grid',gridTemplateColumns:'1fr 1fr',gap:.55}}><StatBox label="AVG" value={avg.toFixed(1)} theme={theme}/><StatBox label="PEAK" value={String(max)} theme={theme} accent/></Box></Box>
+    <Box sx={{ minWidth:0,borderLeft:`1px solid ${theme.border}`,pl:1.2 }}>{barsVisual}</Box>
+  </Box>;
+
+  return <Box sx={{ height:'100%',display:'grid',gridTemplateRows:'auto minmax(0,1fr)',gap:.7,direction:'ltr' }}><Box sx={{display:'flex',justifyContent:'space-between'}}><Typography sx={{fontSize:12,fontWeight:800}}>{s(def.mock.summary,'Weekly total')}</Typography><Typography sx={{fontSize:10.5,color:theme.muted}}>7d</Typography></Box>{barsVisual}</Box>;
 }
 
 function MaterialHistogram({ theme, size }: Props) {
   const p = profile(size);
   const values = [2,5,9,15,20,17,12,8,4,2];
-  return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto minmax(0,1fr)', gap: .8, direction: 'ltr' }}><Typography sx={{ fontSize: 12, fontWeight: 800 }}>Distribution</Typography><Box sx={{ minHeight: p.large ? 150 : 88, display: 'flex', alignItems: 'end', gap: .25 }}>{values.map((v,i)=><Box key={i} sx={{ flex: 1, height: `${v*4.5}%`, minHeight: 4, bgcolor: theme.accent, opacity: .26 + (v/20)*.74, borderRadius: '3px 3px 0 0' }} />)}</Box></Box>;
+  const histogram = <Box sx={{ height:'100%',minHeight:p.large?150:88,display:'flex',alignItems:'end',gap:.25 }}>{values.map((v,i)=><Box key={i} sx={{ flex:1,height:`${v*4.5}%`,minHeight:4,bgcolor:theme.accent,opacity:.26+(v/20)*.74,borderRadius:'3px 3px 0 0' }}/>)}</Box>;
+  if (p.veryWide && !p.large) return <Box sx={{ height:'100%',display:'grid',gridTemplateColumns:'170px minmax(0,1fr)',gap:1.2,direction:'ltr' }}>
+    <Box sx={{ display:'flex',flexDirection:'column',justifyContent:'center' }}><Typography sx={{fontSize:10,color:theme.muted,textTransform:'uppercase',letterSpacing:.3}}>Distribution</Typography><Typography sx={{mt:.25,fontSize:28,fontWeight:850}}>124</Typography><Typography sx={{fontSize:10.5,color:theme.muted}}>samples</Typography><Box sx={{mt:.9,display:'grid',gridTemplateColumns:'1fr 1fr',gap:.55}}><StatBox label="MEDIAN" value="12.4" theme={theme}/><StatBox label="PEAK BIN" value="18–24" theme={theme} accent/></Box></Box>
+    <Box sx={{ minWidth:0,borderLeft:`1px solid ${theme.border}`,pl:1.2 }}>{histogram}</Box>
+  </Box>;
+  return <Box sx={{ height:'100%',display:'grid',gridTemplateRows:'auto minmax(0,1fr)',gap:.8,direction:'ltr' }}><Typography sx={{fontSize:12,fontWeight:800}}>Distribution</Typography>{histogram}</Box>;
 }
 
 function MaterialDonut({ def, theme, locale, size }: Props) {
@@ -404,14 +444,14 @@ function MaterialDonut({ def, theme, locale, size }: Props) {
 
 function MaterialHeatmap({ theme, size }: Props) {
   const p = profile(size);
-  return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'minmax(0,1fr) auto', gap:.65 }}>
-    <Box sx={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gridTemplateRows:`repeat(${heat.length},1fr)`, gap:p.large?.7:.45, minHeight:0 }}>
-      {heat.flat().map((v,i)=>{
-        const alpha = .10 + clamp(v,0,1) * .84;
-        return <Box key={i} sx={{ minHeight:16, borderRadius:.6, bgcolor:`rgba(79,70,229,${alpha})`, border:'1px solid rgba(79,70,229,.10)' }}/>;
-      })}
+  return <Box sx={{ height:'100%',display:'grid',gridTemplateRows:'minmax(0,1fr) auto',gap:.65 }}>
+    <Box sx={{ minHeight:0,display:'grid',gridTemplateColumns:'repeat(7,1fr)',gridTemplateRows:`repeat(${heat.length},1fr)`,gap:p.large?.7:.45 }}>
+      {heat.flat().map((v,i)=>{ const alpha=.10+clamp(v,0,1)*.84; return <Box key={i} sx={{minHeight:16,borderRadius:.6,bgcolor:`rgba(79,70,229,${alpha})`,border:'1px solid rgba(79,70,229,.10)'}}/>; })}
     </Box>
-    <Box sx={{ display:'flex', justifyContent:'space-between', color:theme.muted }}>{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(day=><Typography key={day} sx={{ fontSize:9 }}>{p.compact?day[0]:day}</Typography>)}</Box>
+    <Box sx={{ display:'grid',gridTemplateColumns:'1fr auto',gap:1,alignItems:'end' }}>
+      <Box sx={{display:'flex',justifyContent:'space-between',color:theme.muted}}>{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(day=><Typography key={day} sx={{fontSize:9}}>{p.compact?day[0]:day}</Typography>)}</Box>
+      {p.large&&<Box sx={{display:'flex',alignItems:'center',gap:.5}}><Typography sx={{fontSize:8.8,color:theme.muted}}>low</Typography><Box sx={{width:56,height:7,borderRadius:.8,background:'linear-gradient(90deg,rgba(79,70,229,.12),rgba(79,70,229,.92))'}}/><Typography sx={{fontSize:8.8,color:theme.muted}}>high</Typography></Box>}
+    </Box>
   </Box>;
 }
 
@@ -425,22 +465,27 @@ function MaterialTimeline({ theme, size }: Props) {
   return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'repeat(3,1fr) auto', gap: p.large ? 1.1 : .75, direction: 'ltr', alignItems: 'center' }}>{rows.map(row=><Box key={row.name} sx={{ display: 'grid', gridTemplateColumns: p.large ? '68px 1fr' : '52px 1fr', gap: .8, alignItems: 'center' }}><Typography sx={{ fontSize: 10, color: theme.muted }}>{row.name}</Typography><Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: .35 }}>{row.segments.map((seg,i)=><Box key={i} sx={{ height: p.large ? 22 : 15, borderRadius: .65, bgcolor: seg }} />)}</Box></Box>)}<Box sx={{ display: 'flex', justifyContent: 'space-between', color: theme.muted, pl: p.large ? '76px' : '60px' }}>{['00','06','12','18','24'].map(t=><Typography key={t} sx={{ fontSize: 9 }}>{t}</Typography>)}</Box></Box>;
 }
 
-function MaterialMap({ theme, size }: Props) {
+function MaterialMap({ def, theme, size }: Props) {
   const p = profile(size);
-  return <Box sx={{ height:'100%', borderRadius:1.25, overflow:'hidden', position:'relative', border:`1px solid ${theme.border}`, background:'#f7f8fb' }}>
+  const isRoute = def.visual === 'route';
+  const map = <Box sx={{ height:'100%',borderRadius:1.25,overflow:'hidden',position:'relative',border:`1px solid ${theme.border}`,background:'#f7f8fb' }}>
     <svg viewBox="0 0 300 180" width="100%" height="100%" preserveAspectRatio="none" style={{position:'absolute',inset:0}}>
       <rect width="300" height="180" fill="#f7f8fb"/>
       <path d="M-15 45 C55 20 92 58 160 38 S255 24 322 56" fill="none" stroke="#dce4ed" strokeWidth="15"/>
       <path d="M36 -10 C65 48 34 94 75 196" fill="none" stroke="#e2e8f0" strokeWidth="10"/>
       <path d="M230 -10 C205 38 226 92 190 196" fill="none" stroke="#e5eaf1" strokeWidth="9"/>
       <path d="M-10 136 C55 110 106 132 158 113 S245 98 314 128" fill="none" stroke="#dfe6ee" strokeWidth="7"/>
+      {p.large&&<><rect x="96" y="60" width="34" height="22" rx="3" fill="#eef2f7"/><rect x="156" y="68" width="27" height="18" rx="3" fill="#eef2f7"/><rect x="235" y="105" width="32" height="21" rx="3" fill="#eef2f7"/></>}
       <path d="M10 125 C55 80 95 82 136 118 S224 156 290 92" fill="none" stroke={theme.accent} strokeWidth={p.large?4:3.2} strokeLinecap="round"/>
       {[{x:72,y:96},{x:134,y:118},{x:214,y:126}].map((pt,i)=><g key={i}><circle cx={pt.x} cy={pt.y} r="9" fill={theme.accent} opacity=".13"/><circle cx={pt.x} cy={pt.y} r="5" fill={theme.accent}/></g>)}
       {p.large&&<><text x="116" y="33" fill="#94a3b8" fontSize="8">Industrial Ave</text><text x="214" y="82" fill="#94a3b8" fontSize="8">North Rd</text></>}
     </svg>
-    <Box sx={{ position:'absolute', left:10, bottom:10 }}><ToneBadge text="3 devices" tone="accent" theme={theme}/></Box>
-    {p.large&&<Box sx={{ position:'absolute', right:10, top:10, px:.8, py:.45, borderRadius:1, bgcolor:'rgba(255,255,255,.88)', border:`1px solid ${theme.border}` }}><Typography sx={{ fontSize:9.5, color:theme.muted }}>12.4 km route</Typography></Box>}
+    <Box sx={{position:'absolute',left:10,bottom:10}}><ToneBadge text="3 devices" tone="accent" theme={theme}/></Box>
+    {p.large&&<Box sx={{position:'absolute',right:10,top:10,px:.8,py:.45,borderRadius:1,bgcolor:'rgba(255,255,255,.88)',border:`1px solid ${theme.border}`}}><Typography sx={{fontSize:9.5,color:theme.muted}}>12.4 km route</Typography></Box>}
   </Box>;
+
+  if (p.h < 3) return map;
+  return <Box sx={{height:'100%',display:'grid',gridTemplateRows:'minmax(0,1fr) auto',gap:.85,direction:'ltr'}}>{map}<Box sx={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:.7}}><StatBox label={isRoute?'DISTANCE':'DEVICES'} value={isRoute?'12.4 km':'3 online'} theme={theme} accent/><StatBox label={isRoute?'ETA':'UPDATED'} value={isRoute?'18 min':'38 sec'} theme={theme}/><StatBox label={isRoute?'AVG SPEED':'ZONE'} value={isRoute?'42 km/h':'Factory A'} theme={theme}/></Box></Box>;
 }
 
 function MaterialCoordinates({ def, theme, locale, size }: Props) {
@@ -483,18 +528,15 @@ function MaterialCompass({ def, theme, locale, size }: Props) {
     const pointerAngle=value-90; const rad=pointerAngle*Math.PI/180; const radius=dia*.36; const cx=dia/2; const cy=dia/2; const px=cx+Math.cos(rad)*radius; const py=cy+Math.sin(rad)*radius;
     return <Box sx={{ width:dia,height:dia,borderRadius:'50%',border:`1px solid ${theme.border}`,bgcolor:'#fbfcff',position:'relative',display:'grid',placeItems:'center',boxShadow:'inset 0 0 0 8px #fff' }}>
       <Box sx={{position:'absolute',inset:14,borderRadius:'50%',border:'1px dashed #d9deea'}}/>
-      {['N','E','S','W'].map((x,i)=><Typography key={x} sx={{ position:'absolute',fontSize:11,color:x==='N'?theme.accent:theme.muted,fontWeight:x==='N'?850:650,top:i===0?8:i===2?undefined:'50%',bottom:i===2?8:undefined,left:i===3?10:i===1?undefined:'50%',right:i===1?10:undefined,transform:i===0||i===2?'translateX(-50%)':i===1||i===3?'translateY(-50%)':undefined }}>{x}</Typography>)}
-      <Box sx={{ position:'absolute',left:px-6,top:py-6,width:12,height:12,transform:`rotate(${value}deg)`,color:theme.accent }}><Box sx={{ width:0,height:0,borderLeft:'6px solid transparent',borderRight:'6px solid transparent',borderBottom:`12px solid ${theme.accent}` }}/></Box>
-      <Box sx={{ width:dia>180?96:72,height:dia>180?64:50,borderRadius:1.5,bgcolor:'#fff',border:`1px solid ${theme.border}`,display:'grid',placeItems:'center',textAlign:'center',boxShadow:'0 4px 12px rgba(15,23,42,.04)' }}><Box><Typography sx={{fontSize:dia>180?34:25,fontWeight:850,lineHeight:1}}>{value}°</Typography><Typography sx={{fontSize:9.5,color:theme.muted,mt:.25}}>{cardinal}</Typography></Box></Box>
+      {['N','E','S','W'].map((x,i)=><Typography key={x} sx={{position:'absolute',fontSize:11,color:x==='N'?theme.accent:theme.muted,fontWeight:x==='N'?850:650,top:i===0?8:i===2?undefined:'50%',bottom:i===2?8:undefined,left:i===3?10:i===1?undefined:'50%',right:i===1?10:undefined,transform:i===0||i===2?'translateX(-50%)':i===1||i===3?'translateY(-50%)':undefined}}>{x}</Typography>)}
+      <Box sx={{position:'absolute',left:px-6,top:py-6,width:12,height:12,transform:`rotate(${value}deg)`,color:theme.accent}}><Box sx={{width:0,height:0,borderLeft:'6px solid transparent',borderRight:'6px solid transparent',borderBottom:`12px solid ${theme.accent}`}}/></Box>
+      <Box sx={{width:dia>180?96:72,height:dia>180?64:50,borderRadius:1.5,bgcolor:'#fff',border:`1px solid ${theme.border}`,display:'grid',placeItems:'center',textAlign:'center',boxShadow:'0 4px 12px rgba(15,23,42,.04)'}}><Box><Typography sx={{fontSize:dia>180?34:25,fontWeight:850,lineHeight:1}}>{value}°</Typography><Typography sx={{fontSize:9.5,color:theme.muted,mt:.25}}>{cardinal}</Typography></Box></Box>
     </Box>;
   };
   if(p.compact) return <Box sx={{height:'100%',display:'grid',placeItems:'center',direction:'ltr'}}><CompassFace dia={132}/></Box>;
-  if(p.wide && !p.large) return <Box sx={{height:'100%',display:'grid',gridTemplateColumns:'164px 1fr',alignItems:'center',gap:1.4,direction:'ltr'}}><Box sx={{display:'grid',placeItems:'center'}}><CompassFace dia={152}/></Box><Box sx={{display:'grid',gap:.7}}><StatBox label={label(locale,'Heading','جهت')} value={`${value}°`} theme={theme} accent/><StatBox label={label(locale,'Direction','جهت اصلی')} value={cardinal} theme={theme}/><Box sx={{display:'flex',alignItems:'center',gap:.7}}><ToneBadge text={label(locale,'GPS heading','جهت GPS')} tone="success" theme={theme}/><Typography sx={{fontSize:9.5,color:theme.muted}}>±2°</Typography></Box></Box></Box>;
+  if(p.wide && !p.large) return <Box sx={{height:'100%',display:'grid',gridTemplateColumns:'142px minmax(0,1fr)',alignItems:'center',gap:1.15,direction:'ltr'}}><Box sx={{display:'grid',placeItems:'center'}}><CompassFace dia={128}/></Box><Box sx={{display:'grid',gap:.55,minWidth:0}}><Box sx={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:.55}}><StatBox label={label(locale,'Heading','جهت')} value={`${value}°`} theme={theme} accent/><StatBox label={label(locale,'Direction','جهت اصلی')} value={cardinal} theme={theme}/></Box><Box sx={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:.7,px:.9,py:.55,border:`1px solid ${theme.border}`,borderRadius:1.25,bgcolor:'#fbfcff'}}><ToneBadge text={label(locale,'GPS heading','جهت GPS')} tone="success" theme={theme}/><Typography sx={{fontSize:9.5,color:theme.muted,whiteSpace:'nowrap'}}>±2°</Typography></Box></Box></Box>;
   if(!p.large) return <Box sx={{height:'100%',display:'grid',placeItems:'center',direction:'ltr'}}><CompassFace dia={168}/></Box>;
-  return <Box sx={{height:'100%',display:'grid',gridTemplateRows:'minmax(0,1fr) auto',gap:1,direction:'ltr'}}>
-    <Box sx={{minHeight:0,display:'grid',placeItems:'center'}}><CompassFace dia={252}/></Box>
-    <Box sx={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:.7}}><StatBox label={label(locale,'Heading','جهت')} value={`${value}°`} theme={theme} accent/><StatBox label={label(locale,'Direction','جهت اصلی')} value={cardinal} theme={theme}/><StatBox label={label(locale,'Accuracy','دقت')} value="±2°" theme={theme}/></Box>
-  </Box>;
+  return <Box sx={{height:'100%',display:'grid',gridTemplateRows:'minmax(0,1fr) auto',gap:1,direction:'ltr'}}><Box sx={{minHeight:0,display:'grid',placeItems:'center'}}><CompassFace dia={252}/></Box><Box sx={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:.7}}><StatBox label={label(locale,'Heading','جهت')} value={`${value}°`} theme={theme} accent/><StatBox label={label(locale,'Direction','جهت اصلی')} value={cardinal} theme={theme}/><StatBox label={label(locale,'Accuracy','دقت')} value="±2°" theme={theme}/></Box></Box>;
 }
 
 function MaterialButton({ def, theme, locale, size }: Props) {
