@@ -1,65 +1,64 @@
-# Gaming theme integration
+# Minimal Mono — Integration
 
-Shared integration is required only if your project has not already applied the gaming dispatch hooks.
+Shared integration is required only to route theme ID `minimal` to the new isolated renderer.
 
-This patch intentionally does **not** modify shared files because theme work is happening in parallel.
+Do **not** rename the stable theme ID.
 
-The dedicated theme file exports both named components:
+## Required change
 
-```tsx
-export function GamingVisualRenderer(...) { ... }
-export function GamingFrame(...) { ... }
+Edit:
+
+`src/widgets/renderers/WidgetVisuals.tsx`
+
+### 1. Add this import next to the Material renderer import
+
+```ts
+import { MinimalVisualRenderer } from '../themes/MinimalVisuals';
 ```
 
-If you already fixed the gaming export/dispatch locally, no new shared integration change is required for pass 4.
+### 2. Add this dispatcher branch immediately after the Material branch
 
-## 1. `src/widgets/renderers/WidgetVisuals.tsx`
+Current:
 
-Import the dedicated renderer:
-
-```tsx
-import { GamingVisualRenderer } from '../themes/GamingVisuals';
-```
-
-At the start of `WidgetVisualRenderer`, dispatch only the stable `gaming` theme ID:
-
-```tsx
-if (props.theme.id === 'gaming') return <GamingVisualRenderer {...props} />;
-```
-
-Example:
-
-```tsx
+```ts
 export function WidgetVisualRenderer(props: Props) {
   if (props.theme.id === 'material') return <MaterialVisualRenderer {...props} />;
-  if (props.theme.id === 'gaming') return <GamingVisualRenderer {...props} />;
-
   const v = props.def.visual;
-  // existing shared renderer...
-}
 ```
 
-## 2. `src/widgets/core/WidgetFrame.tsx`
+Replace that opening with:
 
-Import the gaming frame:
-
-```tsx
-import { GamingFrame as GamingThemeFrame } from '../themes/GamingVisuals';
+```ts
+export function WidgetVisualRenderer(props: Props) {
+  if (props.theme.id === 'material') return <MaterialVisualRenderer {...props} />;
+  if (props.theme.id === 'minimal') return <MinimalVisualRenderer {...props} />;
+  const v = props.def.visual;
 ```
 
-Route only the stable gaming ID:
+No other shared renderer edits are required. The older scattered `theme.id === 'minimal'` branches may remain temporarily because this early return bypasses them. They can be removed later during shared-renderer cleanup by the coordinator.
 
-```tsx
-case 'gaming':
-  return <GamingThemeFrame {...props} />;
+## Optional display-name cleanup
+
+The shared token currently labels the theme as `Minimal`. If the coordinator wants the UI to match the working name used for this pass, change only the display label in `src/widgets/core/themeTokens.ts`:
+
+```ts
+minimal: {
+  id: 'minimal',
+  label: 'Minimal Mono',
 ```
 
-No changes are required in:
+This is optional and does not affect persistence/API compatibility.
 
-- `registry.ts`
-- `types.ts`
-- `themeTokens.ts`
-- `App.tsx`
-- `styles.css`
+## QA commands
 
-Pass 4 changes only internal gaming-theme layouts; the integration contract is unchanged.
+PowerShell:
+
+```powershell
+$env:WIDGET_QA_THEME="minimal"
+npm run screenshots:full
+
+$env:WIDGET_QA_THEME="minimal"
+npm run screenshots
+```
+
+Then inspect all generated Minimal screenshots for metrics, controls, charts, location, tables, and display.
