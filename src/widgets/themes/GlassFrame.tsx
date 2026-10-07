@@ -48,9 +48,9 @@ export function GlassFrame(p: GlassFrameProps) {
         }}>
     <Box sx={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
             background: `radial-gradient(circle at 94% 4%, ${p.theme.accent}1c 0, transparent 24%), radial-gradient(circle at 5% 96%, ${p.theme.accent2}12 0, transparent 28%), linear-gradient(112deg, transparent 0 58%, rgba(255,255,255,.035) 71%, transparent 82%)` }}/>
-    <Box sx={{ position: 'absolute', left: 14, right: 14, top: 0, height: 1, pointerEvents: 'none', zIndex: 1,
+    <Box sx={{ position: 'absolute', left: 14, right: 14, top: 0, height: '1px', pointerEvents: 'none', zIndex: 1,
             background: 'linear-gradient(90deg, transparent, rgba(255,255,255,.34) 30%, rgba(125,211,252,.16) 68%, transparent)' }}/>
-    <Box sx={{ position: 'absolute', left: 0, top: 20, bottom: 20, width: 1, pointerEvents: 'none', zIndex: 1,
+    <Box sx={{ position: 'absolute', left: 0, top: 20, bottom: 20, width: '1px', pointerEvents: 'none', zIndex: 1,
             background: 'linear-gradient(180deg, transparent, rgba(255,255,255,.12), transparent)' }}/>
 
     <Box sx={{ position: 'relative', zIndex: 2, px: d.compact ? 1.15 : 1.35, pt: d.compact ? 1.05 : 1.15, pb: d.compact ? .45 : .55,
@@ -78,7 +78,7 @@ export function GlassFrame(p: GlassFrameProps) {
         <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: statusColor, boxShadow: `0 0 12px ${statusColor}99` }}/>
         <Typography sx={{ fontSize: 9.5, fontWeight: 750, color: 'rgba(235,248,252,.74)', whiteSpace: 'nowrap' }}>{p.status}</Typography>
       </Box>
-      <Box sx={{ width: 1, height: 10, bgcolor: 'rgba(255,255,255,.15)' }}/>
+      <Box sx={{ width: '1px', height: 10, flex: '0 0 1px', bgcolor: 'rgba(255,255,255,.15)' }}/>
       <Typography sx={{ fontSize: 9.5, color: 'rgba(227,242,248,.56)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.locationLabel}</Typography>
       {d.large && <Typography sx={{ marginInlineStart: 'auto', fontSize: 9.2, color: 'rgba(227,242,248,.48)', direction: rtl ? 'rtl' : 'ltr', whiteSpace: 'nowrap' }}>{p.lastSeen}</Typography>}
     </Box>}
