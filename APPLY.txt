@@ -1,4 +1,4 @@
-Material 3 patch v9
+Material 3 patch v10
 
 Scope:
   Material theme only.
@@ -6,15 +6,16 @@ Scope:
 Replace:
   src/widgets/themes/MaterialVisuals.tsx
 
-This pass was based on the latest EN + FA material-qa(1).zip.
+Based on:
+  material-qa(2).zip EN + FA QA results.
 
 Main fixes:
-  - Replaced transformed MUI switches with a native-sized Material toggle to remove real body overflow in Switch / Door Lock / Siren.
-  - Fixed 3x2 iFrame / External Content vertical overflow and clipped chart.
-  - Tightened iFrame 2x1 / 2x2 layouts and made all inner grid tracks overflow-safe.
-  - Made SVG charts/gauges block-level to eliminate baseline-induced 4–6 px false overflow.
-  - Tightened tall SCADA trend charts so they no longer force intrinsic extra height.
-  - Kept all changes isolated to Material theme renderer.
+  - RGB / Light Color 2x1 is re-composed horizontally and no longer vertically overflows.
+  - 2x1 RGB keeps Hue interactive and uses compact +/- brightness controls instead of two stacked sliders.
+  - 1x1 RGB is tightened to avoid wasting vertical space.
+  - Large RGB remains fully interactive with Hue and Brightness sliders.
+  - 3x3 SCADA trend panels now use overflow-safe grid rows so their charts cannot force extra intrinsic height.
+  - No shared files or other themes changed.
 
 After copying:
   Remove-Item -Recurse -Force .\node_modules\.vite -ErrorAction SilentlyContinue
