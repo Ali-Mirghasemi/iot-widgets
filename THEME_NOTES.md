@@ -1,101 +1,119 @@
-# Cupertino (`ios`) Theme Notes
+# HUD / Cyber (`gaming`) theme notes — QA screenshot pass 4
 
 ## Scope
 
-This patch redesigns the complete `ios` widget family as a dedicated, reusable Cupertino renderer instead of continuing to layer iOS conditions into the generic renderer. It covers all 35 supported visual types across metrics, controls, charts, location, tables, and display widgets.
+This patch changes only the dedicated `gaming` theme implementation. Stable theme ID and widget IDs are unchanged. Material 3 and every other theme remain untouched.
 
-The stable theme ID remains `ios`. No Material 3 or other theme implementation is included in this patch.
+Theme-owned implementation:
 
-## Design direction
+- `src/widgets/themes/GamingVisuals.tsx`
 
-Cupertino uses restrained system-like surfaces rather than a recolored Material card or a glass-heavy treatment. The visual language uses compact 18–20 px containers, subtle separators, quiet elevation, square-rounded semantic icon tiles, strong numeric hierarchy, restrained system colors, and clear active/inactive state treatment.
+Both named exports are present:
 
-The layout deliberately changes with widget size:
+```tsx
+export function GamingVisualRenderer(...) { ... }
+export function GamingFrame(...) { ... }
+```
 
-- `1x1`: glanceable value/state and only the most important indicator.
-- `2x1`: secondary context, trend/history, or a more useful compact control layout.
-- `1x2`: vertical space is used for semantic tank/control/history compositions rather than simply centering a small component.
-- `2x2+`: adds statistics, metadata, history, event/context rows, richer visualizations, or richer control feedback.
+## QA bundle reviewed
 
-Semantic IoT treatments are used for battery, radio signal, tanks, fire/smoke/leak alarms, thermostat, map/route, compass, and SCADA instead of rendering every device as a generic KPI tile.
+Reviewed the user-generated `gaming-qa.zip` bundle in both locales:
 
-Interactive mock controls keep local theme-renderer state: button feedback, switches, sliders, numeric stepper/input, thermostat setpoint, color controls, and direction pad all respond without requiring showcase-only state in `App.tsx`.
+- English (`en`)
+- Persian / RTL (`fa`)
 
-Persian remains supported through localized labels and RTL layout where appropriate. Numeric, chart, coordinates, telemetry, and other technical content intentionally stays LTR where that improves readability.
+The bundle reports:
 
-## Post-screenshot QA revision
+- widget screenshots: PASS
+- full screenshots: PASS
+- console/page errors: 0
+- render errors: 0
 
-The first Cupertino patch was rendered by the user with the full QA screenshot pass and all six `ios` category sheets were inspected visually. The second revision in this ZIP addresses the issues that were visible in those sheets:
+All six categories were visually inspected:
 
-- Large metric and line/area chart cards now let the chart consume the available flexible height instead of leaving a large blank middle region.
-- Large state/status widgets now use a centered semantic hero treatment plus metadata instead of stretching a small `1x1` composition across a `2x2` card.
-- `2x2` command, switch/lock/siren, slider, manual set-value, and directional controls now expose richer context and use the available vertical space intentionally.
-- Large state timeline/history cards now include availability/warning/fault summary context and distribute timeline rows through the available height.
-- Large coordinate widgets now include a GPS-lock/fix visualization instead of leaving the upper half unused.
-- Large tables now use otherwise-empty `3x2` / `3x3` space for trend/activity context plus refresh/window metadata.
-- Large fire/smoke/leak widgets now use semantic safety-zone hero treatments and richer event metadata.
-- The compass center label now masks the needle so the heading number remains readable.
-- Gauge needle geometry was corrected so the needle uses the same left-to-right semicircle as the visible gauge arc.
+- metrics
+- controls
+- charts
+- location
+- tables
+- display
 
-## Reference direction
+The individual widget sheets were also checked, especially variants flagged by the automated overflow heuristic.
 
-The redesign was informed by current Apple Human Interface Guidelines for Widgets, Controls, Toggles, Sliders, Gauges, Charts, Layout, and right-to-left interfaces, plus Apple Home interaction patterns. The implementation uses those principles for glanceability, hierarchy, adaptive composition, familiar control behavior, and restrained status color without copying an Apple product interface pixel-for-pixel.
+## Pass-4 fixes
 
-The separate Aurora Glass theme exists in this project, so Cupertino intentionally avoids making translucent/liquid-glass material the dominant visual device.
+### 1. Generic metric `2x1` clipping
 
-## Third QA revision (individual widget captures)
+The real screenshots exposed a repeated problem in the generic metric renderer:
 
-The user supplied a second full-sheet archive plus per-widget captures and the generated `report.json`. This pass focused on edge defects rather than another visual redesign. The v3 patch adds:
+- the `2x1` history composition was slightly taller than the available frame body;
+- bottom history-axis labels (`00 / 12 / NOW`) were clipped;
+- the QA diagnostic therefore marked the same `2x1` pattern as outside/body-overflow for multiple metric widgets.
 
-- Sparkline/chart endpoints are inset so the final marker is no longer clipped at the card edge.
-- Sparkline normalization now preserves small telemetry changes (for example 24.4–24.8 °C) instead of flattening sub-unit ranges.
-- Sparkline and SCADA SVGs render as block elements, removing the inline-SVG baseline that produced spurious vertical scroll/overflow in large table and SCADA cards.
-- Value/unit typography now uses an explicit baseline flex row and normal line box, addressing the QA detector's repeated text scroll-overflow hits across metric, gauge, slider, and related numeric widgets.
-- Cupertino switches constrain the hidden MUI input hit target to the visible switch bounds, reducing false outside-widget detections while preserving interaction.
-- Horizontal slider roots now use border-box containment so their rails do not extend beyond `1x1` card bounds.
-- `2x1` directional control uses the compact pad geometry and tighter caption spacing so the last-command row remains inside the available body height.
-- Decorative map roads were redrawn with endpoints inside the viewBox instead of relying on clipping beyond the map bounds.
-- Clock line-height was normalized to prevent a false text scroll-height overflow.
+Affected widgets included temperature, humidity, voltage, current, power, energy, light, CO₂, PM2.5, flow, vibration, noise, distance, weight, rain, and other widgets sharing the generic metric visual.
 
-## QA performed
+The `2x1` composition now has its own compact-wide layout:
 
-- Read `docs/profile.md`, `docs/agents.md`, and `docs/todo.md` completely before the initial edit.
-- Inspected the original `ios` source paths and original iOS full-screenshot category sheets before redesigning.
-- Verified dispatch coverage for all 35 `WidgetVisual` values.
-- Inspected the user's generated post-patch `metrics`, `controls`, `charts`, `location`, `tables`, and `display` full QA sheets at supported sizes.
-- Inspected the follow-up per-widget captures and `report.json` diagnostics from the second QA archive, including every category and the reported outside/scroll-overflow suspects.
-- Performed a TypeScript/JSX transpile syntax check on the v3 `IOSVisuals.tsx` and `IOSFrame.tsx`; both pass.
-- Full project `tsc` remains blocked in the supplied sandbox by the incomplete `node_modules` tree (missing React/Babel/etc. type packages), as in the first pass.
-- Playwright screenshot generation also remains unavailable in this sandbox because the supplied dependency tree is incomplete.
+- smaller primary readout;
+- tighter status/delta row;
+- explicitly constrained chart region;
+- dedicated 8 px history-axis row;
+- internal overflow containment rather than relying on clipping at the frame boundary.
 
-A fresh screenshot pass should be run after applying v3. Both requested screenshot commands were attempted again in the sandbox, but the supplied dependency tree still lacks `node_modules/playwright/index.js`, so post-v3 rendering cannot be generated locally here.
+`1x1` and `2x2` metric compositions are unchanged.
 
-## Files in this patch
+### 2. Directional Control `2x1` clipping
 
-- `src/widgets/themes/IOSVisuals.tsx`
-- `src/widgets/themes/IOSFrame.tsx`
-- `THEME_NOTES.md`
-- `INTEGRATION.md`
+The real `2x1` Directional Control screenshot showed the bottom D-pad button extending into the frame boundary and being clipped.
 
-## Fourth QA revision — bilingual English / Persian bundle
+The `2x1` composition is now structurally different:
 
-The user supplied a single `ios-qa.zip` generated by the automated QA runner. Both English (`en`) and Persian (`fa`) outputs were inspected across all six categories, including full sheets, individual widget captures, and both `report.json` files.
+- 108 px D-pad on the left;
+- motion speed, last command, and mode on the right;
+- no bottom control extends beyond the body;
+- all mock directional buttons remain interactive.
 
-Observed QA status before this revision:
+`1x1` remains the glanceable D-pad and `2x2` remains the richer PTZ/motion-vector view.
 
-- English: widget QA PASS, full-page QA PASS, 0 console errors, 0 render errors.
-- Persian: widget QA PASS, full-page QA PASS, 0 console errors, 0 render errors.
-- RTL card/header/content alignment is behaving correctly; telemetry, coordinates, charts, SCADA labels, and other technical numeric content intentionally remain LTR where appropriate.
+## About the QA overflow counts
 
-The remaining findings were mostly detector-visible geometry rather than obvious visual breakage. This v4 cleanup therefore targets containment and compact-size composition only:
+The automated QA report still identifies many `scrollOverflow` suspects even where the screenshot is visually correct. Most of these come from:
 
-- Numeric `ValueText` and clock line boxes now have enough line-height for the rendered glyph metrics, reducing false scroll-height overflow diagnostics without shrinking the text.
-- Battery terminal geometry is contained inside its own wrapper instead of extending outside the battery element's scroll bounds.
-- MUI switch hidden inputs are explicitly constrained to the visible switch bounds and unnecessary switch scaling was removed.
-- MUI slider thumb hit-area pseudo-elements are constrained to the thumb bounds, preventing invisible hit-target geometry from increasing card/body scroll dimensions.
-- Thermostat and color-control sliders use the same containment rules as the main slider/fan controls.
-- `3x1` time-series, area, bar, and histogram widgets now use a dedicated slim-wide composition with reduced chart minimum height so their content fits the short body without clipping.
-- `3x2` table widgets now cap their contextual trend panel to the actually available body height; `3x3` remains free to use the larger flexible context area.
-- Sparkline SVGs now explicitly cap their rendered height to their containing flex/grid cell to prevent intrinsic SVG sizing from expanding table context rows.
+- fractional CSS/MUI line-height rounding by 1–6 px;
+- SVG internals intentionally using visible overflow;
+- intentionally oversized radar/crosshair decoration that is clipped by its own parent;
+- MUI range/input internals.
 
-The v4 `IOSVisuals.tsx` and unchanged `IOSFrame.tsx` pass a TypeScript/JSX transpile syntax check. A fresh Playwright render could not be generated in this sandbox because the supplied project dependency tree still lacks the runnable Playwright/Vite package files; the user's QA runner should be used for the final confirmation pass.
+These are different from real widget/card overflow. The QA report shows `cardScrollOverflow: false` throughout the reviewed gaming captures.
+
+The two visible issues that corresponded to actual outside/clipped content were the generic metric `2x1` layout and Directional Control `2x1`; both are addressed in this pass.
+
+## RTL / Persian
+
+The Persian screenshots remain compatible:
+
+- titles and prose use RTL where appropriate;
+- coordinates, telemetry values, units, axes, gauges, and technical labels remain LTR where this improves readability;
+- the pass-4 layout changes use the same locale-safe behavior.
+
+## Validation
+
+- TypeScript/TSX transpile syntax check for `GamingVisuals.tsx`: **0 diagnostics**.
+- No shared files are included in this patch.
+- No Material 3 or other theme file was modified.
+
+After applying the patch, rerun:
+
+```powershell
+$env:WIDGET_QA_THEME="gaming"
+npm run screenshots:full
+
+$env:WIDGET_QA_THEME="gaming"
+npm run screenshots
+```
+
+For the next screenshot review, the important regression checks are:
+
+- generic metric `2x1`: bottom history labels fully visible;
+- Directional Control `2x1`: complete D-pad visible;
+- English and Persian remain aligned identically.
