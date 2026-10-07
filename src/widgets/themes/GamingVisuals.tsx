@@ -322,18 +322,18 @@ function BooleanStatus({ def, locale, size }: VisualProps) {
   const tone = on ? HUD.green : HUD.red;
   const label = on ? (locale === 'fa' ? 'فعال' : 'ACTIVE') : (locale === 'fa' ? 'غیرفعال' : 'INACTIVE');
   const rtl = locale === 'fa';
-  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: p.compact || p.tall ? '1fr' : 'auto 1fr', placeItems: p.compact || p.tall ? 'center' : undefined, alignItems: 'center', gap: 1.35, direction: 'ltr' }}>
-    <Box onClick={() => setOn(v => !v)} sx={{ cursor: 'pointer', width: p.compact ? 84 : 96, height: p.compact ? 84 : 96, display: 'grid', placeItems: 'center', position: 'relative', clipPath: 'polygon(16% 0,84% 0,100% 16%,100% 84%,84% 100%,16% 100%,0 84%,0 16%)', bgcolor: `${tone}0b`, border: `1px solid ${tone}99`, boxShadow: on ? `0 0 28px ${tone}20` : 'none' }}>
-      <Box sx={{ width: 38, height: 38, border: `2px solid ${tone}`, position: 'relative', transform: 'rotate(45deg)', boxShadow: `0 0 15px ${tone}35`, '&:after': { content: '""', position: 'absolute', inset: 9, bgcolor: tone } }} />
-    </Box>
-    <Box sx={{ textAlign: p.compact || p.tall ? 'center' : 'left', minWidth: 0 }}>
-      <HudLabel tone={tone} rtl={rtl}>{label}</HudLabel>
-      {!p.compact && <><Typography sx={{ mt: .45, fontFamily: 'inherit', fontSize: 20, fontWeight: 760, color: HUD.fg }}>{on ? 'SYS_READY' : 'SYS_HOLD'}</Typography><Typography sx={{ mt: .45, fontFamily: 'inherit', fontSize: 10.5, color: HUD.muted }}>{locale === 'fa' ? 'برای تغییر وضعیت کلیک کنید' : 'Click to toggle mock state'}</Typography></>}
-    </Box>
+  const indicatorSize = p.compact ? 84 : p.large ? 122 : 96;
+  const indicator = <Box onClick={() => setOn(v => !v)} sx={{ cursor: 'pointer', width: indicatorSize, height: indicatorSize, display: 'grid', placeItems: 'center', position: 'relative', clipPath: 'polygon(16% 0,84% 0,100% 16%,100% 84%,84% 100%,16% 100%,0 84%,0 16%)', bgcolor: `${tone}0b`, border: `1px solid ${tone}99`, boxShadow: on ? `0 0 28px ${tone}20` : 'none' }}><Box sx={{ width: p.large ? 48 : 38, height: p.large ? 48 : 38, border: `2px solid ${tone}`, position: 'relative', transform: 'rotate(45deg)', boxShadow: `0 0 15px ${tone}35`, '&:after': { content: '""', position: 'absolute', inset: p.large ? 11 : 9, bgcolor: tone } }} /></Box>;
+
+  if (!p.large) return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: p.compact || p.tall ? '1fr' : 'auto 1fr', placeItems: p.compact || p.tall ? 'center' : undefined, alignItems: 'center', gap: 1.35, direction: 'ltr' }}>{indicator}<Box sx={{ textAlign: p.compact || p.tall ? 'center' : 'left', minWidth: 0 }}><HudLabel tone={tone} rtl={rtl}>{label}</HudLabel>{!p.compact && <><Typography sx={{ mt: .45, fontFamily: 'inherit', fontSize: 20, fontWeight: 760, color: HUD.fg }}>{on ? 'SYS_READY' : 'SYS_HOLD'}</Typography><Typography sx={{ mt: .45, fontFamily: 'inherit', fontSize: 10.5, color: HUD.muted }}>{rtl ? 'برای تغییر وضعیت کلیک کنید' : 'Click to toggle mock state'}</Typography></>}</Box></Box>;
+
+  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr)', gap: 1.55, alignItems: 'center', direction: 'ltr' }}>
+    <Box sx={{ display: 'grid', justifyItems: 'center', gap: .85 }}>{indicator}<HudLabel tone={tone}>{on ? 'INPUT / HIGH' : 'INPUT / LOW'}</HudLabel></Box>
+    <Box sx={{ minWidth: 0, display: 'grid', gap: 1 }}><HudLabel tone={tone} rtl={rtl}>{label}</HudLabel><Readout value={on ? 'SYS_READY' : 'SYS_HOLD'} compact tone={tone} /><TickRail value={on ? 92 : 12} max={100} segments={16} height={12} /><Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: .7 }}><MiniStat label="UPTIME" value="18d 04h" tone={HUD.green} /><MiniStat label="FAULTS" value={on ? '0' : '1'} tone={on ? HUD.green : HUD.red} /><MiniStat label="MODE" value={on ? 'AUTO' : 'HOLD'} tone={tone} /></Box><Box><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><HudLabel>state trace</HudLabel><HudLabel tone={HUD.dim}>15 MIN</HudLabel></Box><HudSparkline values={on ? [90,92,91,93,92,93,94,93,94,94,95,94] : [91,88,64,31,13,12,11,12,10,11,12,11]} height={58} color={tone} fill /></Box></Box>
   </Box>;
 }
 
-function ArcGauge({ value, max, unit, tone, compact }: { value: number; max: number; unit: string; tone: string; compact: boolean }) {
+function ArcGauge({ value, max, unit, tone, compact, large = false }: { value: number; max: number; unit: string; tone: string; compact: boolean; large?: boolean }) {
   const pct = clamp(value / Math.max(1, max), 0, 1);
   const start = -220;
   const sweep = 260;
@@ -343,22 +343,12 @@ function ArcGauge({ value, max, unit, tone, compact }: { value: number; max: num
   const needleY = 72 + Math.sin(rad) * 39;
   const circumference = 2 * Math.PI * 48;
   const visible = circumference * .72;
-  return <Box sx={{ width: compact ? 138 : 164, height: compact ? 118 : 138, position: 'relative', direction: 'ltr' }}>
+  return <Box sx={{ width: compact ? 138 : large ? 192 : 164, height: compact ? 118 : large ? 164 : 138, position: 'relative', direction: 'ltr' }}>
     <svg viewBox="0 0 140 118" width="100%" height="100%" aria-hidden>
       <circle cx="70" cy="72" r="48" fill="none" stroke="rgba(25,247,255,.08)" strokeWidth="7" strokeDasharray={`${visible} ${circumference}`} transform="rotate(145 70 72)" />
       <circle cx="70" cy="72" r="48" fill="none" stroke={tone} strokeWidth="7" strokeDasharray={`${visible * pct} ${circumference}`} transform="rotate(145 70 72)" />
-      {Array.from({ length: 13 }).map((_, i) => {
-        const a = (start + (sweep / 12) * i) * Math.PI / 180;
-        const x1 = 70 + Math.cos(a) * 52;
-        const y1 = 72 + Math.sin(a) * 52;
-        const x2 = 70 + Math.cos(a) * 58;
-        const y2 = 72 + Math.sin(a) * 58;
-        return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(231,251,255,.38)" strokeWidth="1" />;
-      })}
-      <line x1="70" y1="72" x2={needleX} y2={needleY} stroke={HUD.fg} strokeWidth="2" />
-      <circle cx="70" cy="72" r="4" fill={tone} />
-      <text x="70" y="103" textAnchor="middle" fill={HUD.fg} fontSize="18" fontWeight="700">{value}</text>
-      <text x="70" y="114" textAnchor="middle" fill={HUD.muted} fontSize="7.5">{unit}</text>
+      {Array.from({ length: 13 }).map((_, i) => { const a = (start + (sweep / 12) * i) * Math.PI / 180; const x1 = 70 + Math.cos(a) * 52; const y1 = 72 + Math.sin(a) * 52; const x2 = 70 + Math.cos(a) * 58; const y2 = 72 + Math.sin(a) * 58; return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(231,251,255,.38)" strokeWidth="1" />; })}
+      <line x1="70" y1="72" x2={needleX} y2={needleY} stroke={HUD.fg} strokeWidth="2" /><circle cx="70" cy="72" r="4" fill={tone} /><text x="70" y="103" textAnchor="middle" fill={HUD.fg} fontSize="18" fontWeight="700">{value}</text><text x="70" y="114" textAnchor="middle" fill={HUD.muted} fontSize="7.5">{unit}</text>
     </svg>
   </Box>;
 }
@@ -373,21 +363,9 @@ function Gauge({ def, size }: VisualProps) {
   const state = pct > .9 ? 'CRITICAL' : pct > .75 ? 'WATCH' : 'NOMINAL';
 
   if (p.compact) return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center' }}><ArcGauge value={value} max={max} unit={unit} tone={tone} compact /></Box>;
+  if (p.wide && !p.large) return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: '145px 1fr', gap: 1.3, alignItems: 'center', direction: 'ltr' }}><Box><HudLabel tone={tone}>{state}</HudLabel><Readout value={value} unit={unit} /><Typography sx={{ mt: .5, fontFamily: 'inherit', fontSize: 10, color: HUD.muted }}>RANGE 0 — {max}</Typography></Box><Box sx={{ display: 'grid', gap: 1 }}><TickRail value={value} max={max} segments={18} height={18} /><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><HudLabel tone={HUD.dim}>MIN</HudLabel><HudLabel tone={tone}>{Math.round(pct * 100)}%</HudLabel><HudLabel tone={HUD.dim}>MAX</HudLabel></Box></Box></Box>;
 
-  if (p.wide && !p.large) return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: '145px 1fr', gap: 1.3, alignItems: 'center', direction: 'ltr' }}>
-    <Box><HudLabel tone={tone}>{state}</HudLabel><Readout value={value} unit={unit} /><Typography sx={{ mt: .5, fontFamily: 'inherit', fontSize: 10, color: HUD.muted }}>RANGE 0 — {max}</Typography></Box>
-    <Box sx={{ display: 'grid', gap: 1 }}><TickRail value={value} max={max} segments={18} height={18} /><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><HudLabel tone={HUD.dim}>MIN</HudLabel><HudLabel tone={tone}>{Math.round(pct * 100)}%</HudLabel><HudLabel tone={HUD.dim}>MAX</HudLabel></Box></Box>
-  </Box>;
-
-  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: p.tall ? '1fr' : 'minmax(170px,.85fr) minmax(0,1.15fr)', alignItems: 'center', gap: 1.2, direction: 'ltr' }}>
-    <Box sx={{ display: 'grid', placeItems: 'center' }}><ArcGauge value={value} max={max} unit={unit} tone={tone} compact={false} /></Box>
-    <Box sx={{ minWidth: 0, borderLeft: p.tall ? 'none' : `1px solid ${HUD.borderSoft}`, borderTop: p.tall ? `1px solid ${HUD.borderSoft}` : 'none', pl: p.tall ? 0 : 1.1, pt: p.tall ? 1 : 0, display: 'grid', gap: 1 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><HudLabel tone={tone}>{state}</HudLabel><HudLabel>{Math.round(pct * 100)}% LOAD</HudLabel></Box>
-      <TickRail value={value} max={max} segments={16} height={13} />
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .8 }}><MiniStat label="LOW" value="0" /><MiniStat label="HIGH" value={String(max)} /></Box>
-      {p.large && <HudSparkline values={[35,42,38,51,58,54,65,68,64,71,69,72]} height={54} color={tone} />}
-    </Box>
-  </Box>;
+  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: p.tall ? '1fr' : p.large ? 'minmax(200px,.9fr) minmax(0,1.1fr)' : 'minmax(170px,.85fr) minmax(0,1.15fr)', alignItems: 'center', gap: 1.2, direction: 'ltr' }}><Box sx={{ display: 'grid', placeItems: 'center' }}><ArcGauge value={value} max={max} unit={unit} tone={tone} compact={false} large={p.large} /></Box><Box sx={{ minWidth: 0, height: p.large ? '100%' : 'auto', borderLeft: p.tall ? 'none' : `1px solid ${HUD.borderSoft}`, borderTop: p.tall ? `1px solid ${HUD.borderSoft}` : 'none', pl: p.tall ? 0 : 1.1, pt: p.tall ? 1 : 0, display: 'grid', gridTemplateRows: p.large ? 'auto auto auto minmax(0,1fr)' : undefined, alignContent: 'center', gap: 1 }}><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><HudLabel tone={tone}>{state}</HudLabel><HudLabel>{Math.round(pct * 100)}% LOAD</HudLabel></Box><TickRail value={value} max={max} segments={16} height={13} /><Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .8 }}><MiniStat label="LOW" value="0" /><MiniStat label="HIGH" value={String(max)} /></Box>{p.large && <Box sx={{ minHeight: 0 }}><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><HudLabel>load trace</HudLabel><HudLabel tone={HUD.dim}>30 MIN</HudLabel></Box><HudSparkline values={[35,42,38,51,58,54,65,68,64,71,69,72]} height="100%" color={tone} fill /></Box>}</Box></Box>;
 }
 
 function LineChart({ def, size }: VisualProps) {
@@ -443,18 +421,10 @@ function Donut({ def, size }: VisualProps) {
   const circumference = 2 * Math.PI * radius;
   const gap = circumference / segments;
   const dash = gap * .58;
-  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: p.compact || p.tall ? '1fr' : 'auto 1fr', placeItems: p.compact || p.tall ? 'center' : undefined, alignItems: 'center', gap: 1.35, direction: 'ltr' }}>
-    <Box sx={{ position: 'relative', width: p.compact ? 126 : p.wide && !p.large ? 124 : 150, height: p.compact ? 126 : p.wide && !p.large ? 124 : 150 }}>
-      <svg viewBox="0 0 120 120" width="100%" height="100%" aria-hidden>
-        <circle cx="60" cy="60" r={radius} fill="none" stroke="rgba(25,247,255,.07)" strokeWidth="9" />
-        <circle cx="60" cy="60" r={radius} fill="none" stroke={value > 85 ? HUD.amber : HUD.cyan} strokeWidth="9" strokeDasharray={`${dash} ${gap - dash}`} strokeDashoffset="0" transform="rotate(-90 60 60)" pathLength={circumference} opacity=".95" />
-        <circle cx="60" cy="60" r="34" fill="rgba(25,247,255,.025)" stroke="rgba(25,247,255,.12)" />
-      </svg>
-      <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', textAlign: 'center' }}><Box><Typography sx={{ fontFamily: 'inherit', fontSize: 26, fontWeight: 760 }}>{value}%</Typography><HudLabel>UTIL</HudLabel></Box></Box>
-      <Box sx={{ position: 'absolute', left: '50%', top: 1, transform: 'translateX(-50%)', width: 2, height: 7, bgcolor: active > 0 ? HUD.cyan : HUD.dim }} />
-    </Box>
-    {!p.compact && !p.tall && <Box sx={{ display: 'grid', gap: .9, minWidth: 0 }}><HudLabel>capacity matrix</HudLabel><MiniStat label="USED" value={`${value}%`} tone={value > 85 ? HUD.amber : HUD.cyan} /><MiniStat label="FREE" value={`${100 - value}%`} tone={HUD.green} />{p.large && <TickRail value={value} max={100} segments={14} height={12} />}</Box>}
-  </Box>;
+  const diameter = p.compact ? 126 : p.wide && !p.large ? 124 : p.large ? 178 : 150;
+  const ring = <Box sx={{ position: 'relative', width: diameter, height: diameter }}><svg viewBox="0 0 120 120" width="100%" height="100%" aria-hidden><circle cx="60" cy="60" r={radius} fill="none" stroke="rgba(25,247,255,.07)" strokeWidth="9" /><circle cx="60" cy="60" r={radius} fill="none" stroke={value > 85 ? HUD.amber : HUD.cyan} strokeWidth="9" strokeDasharray={`${dash} ${gap - dash}`} strokeDashoffset="0" transform="rotate(-90 60 60)" pathLength={circumference} opacity=".95" /><circle cx="60" cy="60" r="34" fill="rgba(25,247,255,.025)" stroke="rgba(25,247,255,.12)" /></svg><Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', textAlign: 'center' }}><Box><Typography sx={{ fontFamily: 'inherit', fontSize: p.large ? 30 : 26, fontWeight: 760 }}>{value}%</Typography><HudLabel>UTIL</HudLabel></Box></Box><Box sx={{ position: 'absolute', left: '50%', top: 1, transform: 'translateX(-50%)', width: 2, height: 7, bgcolor: active > 0 ? HUD.cyan : HUD.dim }} /></Box>;
+  if (p.compact || p.tall) return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center' }}>{ring}</Box>;
+  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: p.large ? 'minmax(185px,.85fr) minmax(0,1.15fr)' : 'auto 1fr', alignItems: 'center', gap: 1.35, direction: 'ltr' }}><Box sx={{ display: 'grid', placeItems: 'center' }}>{ring}</Box><Box sx={{ height: p.large ? '100%' : 'auto', display: 'grid', gridTemplateRows: p.large ? 'auto auto auto auto minmax(0,1fr)' : undefined, alignContent: 'center', gap: .9, minWidth: 0 }}><HudLabel>capacity matrix</HudLabel><MiniStat label="USED" value={`${value}%`} tone={value > 85 ? HUD.amber : HUD.cyan} /><MiniStat label="FREE" value={`${100 - value}%`} tone={HUD.green} />{p.large && <><TickRail value={value} max={100} segments={14} height={12} /><Box sx={{ minHeight: 0 }}><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><HudLabel>utilization trace</HudLabel><HudLabel tone={HUD.dim}>6 H</HudLabel></Box><HudSparkline values={[58,61,59,63,66,68,67,71,70,73,72,72]} height="100%" fill /></Box></>}</Box></Box>;
 }
 
 function Heatmap({ size }: VisualProps) {
@@ -513,14 +483,32 @@ function MapVisual({ def, size }: VisualProps) {
 
 function Coordinates({ def, locale, size }: VisualProps) {
   const p = profile(size);
-  const rows = [
-    ['LAT', s(def.mock.lat, '35.7219° N')],
-    ['LON', s(def.mock.lng, '51.3347° E')],
-    [locale === 'fa' ? 'دقت' : 'ACC', s(def.mock.accuracy, '4.2 m')],
-  ];
+  const lat = s(def.mock.lat, '35.7219° N');
+  const lng = s(def.mock.lng, '51.3347° E');
+  const accuracy = s(def.mock.accuracy, '4.2 m');
+  const rtl = locale === 'fa';
+
+  if (p.large) return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: 'minmax(0,1.2fr) minmax(150px,.8fr)', gap: 1.2, direction: 'ltr' }}>
+    <Box sx={{ minWidth: 0, display: 'grid', gridTemplateRows: '1fr 1fr auto', gap: .75 }}>
+      {[['LAT', lat], ['LON', lng]].map(([label, value]) => <Box key={label} sx={{ minHeight: 0, px: 1.1, py: .8, borderLeft: `2px solid ${HUD.cyan}`, background: 'linear-gradient(90deg,rgba(25,247,255,.075),rgba(25,247,255,.015))', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <HudLabel>{label} / WGS84</HudLabel>
+        <Typography sx={{ mt: .35, fontFamily: 'inherit', fontSize: 25, lineHeight: 1, fontWeight: 760, color: HUD.fg, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{value}</Typography>
+      </Box>)}
+      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .75 }}><MiniStat label={rtl ? 'دقت' : 'ACCURACY'} value={accuracy} tone={HUD.green} rtl={rtl} /><MiniStat label="FIX" value="3D / 12 SAT" tone={HUD.cyan} /></Box>
+    </Box>
+    <Box sx={{ minWidth: 0, position: 'relative', border: `1px solid ${HUD.borderSoft}`, background: 'radial-gradient(circle,rgba(25,247,255,.07),transparent 58%)', overflow: 'hidden' }}>
+      <Box sx={{ position: 'absolute', inset: '13%', border: `1px solid ${HUD.borderSoft}`, borderRadius: '50%', '&:before': { content: '""', position: 'absolute', inset: '26%', border: `1px solid ${HUD.borderSoft}`, borderRadius: '50%' }, '&:after': { content: '""', position: 'absolute', left: '50%', top: -18, bottom: -18, borderLeft: `1px solid ${HUD.borderSoft}` } }} />
+      <Box sx={{ position: 'absolute', left: -18, right: -18, top: '50%', borderTop: `1px solid ${HUD.borderSoft}` }} />
+      <Box sx={{ position: 'absolute', left: '50%', top: '50%', width: 12, height: 12, transform: 'translate(-50%,-50%) rotate(45deg)', bgcolor: HUD.cyan, boxShadow: `0 0 16px ${HUD.cyan}66` }} />
+      <Box sx={{ position: 'absolute', left: 9, top: 8 }}><HudLabel tone={HUD.green}>GPS LOCK</HudLabel></Box>
+      <Box sx={{ position: 'absolute', right: 9, bottom: 8 }}><HudLabel tone={HUD.dim}>HDOP 0.8</HudLabel></Box>
+    </Box>
+  </Box>;
+
+  const rows = [['LAT', lat], ['LON', lng], [rtl ? 'دقت' : 'ACC', accuracy]];
   return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: `repeat(${rows.length},1fr)`, gap: p.compact ? .45 : .65, direction: 'ltr', alignContent: 'center' }}>
     {rows.map(([label, value], i) => <Box key={label} sx={{ minHeight: 0, display: 'grid', gridTemplateColumns: '46px 1fr auto', alignItems: 'center', gap: .7, px: p.compact ? .55 : .85, borderLeft: `2px solid ${i === 2 ? HUD.green : HUD.cyan}`, background: 'linear-gradient(90deg,rgba(25,247,255,.055),transparent)' }}>
-      <HudLabel tone={i === 2 ? HUD.green : HUD.muted} rtl={locale === 'fa' && i === 2}>{label}</HudLabel>
+      <HudLabel tone={i === 2 ? HUD.green : HUD.muted} rtl={rtl && i === 2}>{label}</HudLabel>
       <Typography sx={{ fontFamily: 'inherit', fontSize: p.compact ? 12 : 14.5, fontWeight: 710, color: HUD.fg, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</Typography>
       {!p.compact && <HudLabel tone={HUD.dim}>LOCK</HudLabel>}
     </Box>)}
@@ -534,61 +522,42 @@ function Compass({ def, size }: VisualProps) {
   const x = 70 + Math.sin(angle) * 43;
   const y = 70 - Math.cos(angle) * 43;
   const cardinal = value >= 315 || value < 45 ? 'N' : value < 135 ? 'E' : value < 225 ? 'S' : 'W';
-  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: p.compact || p.tall ? '1fr' : 'auto 1fr', placeItems: p.compact || p.tall ? 'center' : undefined, alignItems: 'center', gap: 1.4, direction: 'ltr' }}>
-    <Box sx={{ width: p.compact ? 132 : p.wide && !p.large ? 124 : 154, height: p.compact ? 132 : p.wide && !p.large ? 124 : 154, position: 'relative' }}>
-      <svg viewBox="0 0 140 140" width="100%" height="100%" aria-hidden>
-        <circle cx="70" cy="70" r="57" fill="rgba(25,247,255,.025)" stroke="rgba(25,247,255,.28)" />
-        <circle cx="70" cy="70" r="44" fill="none" stroke="rgba(25,247,255,.09)" />
-        {Array.from({ length: 24 }).map((_, i) => {
-          const a = i * 15 * Math.PI / 180;
-          const major = i % 6 === 0;
-          const r1 = major ? 49 : 52;
-          const r2 = 57;
-          return <line key={i} x1={70 + Math.sin(a) * r1} y1={70 - Math.cos(a) * r1} x2={70 + Math.sin(a) * r2} y2={70 - Math.cos(a) * r2} stroke={major ? HUD.fg : HUD.dim} strokeWidth={major ? 1.2 : .6} />;
-        })}
-        <line x1="70" y1="70" x2={x} y2={y} stroke={HUD.cyan} strokeWidth="3" />
-        <circle cx="70" cy="70" r="4" fill={HUD.cyan} />
-        <text x="70" y="17" fill={HUD.fg} textAnchor="middle" fontSize="9">N</text>
-        <text x="123" y="74" fill={HUD.muted} textAnchor="middle" fontSize="8">E</text>
-        <text x="70" y="129" fill={HUD.muted} textAnchor="middle" fontSize="8">S</text>
-        <text x="17" y="74" fill={HUD.muted} textAnchor="middle" fontSize="8">W</text>
-      </svg>
-      <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', textAlign: 'center' }}><Box><Typography sx={{ mt: 2.8, fontFamily: 'inherit', fontSize: 21, fontWeight: 760 }}>{value}°</Typography><HudLabel>{cardinal}</HudLabel></Box></Box>
-    </Box>
-    {!p.compact && !p.tall && <Box sx={{ display: 'grid', gap: .9 }}><HudLabel>heading solution</HudLabel><Readout value={`${value}°`} /><MiniStat label="CARDINAL" value={cardinal} tone={HUD.cyan} /><MiniStat label="MAG VAR" value="+2.1°" /></Box>}
+  const diameter = p.compact ? 132 : p.wide && !p.large ? 124 : p.large ? 188 : 154;
+  const compass = <Box sx={{ width: diameter, height: diameter, position: 'relative' }}>
+    <svg viewBox="0 0 140 140" width="100%" height="100%" aria-hidden>
+      <circle cx="70" cy="70" r="57" fill="rgba(25,247,255,.025)" stroke="rgba(25,247,255,.28)" />
+      <circle cx="70" cy="70" r="44" fill="none" stroke="rgba(25,247,255,.09)" />
+      {Array.from({ length: 24 }).map((_, i) => { const a = i * 15 * Math.PI / 180; const major = i % 6 === 0; const r1 = major ? 49 : 52; const r2 = 57; return <line key={i} x1={70 + Math.sin(a) * r1} y1={70 - Math.cos(a) * r1} x2={70 + Math.sin(a) * r2} y2={70 - Math.cos(a) * r2} stroke={major ? HUD.fg : HUD.dim} strokeWidth={major ? 1.2 : .6} />; })}
+      <line x1="70" y1="70" x2={x} y2={y} stroke={HUD.cyan} strokeWidth="3" />
+      <circle cx="70" cy="70" r="4" fill={HUD.cyan} />
+      <text x="70" y="17" fill={HUD.fg} textAnchor="middle" fontSize="9">N</text><text x="123" y="74" fill={HUD.muted} textAnchor="middle" fontSize="8">E</text><text x="70" y="129" fill={HUD.muted} textAnchor="middle" fontSize="8">S</text><text x="17" y="74" fill={HUD.muted} textAnchor="middle" fontSize="8">W</text>
+    </svg>
+    <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', textAlign: 'center' }}><Box><Typography sx={{ mt: 2.8, fontFamily: 'inherit', fontSize: p.large ? 25 : 21, fontWeight: 760 }}>{value}°</Typography><HudLabel>{cardinal}</HudLabel></Box></Box>
+  </Box>;
+
+  if (p.compact || p.tall) return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center' }}>{compass}</Box>;
+
+  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: p.large ? 'minmax(190px,.9fr) minmax(0,1.1fr)' : 'auto 1fr', alignItems: 'center', gap: 1.5, direction: 'ltr' }}>
+    <Box sx={{ display: 'grid', placeItems: 'center' }}>{compass}</Box>
+    <Box sx={{ display: 'grid', gap: p.large ? 1.05 : .9, minWidth: 0 }}><HudLabel>heading solution</HudLabel><Readout value={`${value}°`} /><MiniStat label="CARDINAL" value={cardinal} tone={HUD.cyan} /><MiniStat label="MAG VAR" value="+2.1°" />{p.large && <><TickRail value={value} max={360} segments={18} height={11} /><Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .8 }}><MiniStat label="COURSE" value="326.4°" /><MiniStat label="DRIFT" value="0.6°" tone={HUD.green} /></Box></>}</Box>
   </Box>;
 }
 
 function CommandButton({ locale, size }: VisualProps) {
   const p = profile(size);
   const [state, setState] = useState<'ready' | 'queued' | 'ack'>('ready');
-  const send = () => {
-    setState('queued');
-    window.setTimeout(() => setState('ack'), 650);
-    window.setTimeout(() => setState('ready'), 1650);
-  };
+  const send = () => { setState('queued'); window.setTimeout(() => setState('ack'), 650); window.setTimeout(() => setState('ready'), 1650); };
   const tone = state === 'ack' ? HUD.green : state === 'queued' ? HUD.amber : HUD.cyan;
   const primary = state === 'ack' ? (locale === 'fa' ? 'تأیید شد' : 'ACKNOWLEDGED') : state === 'queued' ? (locale === 'fa' ? 'در صف' : 'QUEUED') : (locale === 'fa' ? 'ارسال فرمان' : 'EXECUTE');
-  return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', direction: 'ltr' }}>
-    <Box sx={{ width: '100%', maxWidth: p.compact ? 175 : 320, textAlign: 'center' }}>
-      <Button onClick={send} disableRipple sx={{
-        width: '100%',
-        minHeight: p.compact ? 62 : 72,
-        color: tone,
-        fontFamily: 'inherit',
-        fontSize: p.compact ? 12 : 13,
-        fontWeight: 760,
-        letterSpacing: locale === 'fa' ? 0 : 1.4,
-        border: `1px solid ${tone}99`,
-        borderRadius: 0,
-        clipPath: 'polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)',
-        background: `linear-gradient(90deg,${tone}09,${tone}17,${tone}09)`,
-        boxShadow: `inset 0 0 0 1px ${tone}12,0 0 24px ${tone}12`,
-        '&:hover': { background: `linear-gradient(90deg,${tone}11,${tone}22,${tone}11)` },
-      }}>{primary}</Button>
-      <Box sx={{ mt: .8, display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: .7, alignItems: 'center' }}><Box sx={{ height: 1, bgcolor: HUD.borderSoft }} /><HudLabel tone={tone}>{state === 'ready' ? 'RPC READY' : state === 'queued' ? 'TX / 01' : 'RX / OK'}</HudLabel><Box sx={{ height: 1, bgcolor: HUD.borderSoft }} /></Box>
-      {p.large && <Typography sx={{ mt: .65, fontFamily: 'inherit', fontSize: 10, color: HUD.muted }}>{locale === 'fa' ? 'فرمان آزمایشی در حالت Mock اجرا می‌شود' : 'Mock command path · visible local feedback'}</Typography>}
-    </Box>
+  const button = <Button onClick={send} disableRipple sx={{ width: '100%', minHeight: p.compact ? 62 : p.large ? 92 : 72, color: tone, fontFamily: 'inherit', fontSize: p.large ? 15 : p.compact ? 12 : 13, fontWeight: 760, letterSpacing: locale === 'fa' ? 0 : 1.4, border: `1px solid ${tone}99`, borderRadius: 0, clipPath: 'polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)', background: `linear-gradient(90deg,${tone}09,${tone}17,${tone}09)`, boxShadow: `inset 0 0 0 1px ${tone}12,0 0 24px ${tone}12`, '&:hover': { background: `linear-gradient(90deg,${tone}11,${tone}22,${tone}11)` } }}>{primary}</Button>;
+
+  if (!p.large) return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', direction: 'ltr' }}><Box sx={{ width: '100%', maxWidth: p.compact ? 175 : 320, textAlign: 'center' }}>{button}<Box sx={{ mt: .8, display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: .7, alignItems: 'center' }}><Box sx={{ height: 1, bgcolor: HUD.borderSoft }} /><HudLabel tone={tone}>{state === 'ready' ? 'RPC READY' : state === 'queued' ? 'TX / 01' : 'RX / OK'}</HudLabel><Box sx={{ height: 1, bgcolor: HUD.borderSoft }} /></Box></Box></Box>;
+
+  return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto auto auto minmax(0,1fr)', gap: 1, direction: 'ltr' }}>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><Box><HudLabel>command channel / rpc-01</HudLabel><Typography sx={{ mt: .2, fontFamily: 'inherit', fontSize: 18, fontWeight: 740, color: HUD.fg }}>ACTUATOR EXECUTION</Typography></Box><HudLabel tone={tone}>{state === 'ready' ? 'ARMED' : state.toUpperCase()}</HudLabel></Box>
+    {button}
+    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: .75 }}><MiniStat label="TARGET" value="NODE-04" /><MiniStat label="TIMEOUT" value="2.5 s" /><MiniStat label="LAST ACK" value={state === 'ack' ? 'NOW' : '09:42:18'} tone={state === 'ack' ? HUD.green : HUD.fg} /></Box>
+    <Box sx={{ minHeight: 0, border: `1px solid ${HUD.borderSoft}`, p: .8, background: 'rgba(25,247,255,.018)', display: 'grid', alignContent: 'center', gap: .55 }}><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><HudLabel>response bus</HudLabel><HudLabel tone={tone}>{state === 'queued' ? 'TX →' : state === 'ack' ? '← ACK' : 'IDLE'}</HudLabel></Box><TickRail value={state === 'ready' ? 36 : state === 'queued' ? 72 : 100} max={100} segments={18} height={9} /><HudLabel tone={HUD.dim}>{locale === 'fa' ? 'بازخورد محلی حالت Mock فعال است' : 'MOCK PATH / LOCAL FEEDBACK / CRC OK'}</HudLabel></Box>
   </Box>;
 }
 
@@ -596,14 +565,15 @@ function SwitchControl({ def, locale, size }: VisualProps) {
   const p = profile(size);
   const [on, setOn] = useState(Boolean(def.mock.value ?? true));
   const tone = on ? HUD.green : HUD.red;
-  return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', direction: 'ltr' }}>
-    <Box onClick={() => setOn(v => !v)} sx={{ cursor: 'pointer', width: p.compact ? 166 : Math.min(260, p.wide ? 250 : 190), border: `1px solid ${tone}88`, bgcolor: `${tone}08`, p: .75, clipPath: 'polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)' }}>
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: p.compact ? 48 : 58, gap: .5 }}>
-        <Box sx={{ display: 'grid', placeItems: 'center', bgcolor: on ? `${HUD.green}22` : 'transparent', border: `1px solid ${on ? `${HUD.green}99` : HUD.borderSoft}` }}><Typography sx={{ fontFamily: 'inherit', fontSize: 11.5, fontWeight: 760, color: on ? HUD.green : HUD.dim }}>ON</Typography></Box>
-        <Box sx={{ display: 'grid', placeItems: 'center', bgcolor: !on ? `${HUD.red}18` : 'transparent', border: `1px solid ${!on ? `${HUD.red}99` : HUD.borderSoft}` }}><Typography sx={{ fontFamily: 'inherit', fontSize: 11.5, fontWeight: 760, color: !on ? HUD.red : HUD.dim }}>OFF</Typography></Box>
-      </Box>
-      {!p.compact && <Box sx={{ mt: .7, display: 'flex', justifyContent: 'space-between' }}><HudLabel tone={tone}>{on ? 'OUTPUT ENERGIZED' : 'OUTPUT ISOLATED'}</HudLabel><HudLabel>{locale === 'fa' ? 'برای تغییر کلیک کنید' : 'TAP / TOGGLE'}</HudLabel></Box>}
-    </Box>
+  const toggle = <Box onClick={() => setOn(v => !v)} sx={{ cursor: 'pointer', width: '100%', border: `1px solid ${tone}88`, bgcolor: `${tone}08`, p: .75, clipPath: 'polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)' }}>
+    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: p.compact ? 48 : p.large ? 78 : 58, gap: .5 }}><Box sx={{ display: 'grid', placeItems: 'center', bgcolor: on ? `${HUD.green}22` : 'transparent', border: `1px solid ${on ? `${HUD.green}99` : HUD.borderSoft}` }}><Typography sx={{ fontFamily: 'inherit', fontSize: p.large ? 14 : 11.5, fontWeight: 760, color: on ? HUD.green : HUD.dim }}>ON</Typography></Box><Box sx={{ display: 'grid', placeItems: 'center', bgcolor: !on ? `${HUD.red}18` : 'transparent', border: `1px solid ${!on ? `${HUD.red}99` : HUD.borderSoft}` }}><Typography sx={{ fontFamily: 'inherit', fontSize: p.large ? 14 : 11.5, fontWeight: 760, color: !on ? HUD.red : HUD.dim }}>OFF</Typography></Box></Box>
+  </Box>;
+
+  if (!p.large) return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', direction: 'ltr' }}><Box sx={{ width: p.compact ? 166 : Math.min(260, p.wide ? 250 : 190) }}>{toggle}{!p.compact && <Box sx={{ mt: .7, display: 'flex', justifyContent: 'space-between' }}><HudLabel tone={tone}>{on ? 'OUTPUT ENERGIZED' : 'OUTPUT ISOLATED'}</HudLabel><HudLabel>{locale === 'fa' ? 'برای تغییر کلیک کنید' : 'TAP / TOGGLE'}</HudLabel></Box>}</Box></Box>;
+
+  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: 'minmax(200px,.92fr) minmax(0,1.08fr)', gap: 1.25, direction: 'ltr' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 1 }}><HudLabel>digital output / do-04</HudLabel><Typography sx={{ fontFamily: 'inherit', fontSize: 28, lineHeight: 1, fontWeight: 760, color: tone }}>{on ? 'ENERGIZED' : 'ISOLATED'}</Typography>{toggle}<HudLabel tone={tone}>{locale === 'fa' ? 'برای تغییر وضعیت کلیک کنید' : 'CLICK PANEL TO TOGGLE OUTPUT'}</HudLabel></Box>
+    <Box sx={{ minWidth: 0, borderLeft: `1px solid ${HUD.borderSoft}`, pl: 1.15, display: 'grid', gridTemplateRows: 'auto auto minmax(0,1fr)', gap: .85 }}><Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .75 }}><MiniStat label="COIL" value={on ? '24.1 V' : '0.0 V'} tone={tone} /><MiniStat label="FEEDBACK" value={on ? 'CLOSED' : 'OPEN'} tone={tone} /></Box><TickRail value={on ? 82 : 8} max={100} segments={14} height={11} /><Box sx={{ minHeight: 0 }}><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><HudLabel>output trace</HudLabel><HudLabel tone={HUD.dim}>60 SEC</HudLabel></Box><HudSparkline values={on ? [8,8,18,35,72,80,82,81,83,82,82,82] : [84,82,55,24,9,8,8,7,8,7,8,8]} height="100%" color={tone} fill /></Box></Box>
   </Box>;
 }
 
@@ -628,16 +598,19 @@ function HudSlider({ def, locale, size }: VisualProps) {
 function InputControl({ def, locale, size }: VisualProps) {
   const p = profile(size);
   const [value, setValue] = useState(String(def.mock.value ?? '22.5'));
-  return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', direction: 'ltr' }}>
-    <Box sx={{ width: '100%', maxWidth: p.compact ? 180 : 320 }}>
-      <HudLabel>{locale === 'fa' ? 'ورودی دستی' : 'MANUAL SETPOINT'}</HudLabel>
-      <TextField value={value} onChange={e => setValue(e.target.value)} size="small" fullWidth inputProps={{ dir: 'ltr' }} sx={{
-        mt: .8,
-        '& .MuiOutlinedInput-root': { color: HUD.fg, fontFamily: 'inherit', borderRadius: 0, bgcolor: 'rgba(25,247,255,.025)', '& fieldset': { borderColor: HUD.border }, '&:hover fieldset': { borderColor: 'rgba(25,247,255,.5)' }, '&.Mui-focused fieldset': { borderColor: HUD.cyan } },
-        '& input': { fontSize: p.compact ? 18 : 22, fontWeight: 720, fontVariantNumeric: 'tabular-nums' },
-      }} />
-      <Box sx={{ mt: .7, display: 'flex', justifyContent: 'space-between' }}><HudLabel tone={HUD.green}>VALID</HudLabel><HudLabel>{s(def.mock.unit, '°C')}</HudLabel></Box>
-    </Box>
+  const unit = s(def.mock.unit, '°C');
+  const field = <TextField value={value} onChange={e => setValue(e.target.value)} size="small" fullWidth inputProps={{ dir: 'ltr' }} sx={{ '& .MuiOutlinedInput-root': { color: HUD.fg, fontFamily: 'inherit', borderRadius: 0, bgcolor: 'rgba(25,247,255,.025)', '& fieldset': { borderColor: HUD.border }, '&:hover fieldset': { borderColor: 'rgba(25,247,255,.5)' }, '&.Mui-focused fieldset': { borderColor: HUD.cyan } }, '& input': { fontSize: p.large ? 28 : p.compact ? 18 : 22, py: p.large ? 1.35 : undefined, fontWeight: 720, fontVariantNumeric: 'tabular-nums' } }} />;
+
+  if (!p.large) return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', direction: 'ltr' }}><Box sx={{ width: '100%', maxWidth: p.compact ? 180 : 320 }}><HudLabel>{locale === 'fa' ? 'ورودی دستی' : 'MANUAL SETPOINT'}</HudLabel><Box sx={{ mt: .8 }}>{field}</Box><Box sx={{ mt: .7, display: 'flex', justifyContent: 'space-between' }}><HudLabel tone={HUD.green}>VALID</HudLabel><HudLabel>{unit}</HudLabel></Box></Box></Box>;
+
+  const numeric = Number(value);
+  const valid = Number.isFinite(numeric);
+  const pct = valid ? clamp(((numeric - 10) / 30) * 100, 0, 100) : 0;
+  return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto auto auto minmax(0,1fr)', gap: 1, direction: 'ltr' }}>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}><Box><HudLabel>{locale === 'fa' ? 'ورودی دستی / محلی' : 'MANUAL SETPOINT / LOCAL'}</HudLabel><Typography sx={{ mt: .2, fontFamily: 'inherit', fontSize: 18, fontWeight: 740 }}>CONTROL REGISTER SP-01</Typography></Box><HudLabel tone={valid ? HUD.green : HUD.red}>{valid ? 'VALID' : 'INVALID'}</HudLabel></Box>
+    {field}
+    <Box><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><HudLabel>10 {unit}</HudLabel><HudLabel tone={HUD.cyan}>{valid ? `${numeric.toFixed(1)} ${unit}` : '--'}</HudLabel><HudLabel>40 {unit}</HudLabel></Box><Box sx={{ mt: .6 }}><TickRail value={pct} max={100} segments={18} height={12} /></Box></Box>
+    <Box sx={{ minHeight: 0, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: .75, alignContent: 'end' }}><MiniStat label="PREVIOUS" value={`21.8 ${unit}`} /><MiniStat label="DEADBAND" value={`±0.5 ${unit}`} /><MiniStat label="SOURCE" value="LOCAL" tone={HUD.green} /></Box>
   </Box>;
 }
 
@@ -680,17 +653,13 @@ function DirectionControl({ locale, size }: VisualProps) {
   const [active, setActive] = useState('•');
   const keys = ['↑', '←', '•', '→', '↓'];
   const positions = [2,4,5,6,8];
-  return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', direction: 'ltr' }}>
-    <Box sx={{ width: p.compact ? 142 : p.wide && !p.large ? 124 : 176 }}>
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gridTemplateRows: 'repeat(3,1fr)', gap: .45, aspectRatio: '1/1' }}>
-        {keys.map((key, i) => {
-          const pos = positions[i];
-          const selected = active === key;
-          return <Button key={key} onClick={() => setActive(key)} disableRipple sx={{ gridColumn: ((pos - 1) % 3) + 1, gridRow: Math.floor((pos - 1) / 3) + 1, minWidth: 0, borderRadius: 0, border: `1px solid ${selected ? `${HUD.cyan}99` : HUD.borderSoft}`, color: selected ? HUD.cyan : HUD.muted, bgcolor: selected ? 'rgba(25,247,255,.11)' : 'rgba(25,247,255,.02)', fontSize: key === '•' ? 20 : 22, '&:hover': { bgcolor: 'rgba(25,247,255,.09)' } }}>{key}</Button>;
-        })}
-      </Box>
-      {!p.compact && <Box sx={{ mt: .65, display: 'flex', justifyContent: 'space-between' }}><HudLabel>{locale === 'fa' ? 'آخرین فرمان' : 'LAST CMD'}</HudLabel><HudLabel tone={HUD.cyan}>{active}</HudLabel></Box>}
-    </Box>
+  const pad = <Box sx={{ width: '100%' }}><Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gridTemplateRows: 'repeat(3,1fr)', gap: .45, aspectRatio: '1/1' }}>{keys.map((key, i) => { const pos = positions[i]; const selected = active === key; return <Button key={key} onClick={() => setActive(key)} disableRipple sx={{ gridColumn: ((pos - 1) % 3) + 1, gridRow: Math.floor((pos - 1) / 3) + 1, minWidth: 0, borderRadius: 0, border: `1px solid ${selected ? `${HUD.cyan}99` : HUD.borderSoft}`, color: selected ? HUD.cyan : HUD.muted, bgcolor: selected ? 'rgba(25,247,255,.11)' : 'rgba(25,247,255,.02)', fontSize: p.large ? (key === '•' ? 26 : 28) : key === '•' ? 20 : 22, '&:hover': { bgcolor: 'rgba(25,247,255,.09)' } }}>{key}</Button>; })}</Box></Box>;
+
+  if (!p.large) return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', direction: 'ltr' }}><Box sx={{ width: p.compact ? 142 : p.wide ? 124 : 176 }}>{pad}{!p.compact && <Box sx={{ mt: .65, display: 'flex', justifyContent: 'space-between' }}><HudLabel>{locale === 'fa' ? 'آخرین فرمان' : 'LAST CMD'}</HudLabel><HudLabel tone={HUD.cyan}>{active}</HudLabel></Box>}</Box></Box>;
+
+  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: 'minmax(220px,.9fr) minmax(0,1.1fr)', gap: 1.3, direction: 'ltr', alignItems: 'center' }}>
+    <Box sx={{ width: 220, maxWidth: '100%', justifySelf: 'center' }}>{pad}<Box sx={{ mt: .7, display: 'flex', justifyContent: 'space-between' }}><HudLabel>{locale === 'fa' ? 'آخرین فرمان' : 'LAST COMMAND'}</HudLabel><HudLabel tone={HUD.cyan}>{active === '•' ? 'HOLD' : active}</HudLabel></Box></Box>
+    <Box sx={{ minWidth: 0, borderLeft: `1px solid ${HUD.borderSoft}`, pl: 1.15, display: 'grid', gap: 1 }}><HudLabel>ptz / motion vector</HudLabel><Readout value={active === '•' ? '0' : active === '←' || active === '→' ? '32' : '18'} unit="deg/s" compact /><TickRail value={active === '•' ? 0 : 62} max={100} segments={14} height={11} /><Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .75 }}><MiniStat label="PAN" value={active === '←' ? '−32°' : active === '→' ? '+32°' : '0°'} /><MiniStat label="TILT" value={active === '↑' ? '+18°' : active === '↓' ? '−18°' : '0°'} /></Box><MiniStat label="MODE" value={active === '•' ? 'HOLD / BRAKE' : 'SLEW'} tone={active === '•' ? HUD.green : HUD.cyan} /></Box>
   </Box>;
 }
 
@@ -732,15 +701,23 @@ function TableVisual({ def, size }: VisualProps) {
 
 function Clock({ locale, size }: VisualProps) {
   const p = profile(size);
-  return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', textAlign: 'center', direction: 'ltr' }}><Box><HudLabel tone={HUD.green}>UTC+03:30 / SYNC</HudLabel><Typography sx={{ mt: .25, fontFamily: 'inherit', fontSize: p.compact ? 40 : 52, lineHeight: 1, fontWeight: 620, letterSpacing: '.06em', color: HUD.fg, fontVariantNumeric: 'tabular-nums', textShadow: '0 0 22px rgba(25,247,255,.13)' }}>09:44</Typography><Typography sx={{ mt: .55, fontFamily: 'inherit', fontSize: 10.5, color: HUD.muted, direction: locale === 'fa' ? 'rtl' : 'ltr' }}>{locale === 'fa' ? 'چهارشنبه، ۱۵ مهر ۱۴۰۵' : 'WED / 07 OCT 2026'}</Typography></Box></Box>;
+  const date = locale === 'fa' ? 'چهارشنبه، ۱۵ مهر ۱۴۰۵' : 'WED / 07 OCT 2026';
+  if (!p.large) return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', textAlign: 'center', direction: 'ltr' }}><Box><HudLabel tone={HUD.green}>UTC+03:30 / SYNC</HudLabel><Typography sx={{ mt: .25, fontFamily: 'inherit', fontSize: p.compact ? 40 : 52, lineHeight: 1, fontWeight: 620, letterSpacing: '.06em', color: HUD.fg, fontVariantNumeric: 'tabular-nums', textShadow: '0 0 22px rgba(25,247,255,.13)' }}>09:44</Typography><Typography sx={{ mt: .55, fontFamily: 'inherit', fontSize: 10.5, color: HUD.muted, direction: locale === 'fa' ? 'rtl' : 'ltr' }}>{date}</Typography></Box></Box>;
+  return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto minmax(0,1fr) auto', gap: 1, direction: 'ltr' }}>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><HudLabel tone={HUD.green}>TIME SOURCE / NTP LOCK</HudLabel><HudLabel tone={HUD.dim}>STRATUM 2</HudLabel></Box>
+    <Box sx={{ minHeight: 0, display: 'grid', placeItems: 'center', textAlign: 'center' }}><Box><Typography sx={{ fontFamily: 'inherit', fontSize: 76, lineHeight: .86, fontWeight: 620, letterSpacing: '.055em', color: HUD.fg, fontVariantNumeric: 'tabular-nums', textShadow: '0 0 26px rgba(25,247,255,.16)' }}>09:44<Typography component="span" sx={{ ml: .8, fontFamily: 'inherit', fontSize: 26, color: HUD.cyan, verticalAlign: 'top' }}>37</Typography></Typography><Typography sx={{ mt: 1, fontFamily: 'inherit', fontSize: 12, color: HUD.muted, direction: locale === 'fa' ? 'rtl' : 'ltr' }}>{date}</Typography></Box></Box>
+    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: .75 }}><MiniStat label="ZONE" value="UTC+03:30" /><MiniStat label="OFFSET" value="+1.8 ms" tone={HUD.green} /><MiniStat label="DRIFT" value="0.4 ppm" tone={HUD.cyan} /></Box>
+  </Box>;
 }
 
 function TextVisual({ locale, size }: VisualProps) {
   const p = profile(size);
-  return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto minmax(0,1fr) auto', gap: .7, direction: locale === 'fa' ? 'rtl' : 'ltr', textAlign: locale === 'fa' ? 'right' : 'left' }}>
+  const rtl = locale === 'fa';
+  const body = rtl ? 'همه سنسورها در محدوده عادی هستند. آخرین بسته داده کمتر از یک دقیقه قبل دریافت شده است.' : 'All sensors are within normal operating limits. Latest telemetry arrived less than one minute ago.';
+  return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto minmax(0,1fr) auto', gap: .7, direction: rtl ? 'rtl' : 'ltr', textAlign: rtl ? 'right' : 'left' }}>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, direction: 'ltr' }}><HudLabel tone={HUD.green}>OPS NOTE / VERIFIED</HudLabel><HudLabel tone={HUD.dim}>09:43</HudLabel></Box>
-    <Typography sx={{ alignSelf: 'center', fontFamily: 'inherit', fontSize: p.compact ? 13.2 : p.large ? 17 : 14.5, fontWeight: 650, lineHeight: p.compact ? 1.45 : 1.65, color: HUD.fg, overflow: 'hidden' }}>{locale === 'fa' ? 'همه سنسورها در محدوده عادی هستند. آخرین بسته داده کمتر از یک دقیقه قبل دریافت شده است.' : 'All sensors are within normal operating limits. Latest telemetry arrived less than one minute ago.'}</Typography>
-    {!p.compact && <Box sx={{ borderTop: `1px solid ${HUD.borderSoft}`, pt: .55, direction: 'ltr' }}><HudLabel tone={HUD.muted}>SERVER ROOM / STATUS SUMMARY</HudLabel></Box>}
+    <Box sx={{ minHeight: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}><Typography sx={{ fontFamily: 'inherit', fontSize: p.compact ? 13.2 : p.large ? 18.5 : 14.5, fontWeight: 650, lineHeight: p.compact ? 1.45 : p.large ? 1.75 : 1.65, color: HUD.fg, overflow: 'hidden' }}>{body}</Typography>{p.large && <Box sx={{ mt: 1.4, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: .75, direction: 'ltr' }}><MiniStat label="SOURCE" value="EDGE-02" /><MiniStat label="AGE" value="42 sec" tone={HUD.green} /><MiniStat label="PRIORITY" value="INFO" tone={HUD.cyan} /></Box>}</Box>
+    {!p.compact && <Box sx={{ borderTop: `1px solid ${HUD.borderSoft}`, pt: .55, direction: 'ltr', display: 'flex', justifyContent: 'space-between' }}><HudLabel tone={HUD.muted}>SERVER ROOM / STATUS SUMMARY</HudLabel>{p.large && <HudLabel tone={HUD.green}>CRC / VERIFIED</HudLabel>}</Box>}
   </Box>;
 }
 
@@ -757,7 +734,12 @@ function ImageVisual({ size }: VisualProps) {
 
 function IframeVisual({ locale, size }: VisualProps) {
   const p = profile(size);
-  return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', border: `1px dashed ${HUD.border}`, background: 'rgba(25,247,255,.018)', textAlign: 'center', px: 2, clipPath: 'polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)' }}><Box><HudLabel tone={HUD.cyan}>EXT / SANDBOX</HudLabel><Typography sx={{ mt: .55, fontFamily: 'inherit', fontSize: p.compact ? 14 : 18, fontWeight: 700, color: HUD.fg }}>{locale === 'fa' ? 'محتوای خارجی' : 'EXTERNAL CONTENT'}</Typography><Typography sx={{ mt: .45, fontFamily: 'inherit', fontSize: 10.5, color: HUD.muted }}>iframe · embedded app · HTML canvas</Typography></Box></Box>;
+  if (!p.large) return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', border: `1px dashed ${HUD.border}`, background: 'rgba(25,247,255,.018)', textAlign: 'center', px: 2, clipPath: 'polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)' }}><Box><HudLabel tone={HUD.cyan}>EXT / SANDBOX</HudLabel><Typography sx={{ mt: .55, fontFamily: 'inherit', fontSize: p.compact ? 14 : 18, fontWeight: 700, color: HUD.fg }}>{locale === 'fa' ? 'محتوای خارجی' : 'EXTERNAL CONTENT'}</Typography><Typography sx={{ mt: .45, fontFamily: 'inherit', fontSize: 10.5, color: HUD.muted }}>iframe · embedded app · HTML canvas</Typography></Box></Box>;
+  return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto minmax(0,1fr) auto', gap: .8, border: `1px dashed ${HUD.border}`, background: 'rgba(25,247,255,.014)', p: 1, clipPath: 'polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)', direction: 'ltr' }}>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><HudLabel tone={HUD.cyan}>EXT / SANDBOX / FRAME-01</HudLabel><HudLabel tone={HUD.green}>CONNECTED</HudLabel></Box>
+    <Box sx={{ minHeight: 0, position: 'relative', overflow: 'hidden', border: `1px solid ${HUD.borderSoft}`, backgroundImage: 'linear-gradient(rgba(25,247,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(25,247,255,.04) 1px,transparent 1px)', backgroundSize: '22px 22px', display: 'grid', placeItems: 'center', textAlign: 'center' }}><Box><HudLabel tone={HUD.cyan}>EMBED TARGET / 200 OK</HudLabel><Typography sx={{ mt: .55, fontFamily: 'inherit', fontSize: 24, fontWeight: 740, color: HUD.fg }}>{locale === 'fa' ? 'محتوای خارجی' : 'EXTERNAL CONTENT'}</Typography><Typography sx={{ mt: .45, fontFamily: 'inherit', fontSize: 10.5, color: HUD.muted }}>iframe · embedded app · HTML canvas</Typography></Box><Box sx={{ position: 'absolute', left: 8, bottom: 7 }}><HudLabel tone={HUD.dim}>SANDBOX: scripts forms</HudLabel></Box></Box>
+    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: .75 }}><MiniStat label="ORIGIN" value="REMOTE" /><MiniStat label="LATENCY" value="38 ms" tone={HUD.green} /><MiniStat label="TLS" value="OK / H2" tone={HUD.cyan} /></Box>
+  </Box>;
 }
 
 function Scada({ size }: VisualProps) {
@@ -802,19 +784,18 @@ function AlarmIndicator({ def, locale, size }: VisualProps) {
   const label = active ? (locale === 'fa' ? 'هشدار فعال' : 'ALARM ACTIVE') : (locale === 'fa' ? 'وضعیت عادی' : 'NORMAL');
   const semantic = def.id === 'fire-alarm' ? 'FIRE LOOP' : def.id === 'smoke-alarm' ? 'SMOKE ZONE' : def.id === 'water-leak' ? 'LEAK PROBE' : 'ALARM LOOP';
   const rtl = locale === 'fa';
-  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: p.compact || p.tall ? '1fr' : 'auto minmax(0,1fr)', placeItems: p.compact || p.tall ? 'center' : undefined, alignItems: 'center', gap: 1.3, direction: 'ltr' }}>
-    <Box sx={{ width: p.compact ? 90 : 104, height: p.compact ? 90 : 104, position: 'relative', display: 'grid', placeItems: 'center', clipPath: 'polygon(50% 0,86% 12%,100% 50%,86% 88%,50% 100%,14% 88%,0 50%,14% 12%)', border: `1px solid ${tone}`, bgcolor: `${tone}0d`, boxShadow: active ? `0 0 34px ${tone}30` : `0 0 20px ${tone}0e` }}>
-      <Icon sx={{ fontSize: p.compact ? 39 : 47, color: tone, filter: active ? `drop-shadow(0 0 8px ${tone}66)` : 'none' }} />
-      <Box sx={{ position: 'absolute', left: 11, right: 11, bottom: 10, height: 3, background: `repeating-linear-gradient(90deg,${tone} 0 8%,transparent 8% 14%)`, opacity: .65 }} />
-    </Box>
-    <Box sx={{ textAlign: p.compact || p.tall ? 'center' : rtl ? 'right' : 'left', direction: rtl ? 'rtl' : 'ltr' }}>
-      <HudLabel tone={tone} rtl={rtl}>{label}</HudLabel>
-      {!p.compact && <><Typography sx={{ mt: .35, fontFamily: 'inherit', fontSize: 18.5, fontWeight: 750, color: tone, direction: 'ltr' }}>{semantic}</Typography><Typography sx={{ mt: .45, fontFamily: 'inherit', fontSize: 10.4, color: HUD.muted }}>{active ? (locale === 'fa' ? 'نیازمند بررسی اپراتور' : 'Operator attention required') : (locale === 'fa' ? 'حلقه پایش آماده است' : 'Monitoring loop armed')}</Typography>{p.large && <Box sx={{ mt: .9, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .8, direction: 'ltr' }}><MiniStat label="ZONE" value="02 / A" /><MiniStat label="LAST TEST" value="08:30" tone={HUD.green} /></Box>}</>}
-    </Box>
+  const iconSize = p.compact ? 90 : p.large ? 128 : 104;
+  const badge = <Box sx={{ width: iconSize, height: iconSize, position: 'relative', display: 'grid', placeItems: 'center', clipPath: 'polygon(50% 0,86% 12%,100% 50%,86% 88%,50% 100%,14% 88%,0 50%,14% 12%)', border: `1px solid ${tone}`, bgcolor: `${tone}0d`, boxShadow: active ? `0 0 34px ${tone}30` : `0 0 20px ${tone}0e` }}><Icon sx={{ fontSize: p.compact ? 39 : p.large ? 57 : 47, color: tone, filter: active ? `drop-shadow(0 0 8px ${tone}66)` : 'none' }} /><Box sx={{ position: 'absolute', left: 11, right: 11, bottom: 10, height: 3, background: `repeating-linear-gradient(90deg,${tone} 0 8%,transparent 8% 14%)`, opacity: .65 }} /></Box>;
+
+  if (!p.large) return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: p.compact || p.tall ? '1fr' : 'auto minmax(0,1fr)', placeItems: p.compact || p.tall ? 'center' : undefined, alignItems: 'center', gap: 1.3, direction: 'ltr' }}>{badge}<Box sx={{ textAlign: p.compact || p.tall ? 'center' : rtl ? 'right' : 'left', direction: rtl ? 'rtl' : 'ltr' }}><HudLabel tone={tone} rtl={rtl}>{label}</HudLabel>{!p.compact && <><Typography sx={{ mt: .35, fontFamily: 'inherit', fontSize: 18.5, fontWeight: 750, color: tone, direction: 'ltr' }}>{semantic}</Typography><Typography sx={{ mt: .45, fontFamily: 'inherit', fontSize: 10.4, color: HUD.muted }}>{active ? (rtl ? 'نیازمند بررسی اپراتور' : 'Operator attention required') : (rtl ? 'حلقه پایش آماده است' : 'Monitoring loop armed')}</Typography></>}</Box></Box>;
+
+  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr)', gap: 1.55, alignItems: 'center', direction: 'ltr' }}>
+    <Box sx={{ display: 'grid', justifyItems: 'center', gap: .85 }}>{badge}<HudLabel tone={tone}>{active ? 'LATCHED / INPUT 01' : 'ARMED / INPUT 01'}</HudLabel></Box>
+    <Box sx={{ minWidth: 0, display: 'grid', gap: 1, direction: rtl ? 'rtl' : 'ltr', textAlign: rtl ? 'right' : 'left' }}><Box><HudLabel tone={tone} rtl={rtl}>{label}</HudLabel><Typography sx={{ mt: .25, fontFamily: 'inherit', fontSize: 25, lineHeight: 1, fontWeight: 760, color: tone, direction: 'ltr' }}>{semantic}</Typography><Typography sx={{ mt: .55, fontFamily: 'inherit', fontSize: 11, color: HUD.muted }}>{active ? (rtl ? 'نیازمند بررسی اپراتور' : 'Operator attention required') : (rtl ? 'حلقه پایش آماده است' : 'Monitoring loop armed')}</Typography></Box><Box sx={{ direction: 'ltr' }}><TickRail value={active ? (isCritical ? 96 : 76) : 24} max={100} segments={16} height={12} /></Box><Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: .7, direction: 'ltr' }}><MiniStat label="ZONE" value="02 / A" /><MiniStat label="LAST TEST" value="08:30" tone={HUD.green} /><MiniStat label="LOOP" value={active ? 'TRIP' : 'READY'} tone={tone} /></Box><Box sx={{ direction: 'ltr' }}><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><HudLabel>event trace</HudLabel><HudLabel tone={HUD.dim}>15 MIN</HudLabel></Box><HudSparkline values={active ? [8,9,8,10,9,11,35,62,91,94,93,95] : [11,10,12,11,10,11,12,11,10,11,10,11]} height={52} color={tone} fill /></Box></Box>
   </Box>;
 }
 
-export function GamingVisualRenderer(props: VisualProps) {
+function GamingVisualRenderer(props: VisualProps) {
   const v = props.def.visual;
   if (v === 'metric') return <Metric {...props} />;
   if (v === 'battery') return <Battery {...props} />;

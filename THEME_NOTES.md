@@ -1,63 +1,90 @@
-# Cupertino (`ios`) Theme Notes
+# HUD / Cyber (`gaming`) theme notes — screenshot review pass 2
 
 ## Scope
 
-This patch redesigns the complete `ios` widget family as a dedicated, reusable Cupertino renderer instead of continuing to layer iOS conditions into the generic renderer. It covers all 35 supported visual types across metrics, controls, charts, location, tables, and display widgets.
+This patch changes only the `gaming` theme implementation. Stable theme ID and widget IDs are unchanged. Material 3 and all other themes are untouched.
 
-The stable theme ID remains `ios`. No Material 3 or other theme implementation is included in this patch.
+Theme-owned implementation:
+
+- `src/widgets/themes/GamingVisuals.tsx`
+
+The file exports both `GamingVisualRenderer` and `GamingFrame`. Shared dispatcher/frame wiring remains intentionally outside the patch and is documented in `INTEGRATION.md` for parallel-safe merging.
 
 ## Design direction
 
-Cupertino uses restrained system-like surfaces rather than a recolored Material card or a glass-heavy treatment. The visual language uses compact 18–20 px containers, subtle separators, quiet elevation, square-rounded semantic icon tiles, strong numeric hierarchy, restrained system colors, and clear active/inactive state treatment.
+The theme is an operational telemetry/HUD interface rather than a generic dark/neon card set:
 
-The layout deliberately changes with widget size:
+- angular instrument-frame geometry;
+- restrained cyan for live telemetry, green for healthy/confirmed state, amber for caution, red for critical state;
+- machine IDs, state codes, segmented rails, scan/grid details and tabular numeric readouts;
+- size-specific composition rather than scale-only resizing;
+- semantic visuals for battery, RF signal, tank level, alarm loops, GPS, heading, state history and SCADA.
 
-- `1x1`: glanceable value/state and only the most important indicator.
-- `2x1`: secondary context, trend/history, or a more useful compact control layout.
-- `1x2`: vertical space is used for semantic tank/control/history compositions rather than simply centering a small component.
-- `2x2+`: adds statistics, metadata, history, event/context rows, richer visualizations, or richer control feedback.
+Reference direction included NASA Open MCT telemetry/mission-control patterns and Grafana state timeline/status-history conventions. The implementation is original and does not copy a proprietary interface pixel-for-pixel.
 
-Semantic IoT treatments are used for battery, radio signal, tanks, fire/smoke/leak alarms, thermostat, map/route, compass, and SCADA instead of rendering every device as a generic KPI tile.
+## Pass-2 changes from the uploaded real screenshots
 
-Interactive mock controls keep local theme-renderer state: button feedback, switches, sliders, numeric stepper/input, thermostat setpoint, color controls, and direction pad all respond without requiring showcase-only state in `App.tsx`.
+The uploaded `full-screenshots(10).zip` was inspected across metrics, controls, charts, location, tables and display. It confirmed the base theme was clean, but exposed several large-size cards that still behaved too much like centered `1x1` widgets.
 
-Persian remains supported through localized labels and RTL layout where appropriate. Numeric, chart, coordinates, telemetry, and other technical content intentionally stays LTR where that improves readability.
+This pass specifically improves those cases:
 
-## Post-screenshot QA revision
+- **Device Status 2x2:** larger semantic state target, readiness rail, uptime/fault/mode context and recent state trace.
+- **Gauge 2x2:** larger instrument face plus a full-height operational side column and history trace.
+- **Donut 2x2:** larger utilization ring, capacity stats, segmented utilization rail and trend history.
+- **Fire / Smoke / Leak 2x2:** larger alarm annunciator, zone/loop/test context, severity rail and event trace instead of large unused space.
+- **Command Button 2x2:** command-channel header, larger execution surface, target/timeout/ack metadata and mock response bus.
+- **Switch / Relay / Door Lock / Siren 2x2:** explicit energized/isolated state, larger toggle surface, coil/feedback data and output history.
+- **Manual Set Value 2x2:** larger editable setpoint register, range rail, validation, previous value/deadband/source context.
+- **Directional Control 2x2:** larger PTZ/motion pad plus pan/tilt/slew telemetry and mode feedback.
+- **Coordinates 2x2:** dedicated WGS84 latitude/longitude readouts plus GPS lock/HDOP reticle and satellite context.
+- **Compass 2x2:** larger compass face with course/drift metadata and heading rail.
+- **Clock 2x2:** large HH:MM:SS display with NTP lock, timezone, offset and drift data.
+- **Text / Markdown 2x2:** larger readable summary plus source/age/priority context.
+- **iFrame / External Content 2x2:** actual sandbox/container composition with connection/origin/latency/TLS state rather than a tiny centered label.
 
-The first Cupertino patch was rendered by the user with the full QA screenshot pass and all six `ios` category sheets were inspected visually. The second revision in this ZIP addresses the issues that were visible in those sheets:
+## Responsive behavior
 
-- Large metric and line/area chart cards now let the chart consume the available flexible height instead of leaving a large blank middle region.
-- Large state/status widgets now use a centered semantic hero treatment plus metadata instead of stretching a small `1x1` composition across a `2x2` card.
-- `2x2` command, switch/lock/siren, slider, manual set-value, and directional controls now expose richer context and use the available vertical space intentionally.
-- Large state timeline/history cards now include availability/warning/fault summary context and distribute timeline rows through the available height.
-- Large coordinate widgets now include a GPS-lock/fix visualization instead of leaving the upper half unused.
-- Large tables now use otherwise-empty `3x2` / `3x3` space for trend/activity context plus refresh/window metadata.
-- Large fire/smoke/leak widgets now use semantic safety-zone hero treatments and richer event metadata.
-- The compass center label now masks the needle so the heading number remains readable.
-- Gauge needle geometry was corrected so the needle uses the same left-to-right semicircle as the visible gauge arc.
+- `1x1`: glanceable primary state/value.
+- `2x1` / `3x1`: secondary state, trend, rail or compact metadata.
+- `1x2`: intentional vertical composition where the registry supports it.
+- `2x2+`: history, state traces, metadata, process context, richer control feedback or larger semantic geometry.
 
-## Reference direction
+Large cards are not intended to be scaled-up small cards; they now expose additional operational information.
 
-The redesign was informed by current Apple Human Interface Guidelines for Widgets, Controls, Toggles, Sliders, Gauges, Charts, Layout, and right-to-left interfaces, plus Apple Home interaction patterns. The implementation uses those principles for glanceability, hierarchy, adaptive composition, familiar control behavior, and restrained status color without copying an Apple product interface pixel-for-pixel.
+## Mock interactions
 
-The separate Aurora Glass theme exists in this project, so Cupertino intentionally avoids making translucent/liquid-glass material the dominant visual device.
+Local mock interaction remains theme-local and reusable:
 
-## QA performed
+- command button: Ready → Queued → Acknowledged → Ready;
+- boolean/device state: local toggle;
+- relay/lock/siren: local ON/OFF toggle;
+- slider/fan level: editable target;
+- manual setpoint: editable local field;
+- thermostat: local setpoint slider;
+- RGB control: preview/on-off, hue presets/slider and large-size brightness;
+- directional control: selected command plus motion-vector feedback.
 
-- Read `docs/profile.md`, `docs/agents.md`, and `docs/todo.md` completely before the initial edit.
-- Inspected the original `ios` source paths and original iOS full-screenshot category sheets before redesigning.
-- Verified dispatch coverage for all 35 `WidgetVisual` values.
-- Inspected the user's generated post-patch `metrics`, `controls`, `charts`, `location`, `tables`, and `display` full QA sheets at supported sizes.
-- Performed a TypeScript/JSX transpile syntax check on the revised `IOSVisuals.tsx` and `IOSFrame.tsx`; both pass.
-- Full project `tsc` remains blocked in the supplied sandbox by the incomplete `node_modules` tree (missing React/Babel/etc. type packages), as in the first pass.
-- Playwright screenshot generation also remains unavailable in this sandbox because the supplied dependency tree is incomplete.
+## English / Persian
 
-A fresh screenshot pass should be run after applying this revision because the second-pass layout changes cannot be rendered locally in this sandbox.
+Persian titles/help remain RTL while machine identifiers, numeric telemetry, coordinates, units, charts, timestamps and SCADA notation stay LTR where technically clearer. The new large-size layouts keep this same separation.
 
-## Files in this patch
+## QA status
 
-- `src/widgets/themes/IOSVisuals.tsx`
-- `src/widgets/themes/IOSFrame.tsx`
-- `THEME_NOTES.md`
-- `INTEGRATION.md`
+Completed in this pass:
+
+- inspected the user-generated **real full-page gaming screenshots** for all six categories;
+- specifically reviewed all visible supported size variants and identified large-card dead-space issues;
+- TypeScript/TSX syntax transpile check on the updated `GamingVisuals.tsx`: **0 parse diagnostics**;
+- no shared source files are included in this patch.
+
+The requested local screenshot commands were attempted again, but this sandbox copy has empty/stripped `node_modules` package directories and no `playwright/index.js`, so both runners stop before rendering:
+
+```powershell
+$env:WIDGET_QA_THEME="gaming"
+npm run screenshots:full
+
+$env:WIDGET_QA_THEME="gaming"
+npm run screenshots
+```
+
+After applying this v2 patch, please rerun those commands in the normal project environment. The uploaded screenshot set was the basis for this second-pass correction, but the newly changed large compositions still need one final real MUI/Playwright screenshot review after merge.
