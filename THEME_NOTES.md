@@ -1,126 +1,55 @@
-# Aurora Glass — Theme Notes
+# Industrial Flat — Theme Notes
 
-Stable theme ID: `glass`
+- Stable theme ID: `flat`
+- Working/display name: **Industrial Flat**
+- Scope: theme-local visual renderer only. Material 3 and every other theme are untouched.
 
 ## Design direction
 
-Aurora Glass is redesigned as a **luminous instrumentation layer**, not Material 3 with transparency.
+Industrial Flat is intentionally closer to a compact operator/HMI surface than a consumer dashboard. The renderer uses hard rectangular zones, thin borders, neutral process surfaces, dense numeric hierarchy, square segmented indicators, setpoint/deviation scales, orthogonal schematics, and restrained rounding. Saturated color is reserved for state and exception meaning rather than decoration.
 
-Key principles used in this pass:
+References reviewed for the original redesign include ISA-101 / high-performance HMI guidance, current Ignition Perspective material, and Siemens HMI Template Suite patterns. The useful principles are responsive composition, neutral normal-state surfaces, report-by-exception color, compact trend/context beside live values, explicit setpoint/feedback treatment, and semantic process graphics instead of generic KPI cards.
 
-- readable telemetry remains the highest-contrast layer;
-- blur/translucency is concentrated at the outer widget frame rather than repeatedly stacking glass-on-glass;
-- interior surfaces use light translucent fills, hairline highlights, and selective glow instead of heavy nested blur;
-- cyan/violet light is reserved for live data, focus, and active controls;
-- warning/critical states use amber/coral and remain visually distinct from decorative aurora light;
-- larger sizes add history, metadata, operational state, or control context instead of simply scaling a small widget;
-- semantic IoT widgets use shapes appropriate to the data: liquid tanks, battery shells, cellular bars, alarm beacons, process mimic, compass/map, etc.
+## Screenshot-driven QA pass 3
 
-## Research references
+Reviewed both new user-supplied QA archives:
 
-The design pass used these references for hierarchy and interaction ideas, without copying any one interface:
+- `full-screenshots(3).rar`: all 6 Industrial Flat category sheets.
+- `widget-screenshots(4).rar`: 63 individual widget captures across metrics, controls, charts, location, tables, and display, plus the 6 category overview captures.
 
-- Microsoft Fluent 2 Material / Acrylic guidance: https://fluent2.microsoft.design/material
-- Apple Liquid Glass overview and hierarchy guidance: https://developer.apple.com/documentation/TechnologyOverviews/liquid-glass
-- Apple WWDC25 “Meet Liquid Glass” (especially restraint / avoiding glass-on-glass): https://developer.apple.com/videos/play/wwdc2025/219/
-- Grafana dashboard design best practices: https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/best-practices/
-- General contemporary glass-dashboard / IoT telemetry references were also reviewed for density, map, chart, and smart-control composition.
+The supplied renders show that the v2 layouts are broadly stable: no obvious content escapes widget bounds, large Battery/Signal/Coordinates/Compass/Clock/Text compositions now use their available space well, controls remain legible, maps/routes and tables scale cleanly, and Camera/SCADA/iframe display widgets do not need another structural rewrite.
 
-## Files in this patch
+This pass therefore makes only three targeted corrections that are clearly justified by the screenshots:
 
-- `src/widgets/themes/GlassVisuals.tsx`
-- `src/widgets/themes/GlassFrame.tsx`
-- `THEME_NOTES.md`
-- `INTEGRATION.md`
+- **Donut / Pie** is now an actual industrial ring instrument instead of a rectangular fill bar. It uses a hard-edged circular arc, 12 outer tick marks, a centered percentage, responsive metadata, and a 10-segment capacity strip on 2x2+ cards. This fixes the semantic mismatch visible in every donut size.
+- **Heatmap** now has substantially stronger low/mid/high cell separation and tighter gaps at small/wide sizes. The prior pale palette made the matrix appear almost blank in the real screenshots.
+- **Fire / Smoke / Water Leak 2x2** replaces the small bottom-only supervision strip with a framed **15-minute alarm trace** that deliberately occupies the previously empty center region. Active alarms show a clear event rise while normal sensors remain quiet/steady.
 
-No Material 3 files or other theme files are included in the patch.
+No change was made to Directional Control in this pass: the individual capture shows the v2 pad, command feedback, pulse timing, and interlock block are already balanced enough, so enlarging it further would add churn without solving a real problem.
 
-## Widget coverage
+## Interactive behavior
 
-All currently registered visual types used by `glass` are handled in `GlassVisualRenderer`:
+Mock controls remain local and reusable:
 
-- metrics: metric, battery, cellular signal, tank, boolean status, gauge, fire/smoke/leak indicators;
-- controls: command/downlink button, switch/relay/lock/siren, slider/fan, manual set value, thermostat, RGB color, directional control;
-- charts: time-series/area, bar, histogram, donut, heatmap, state/status timeline, gauge;
-- location: map, coordinates, route/track, compass;
-- tables/events: device table, measurement list, alarms, event history, logs;
-- display/custom: clock, text/markdown, camera/image, iframe mock, SCADA/mimic.
+- command button shows temporary sent feedback;
+- switches/lock/siren change state;
+- sliders and fan speed update values/history;
+- manual set value can be edited and applied;
+- thermostat changes target;
+- RGB/light color changes swatch and brightness;
+- directional control highlights and reports the last command.
 
-## Size behavior
+## Locale / portability
 
-The renderer uses width/height-aware compositions rather than scaling one card:
+Persian remains supported for user-facing labels while numeric, chart, coordinate, process, and control instrumentation stays LTR where that improves readability. The renderer receives all required state through its props and local mock state; it does not import showcase/App state.
 
-- `1x1`: core value/state, compact semantic visual, minimal status context;
-- `2x1`: split compositions with trace/control context beside the primary value;
-- `1x2`: deliberately vertical layouts for metrics/tanks and stacked context;
-- `2x2+`: history charts, min/avg/max, recent-state strips, command metadata, richer map/SCADA context;
-- `3x1` / `3x2` chart widgets use the extra horizontal canvas for a real trace/history view.
+## Validation
 
-## Mock interaction behavior
+- Reviewed the new full-category and per-widget screenshots before editing.
+- Ran the isolated strict TypeScript check for the v3 `FlatVisuals.tsx`; it passes.
+- The patch changes only the dedicated Industrial Flat renderer plus documentation.
+- No shared file, Material 3 file, or other theme file is included in this patch.
 
-Interactive widgets now visibly update local mock state:
+## Remaining QA
 
-- command/downlink button: queued/ACK-pending feedback;
-- relay / door lock / siren: state toggles;
-- slider / fan: live numeric value;
-- manual set value: editable field plus apply state on large layout;
-- thermostat: `−` / `+` controls update target;
-- RGB color: selectable swatches plus brightness slider;
-- directional control: last selected command remains highlighted.
-
-State is local to the reusable theme renderer; it is not coupled to `App.tsx` or showcase-global state.
-
-## Validation performed
-
-- Read `docs/profile.md`, `docs/agents.md`, and `docs/todo.md` completely before editing.
-- Reviewed the existing Glass screenshots for all six categories and the current Glass-specific branches in the shared renderer/frame.
-- Performed current web reference research before implementation.
-- `GlassFrame.tsx`: TypeScript JSX transpile check passed.
-- `GlassVisuals.tsx`: TypeScript JSX transpile check passed.
-- Both files passed an additional TypeScript check using temporary local module stubs to validate internal expressions/types without project dependencies.
-- Confirmed no Material 3 or other theme-specific source file is included in the patch.
-
-## Screenshot QA follow-up — pass 3
-
-The latest user-provided QA set was inspected in all three archives:
-
-- `full-screenshots.rar` — full Glass category pages;
-- `widget-screenshots.rar` — per-widget English captures;
-- `widget-screenshots(1).rar` — per-widget Persian captures.
-
-### Root-cause fix: broad white wash / long status bar
-
-The remaining glare was not merely an opacity-tuning problem. Three intended one-pixel rules in `GlassFrame.tsx` used numeric MUI `sx` sizing:
-
-```tsx
-height: 1
-width: 1
-```
-
-For MUI sizing transforms, values in the `0..1` range are percentage-like sizing values. As a result, the intended top hairline and left edge highlight expanded across the card, producing the broad white wash seen in almost every screenshot. The status-row divider had the same issue and expanded into the long pale horizontal bar.
-
-This pass changes those dimensions to explicit CSS pixels (`'1px'`) and fixes the same mistake in two internal semantic highlights in the battery/tank visuals. This keeps the Aurora glass edge treatment while removing the unintended full-surface overlays.
-
-### Additional composition fixes from the new captures
-
-- **State / status timeline:** large `3x2` layouts now use the available height deliberately, with framed channel rows plus Normal / Warning / Alarm summary context instead of leaving a large empty center.
-- **Command / downlink:** large layouts now show a three-row command/transport history and ACK state instead of one status line floating in a large empty plate.
-- **Heatmap:** cell intensity differentiation and high-intensity borders were strengthened so the matrix remains readable after the frame washout is removed.
-- **SCADA / mimic:** tall large layouts now add a flow-stability trace under the process mimic so `3x3` does not look like a small horizontal diagram floating in a tall card.
-- **Persian QA:** the supplied RTL run was checked for ordering/clipping; the new rich command text keeps Persian labels RTL while timestamps, RPC results, chart axes, and other technical data remain LTR where appropriate.
-
-## Validation performed after pass 3
-
-- Both theme files pass TypeScript JSX transpilation with TypeScript 5.8.3.
-- A sizing audit found no remaining positive numeric `width` / `height` values `<= 1` in the two Aurora theme files; intended hairlines are explicit pixel strings.
-- No Material 3 or other theme source is included in the patch.
-- Shared integration requirements are unchanged from the previous patch.
-
-The sandbox still does not have the project npm dependencies / Playwright installation, so the corrected code cannot be recaptured here. Re-run the Glass-only commands below in the normal project checkout and inspect the new Chromium output.
-
-## Remaining review targets
-
-1. Confirm the broad vertical/diagonal white wash and the long status-row bar are gone after replacing `GlassFrame.tsx`.
-2. Inspect `state-timeline`, `status-history`, command/downlink, heatmap, and SCADA first because their large-size compositions changed in this pass.
-3. Re-run the Persian screenshot pass and confirm no host-font-specific RTL wrapping differs from the supplied capture.
-4. If desired, update the shared display label from `Glass` to `Aurora Glass`; this remains optional and is intentionally not included as a shared-file edit.
+Run one fresh `flat` screenshot pass after replacing `FlatVisuals.tsx` to visually verify the three v3 changes in the project's actual browser/font environment. There are no known clipping/overflow issues in the user-supplied v2 screenshots; the remaining verification is specifically for the new donut ring, stronger heatmap cells, and alarm trace composition.
