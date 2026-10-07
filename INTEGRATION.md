@@ -1,73 +1,65 @@
-# Cupertino (`ios`) Integration
+# Gaming theme integration
 
-Shared integration is required, but the shared files are intentionally **not** included in this patch because theme work is happening in parallel.
+Shared integration is required only if your project has not already applied the gaming dispatch hooks.
 
-## 1. Route iOS visuals to the dedicated renderer
+This patch intentionally does **not** modify shared files because theme work is happening in parallel.
 
-File: `src/widgets/renderers/WidgetVisuals.tsx`
-
-Add this import with the other theme renderer imports:
+The dedicated theme file exports both named components:
 
 ```tsx
-import { IOSVisualRenderer } from '../themes/IOSVisuals';
+export function GamingVisualRenderer(...) { ... }
+export function GamingFrame(...) { ... }
 ```
 
-Then, at the start of `WidgetVisualRenderer`, before the Material/default or generic-theme rendering path, add:
+If you already fixed the gaming export/dispatch locally, no new shared integration change is required for pass 4.
+
+## 1. `src/widgets/renderers/WidgetVisuals.tsx`
+
+Import the dedicated renderer:
 
 ```tsx
-if (props.theme.id === 'ios') return <IOSVisualRenderer {...props} />;
+import { GamingVisualRenderer } from '../themes/GamingVisuals';
 ```
 
-For example:
+At the start of `WidgetVisualRenderer`, dispatch only the stable `gaming` theme ID:
+
+```tsx
+if (props.theme.id === 'gaming') return <GamingVisualRenderer {...props} />;
+```
+
+Example:
 
 ```tsx
 export function WidgetVisualRenderer(props: Props) {
-  if (props.theme.id === 'ios') return <IOSVisualRenderer {...props} />;
   if (props.theme.id === 'material') return <MaterialVisualRenderer {...props} />;
-  // existing renderer logic continues unchanged...
+  if (props.theme.id === 'gaming') return <GamingVisualRenderer {...props} />;
+
+  const v = props.def.visual;
+  // existing shared renderer...
 }
 ```
 
-Do not rename the `ios` theme ID or any widget ID. No registry/type/token change is required for this patch.
+## 2. `src/widgets/core/WidgetFrame.tsx`
 
-## 2. Route iOS widgets to the dedicated frame
-
-File: `src/widgets/core/WidgetFrame.tsx`
-
-Add:
+Import the gaming frame:
 
 ```tsx
-import { IOSFrame as IOSThemeFrame } from '../themes/IOSFrame';
+import { GamingFrame as GamingThemeFrame } from '../themes/GamingVisuals';
 ```
 
-Then change only the existing `ios` switch branch to:
+Route only the stable gaming ID:
 
 ```tsx
-case 'ios': return <IOSThemeFrame {...props}/>;
+case 'gaming':
+  return <GamingThemeFrame {...props} />;
 ```
 
-The existing in-file legacy `IOSFrame` can remain temporarily; once all parallel work is merged and verified, the coordinator may remove that dead implementation as a cleanup-only change. Its removal is not required for this patch to work.
+No changes are required in:
 
-## QA after integration
+- `registry.ts`
+- `types.ts`
+- `themeTokens.ts`
+- `App.tsx`
+- `styles.css`
 
-PowerShell:
-
-```powershell
-$env:WIDGET_QA_THEME="ios"
-npm run screenshots:full
-
-$env:WIDGET_QA_THEME="ios"
-npm run screenshots
-```
-
-Inspect every generated Cupertino sheet for metrics, controls, charts, location, tables, and display, at every supported size, in both English and Persian where the QA route supports locale switching.
-
-## Preferred one-command bilingual QA
-
-If the simplified QA runner from this conversation is installed, the easiest final verification is:
-
-```cmd
-scripts\widget-qa.cmd ios
-```
-
-It generates one `out\ios-qa.zip` containing both English and Persian widget/full-page QA outputs.
+Pass 4 changes only internal gaming-theme layouts; the integration contract is unchanged.

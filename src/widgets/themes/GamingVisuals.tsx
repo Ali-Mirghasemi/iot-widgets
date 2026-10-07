@@ -191,6 +191,26 @@ function Metric({ def, locale, size }: VisualProps) {
     <TickRail value={pct} max={100} segments={10} height={14} />
   </Box>;
 
+  if (p.wide && !p.large) return <Box sx={{ height: '100%', minHeight: 0, overflow: 'hidden', display: 'grid', gridTemplateColumns: 'minmax(150px,.72fr) minmax(0,1.28fr)', gap: 1.05, direction: 'ltr' }}>
+    <Box sx={{ minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: .5 }}>
+      <HudLabel>live telemetry</HudLabel>
+      <Readout value={value} unit={unit} compact />
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: .8 }}>
+        <HudLabel tone={trendTone}>{status}</HudLabel>
+        <Typography sx={{ fontFamily: 'inherit', fontSize: 9.6, lineHeight: 1, color: trendTone, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{trendUp ? '+' : '−'}{Math.abs(trend)}% / 24H</Typography>
+      </Box>
+    </Box>
+    <Box sx={{ minWidth: 0, minHeight: 0, overflow: 'hidden', borderLeft: `1px solid ${HUD.borderSoft}`, pl: 1, display: 'grid', gridTemplateRows: 'auto minmax(0,1fr)', gap: .25 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><HudLabel>history</HudLabel><HudLabel tone={HUD.dim}>T−24H</HudLabel></Box>
+      <Box sx={{ minHeight: 0, overflow: 'hidden', display: 'grid', gridTemplateRows: 'minmax(0,1fr) 8px', gap: .15 }}>
+        <Box sx={{ minHeight: 0, overflow: 'hidden' }}><HudSparkline values={values} height="100%" fill /></Box>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
+          {['00','12','NOW'].map(label => <Typography key={label} sx={{ fontFamily: 'inherit', fontSize: 7.4, lineHeight: 1, color: HUD.dim }}>{label}</Typography>)}
+        </Box>
+      </Box>
+    </Box>
+  </Box>;
+
   return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: p.large ? 'minmax(150px,.8fr) minmax(0,1.2fr)' : 'minmax(145px,.82fr) minmax(0,1.18fr)', gap: 1.35, direction: 'ltr' }}>
     <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: .95 }}>
       <HudLabel>live telemetry</HudLabel>
@@ -673,7 +693,16 @@ function DirectionControl({ locale, size }: VisualProps) {
   const positions = [2,4,5,6,8];
   const pad = <Box sx={{ width: '100%' }}><Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gridTemplateRows: 'repeat(3,1fr)', gap: .45, aspectRatio: '1/1' }}>{keys.map((key, i) => { const pos = positions[i]; const selected = active === key; return <Button key={key} onClick={() => setActive(key)} disableRipple sx={{ gridColumn: ((pos - 1) % 3) + 1, gridRow: Math.floor((pos - 1) / 3) + 1, minWidth: 0, borderRadius: 0, border: `1px solid ${selected ? `${HUD.cyan}99` : HUD.borderSoft}`, color: selected ? HUD.cyan : HUD.muted, bgcolor: selected ? 'rgba(25,247,255,.11)' : 'rgba(25,247,255,.02)', fontSize: p.large ? (key === '•' ? 26 : 28) : key === '•' ? 20 : 22, '&:hover': { bgcolor: 'rgba(25,247,255,.09)' } }}>{key}</Button>; })}</Box></Box>;
 
-  if (!p.large) return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', direction: 'ltr' }}><Box sx={{ width: p.compact ? 142 : p.wide ? 124 : 176 }}>{pad}{!p.compact && <Box sx={{ mt: .65, display: 'flex', justifyContent: 'space-between' }}><HudLabel>{locale === 'fa' ? 'آخرین فرمان' : 'LAST CMD'}</HudLabel><HudLabel tone={HUD.cyan}>{active}</HudLabel></Box>}</Box></Box>;
+  if (p.wide && !p.large) return <Box sx={{ height: '100%', minHeight: 0, overflow: 'hidden', display: 'grid', gridTemplateColumns: '108px minmax(0,1fr)', gap: 1.2, alignItems: 'center', direction: 'ltr' }}>
+    <Box sx={{ width: 108, maxWidth: '100%', justifySelf: 'center' }}>{pad}</Box>
+    <Box sx={{ minWidth: 0, display: 'grid', gap: .55, alignContent: 'center' }}>
+      <HudLabel>ptz / input vector</HudLabel>
+      <Readout value={active === '•' ? '0' : active === '←' || active === '→' ? '32' : '18'} unit="deg/s" compact />
+      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: .65 }}><MiniStat label="LAST CMD" value={active === '•' ? 'HOLD' : active} tone={HUD.cyan} /><MiniStat label="MODE" value={active === '•' ? 'BRAKE' : 'SLEW'} tone={active === '•' ? HUD.green : HUD.cyan} /></Box>
+    </Box>
+  </Box>;
+
+  if (!p.large) return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', direction: 'ltr' }}><Box sx={{ width: p.compact ? 142 : 176 }}>{pad}{!p.compact && <Box sx={{ mt: .65, display: 'flex', justifyContent: 'space-between' }}><HudLabel>{locale === 'fa' ? 'آخرین فرمان' : 'LAST CMD'}</HudLabel><HudLabel tone={HUD.cyan}>{active}</HudLabel></Box>}</Box></Box>;
 
   return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: 'minmax(220px,.9fr) minmax(0,1.1fr)', gap: 1.3, direction: 'ltr', alignItems: 'center' }}>
     <Box sx={{ width: 220, maxWidth: '100%', justifySelf: 'center' }}>{pad}<Box sx={{ mt: .7, display: 'flex', justifyContent: 'space-between' }}><HudLabel>{locale === 'fa' ? 'آخرین فرمان' : 'LAST COMMAND'}</HudLabel><HudLabel tone={HUD.cyan}>{active === '•' ? 'HOLD' : active}</HudLabel></Box></Box>
