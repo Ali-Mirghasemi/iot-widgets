@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import {
-  Box, Check, Chip, Dialog, DialogContent, DialogTitle, Divider, ListItemIcon, ListItemText,
+  Box, Chip, Dialog, DialogContent, DialogTitle, Divider, ListItemIcon, ListItemText,
   Menu, MenuItem, Stack, Typography,
 } from '@mui/material';
+import Check from '@mui/icons-material/Check';
 import type { Locale, WidgetDefinition, WidgetSize, WidgetThemeTokens } from './types';
 import { WidgetVisualRenderer } from '../renderers/WidgetVisuals';
 import { WidgetFrame } from './WidgetFrame';

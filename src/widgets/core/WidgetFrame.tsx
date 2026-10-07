@@ -40,25 +40,122 @@ function StatusDot({ theme, status }: { theme:WidgetThemeTokens; status:string }
 }
 
 function MaterialFrame(p: FrameProps) {
-  const d=dims(p.size); const Icon=p.def.icon; const title=p.locale==='fa'?p.def.titleFa:p.def.titleEn;
-  return <Box sx={{ height:'100%', overflow:'hidden', position:'relative', borderRadius:3.5, bgcolor:'#fff', border:`1px solid ${p.theme.border}`, boxShadow:p.theme.shadow, display:'flex', flexDirection:'column', transition:'.2s', '&:hover':{transform:'translateY(-3px)',boxShadow:'0 18px 42px rgba(79,70,229,.16)'} }}>
-    <Box sx={{ position:'absolute', insetInlineStart:0, top:0, bottom:0, width:4, background:`linear-gradient(180deg,${p.theme.accent},${p.theme.accent2})` }}/>
-    <Box sx={{ px:1.55, pt:1.35, pb:.85, display:'flex', alignItems:'center', justifyContent:'space-between', gap:1, direction:p.locale==='fa'?'rtl':'ltr' }}>
-      <Box sx={{ minWidth:0, display:'flex', alignItems:'center', gap:1 }}>
-        <Box sx={{ width:36,height:36,borderRadius:2.5,display:'grid',placeItems:'center',bgcolor:`${p.theme.accent}12`,color:p.theme.accent }}><Icon sx={{fontSize:20}}/></Box>
-        <Box sx={{minWidth:0}}>
-          <Typography sx={{fontSize:11,color:p.theme.muted,fontWeight:700,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.deviceName}</Typography>
-          <Typography sx={{fontSize:15,fontWeight:850,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{title}</Typography>
+  const d = dims(p.size);
+  const Icon = p.def.icon;
+  const title = p.locale === 'fa' ? p.def.titleFa : p.def.titleEn;
+
+  return <Box sx={{
+    height: '100%',
+    minHeight: 0,
+    overflow: 'hidden',
+    position: 'relative',
+    borderRadius: '16px',
+    bgcolor: '#fff',
+    border: `1px solid ${p.theme.border}`,
+    boxShadow: '0 8px 24px rgba(15,23,42,.07)',
+    display: 'flex',
+    flexDirection: 'column',
+    transition: 'transform .18s ease, box-shadow .18s ease, border-color .18s ease',
+    '&:hover': {
+      transform: 'translateY(-2px)',
+      boxShadow: '0 14px 32px rgba(15,23,42,.10)',
+      borderColor: `${p.theme.accent}45`,
+    },
+  }}>
+    <Box sx={{ position:'absolute', left:0, right:0, top:0, height:3, bgcolor:p.theme.accent }} />
+
+    <Box sx={{
+      px: d.compact ? 1.25 : 1.45,
+      pt: d.compact ? 1.1 : 1.2,
+      pb: d.compact ? .65 : .7,
+      display:'flex',
+      alignItems:'flex-start',
+      justifyContent:'space-between',
+      gap:.8,
+      direction:p.locale==='fa'?'rtl':'ltr',
+      minHeight: d.compact ? 51 : 58,
+    }}>
+      <Box sx={{ minWidth:0, display:'flex', alignItems:'center', gap:.85, flex:1 }}>
+        <Box sx={{
+          width:d.compact?30:34,
+          height:d.compact?30:34,
+          borderRadius:'10px',
+          display:'grid',
+          placeItems:'center',
+          bgcolor:`${p.theme.accent}0d`,
+          color:p.theme.accent,
+          border:`1px solid ${p.theme.accent}16`,
+          flex:'0 0 auto',
+        }}>
+          <Icon sx={{fontSize:d.compact?17:19}}/>
+        </Box>
+
+        <Box sx={{ minWidth:0, flex:1 }}>
+          <Typography sx={{
+            fontSize:d.compact?13.5:14.5,
+            fontWeight:850,
+            lineHeight:1.15,
+            overflow:'hidden',
+            textOverflow:'ellipsis',
+            whiteSpace:'nowrap',
+          }}>{title}</Typography>
+          <Typography sx={{
+            mt:.25,
+            fontSize:9.8,
+            color:p.theme.muted,
+            fontWeight:650,
+            overflow:'hidden',
+            textOverflow:'ellipsis',
+            whiteSpace:'nowrap',
+          }}>{p.deviceName}</Typography>
         </Box>
       </Box>
+
       <Actions {...p}/>
     </Box>
-    {!d.compact && <Box sx={{px:1.55,display:'flex',gap:1.3,alignItems:'center',direction:p.locale==='fa'?'rtl':'ltr'}}><StatusDot theme={p.theme} status={p.status}/><Typography sx={{fontSize:10.5,color:p.theme.muted}}>{p.locationLabel}</Typography></Box>}
-    <Box sx={{ flex:1,minHeight:0,p:d.compact?1.45:1.55,pt:d.compact?1:1.2,overflow:'hidden' }}>{p.children}</Box>
-    {d.roomy && <Box sx={{px:1.55,pb:1.15,display:'flex',justifyContent:'space-between',color:p.theme.muted,direction:p.locale==='fa'?'rtl':'ltr'}}><Typography sx={{fontSize:10.5}}>{p.lastSeen}</Typography><Typography sx={{fontSize:10.5,direction:'ltr'}}>{p.size}</Typography></Box>}
+
+    {!d.compact && <Box sx={{
+      px:1.45,
+      pb:.65,
+      display:'flex',
+      gap:1.15,
+      alignItems:'center',
+      direction:p.locale==='fa'?'rtl':'ltr',
+      borderBottom:`1px solid ${p.theme.border}`,
+    }}>
+      <StatusDot theme={p.theme} status={p.status}/>
+      <Typography sx={{
+        fontSize:10,
+        color:p.theme.muted,
+        overflow:'hidden',
+        textOverflow:'ellipsis',
+        whiteSpace:'nowrap',
+      }}>{p.locationLabel}</Typography>
+    </Box>}
+
+    <Box sx={{
+      flex:1,
+      minHeight:0,
+      p:d.compact?1.2:1.35,
+      pt:d.compact?1:1.15,
+      overflow:'hidden',
+    }}>{p.children}</Box>
+
+    {d.roomy && <Box sx={{
+      px:1.4,
+      pb:.85,
+      pt:.15,
+      display:'flex',
+      justifyContent:'space-between',
+      color:p.theme.muted,
+      direction:p.locale==='fa'?'rtl':'ltr',
+      borderTop:`1px solid ${p.theme.border}`,
+    }}>
+      <Typography sx={{fontSize:9.8}}>{p.lastSeen}</Typography>
+      <Typography sx={{fontSize:9.8,direction:'ltr'}}>{p.size}</Typography>
+    </Box>}
   </Box>;
 }
-
 function FlatFrame(p: FrameProps) {
   const d=dims(p.size); const Icon=p.def.icon; const title=p.locale==='fa'?p.def.titleFa:p.def.titleEn;
   return <Box sx={{height:'100%',overflow:'hidden',position:'relative',bgcolor:'#fff',border:`1px solid ${p.theme.border}`,borderRadius:1.5,display:'grid',gridTemplateRows:d.compact?'42px 1fr':'48px 1fr 27px',boxShadow:'0 6px 16px rgba(15,118,110,.06)'}}>

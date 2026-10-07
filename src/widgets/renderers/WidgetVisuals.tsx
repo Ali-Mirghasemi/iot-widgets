@@ -4,6 +4,7 @@ import {
 } from '@mui/material';
 import type { Locale, WidgetDefinition, WidgetThemeTokens, WidgetSize } from '../core/types';
 import { bars, heat, spark, spark2 } from '../data/mockData';
+import { MaterialVisualRenderer } from '../themes/MaterialVisuals';
 
 interface Props { def: WidgetDefinition; theme: WidgetThemeTokens; locale: Locale; size: WidgetSize; }
 
@@ -436,6 +437,7 @@ function AlarmIndicator({ def, theme, locale, size }: Props) {
 }
 
 export function WidgetVisualRenderer(props: Props) {
+  if (props.theme.id === 'material') return <MaterialVisualRenderer {...props} />;
   const v = props.def.visual;
   if (v === 'metric') return <Metric {...props} />;
   if (v === 'battery') return <Battery {...props} />;

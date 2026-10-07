@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { Component, useMemo, useState, type ErrorInfo, type ReactNode } from 'react';
 import { Box, Container, Paper, Typography } from '@mui/material';
 import WidgetsOutlined from '@mui/icons-material/WidgetsOutlined';
 import PaletteOutlined from '@mui/icons-material/PaletteOutlined';
@@ -100,10 +100,61 @@ function WidgetQaPage({ themeId, category, locale }: { themeId:WidgetThemeId; ca
         <Typography sx={{fontSize:11,opacity:.65,direction:'ltr'}}>{def.supportedSizes.join(' · ')}</Typography>
       </Box>
       <Box className="qa-widget-grid">
-        {def.supportedSizes.map(size => <WidgetCard key={`${def.id}-${size}`} def={def} theme={theme} locale={locale} forcedSize={size} qaMode />)}
+        {def.supportedSizes.map(size => <QaErrorBoundary key={`${def.id}-${size}`} defId={def.id} size={size} themeId={theme.id}>
+          <WidgetCard def={def} theme={theme} locale={locale} forcedSize={size} qaMode />
+        </QaErrorBoundary>)}
       </Box>
     </Box>)}
   </Box>;
+}
+
+
+class QaErrorBoundary extends Component<{
+  children: ReactNode;
+  defId: string;
+  size: string;
+  themeId: string;
+}, { error: Error | null }> {
+  state: { error: Error | null } = { error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error(`[Widget QA] ${this.props.defId} ${this.props.size}`, error, info.componentStack);
+  }
+
+  render() {
+    if (!this.state.error) return this.props.children;
+    const sizeClass = `size-${this.props.size.replace('x','-')}`;
+    return <Box
+      className={`widget-grid-item ${sizeClass}`}
+      data-qa-error="true"
+      data-widget-id={this.props.defId}
+      data-widget-size={this.props.size}
+      data-widget-theme={this.props.themeId}
+      sx={{
+        minWidth:0,
+        minHeight:0,
+        height:'100%',
+        overflow:'hidden',
+        p:2,
+        borderRadius:3,
+        border:'2px solid #ef4444',
+        bgcolor:'#fff1f2',
+        color:'#991b1b',
+        display:'flex',
+        flexDirection:'column',
+        justifyContent:'center',
+        gap:1,
+      }}
+    >
+      <Typography sx={{fontWeight:900,fontSize:14}}>Widget render error</Typography>
+      <Typography sx={{fontWeight:800,fontSize:12,direction:'ltr'}}>{this.props.defId} · {this.props.size}</Typography>
+      <Typography sx={{fontSize:11,lineHeight:1.5,direction:'ltr',wordBreak:'break-word'}}>{this.state.error.message}</Typography>
+    </Box>;
+  }
 }
 
 function Stat({icon,value,label}:{icon:React.ReactNode;value:number;label:string}) {

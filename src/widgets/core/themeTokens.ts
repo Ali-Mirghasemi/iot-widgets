@@ -3,7 +3,7 @@ import type { WidgetThemeId, WidgetThemeTokens } from './types';
 export const widgetThemes: Record<WidgetThemeId, WidgetThemeTokens> = {
   material: {
     id: 'material',
-    label: 'Material',
+    label: 'Material 3',
     background: '#eef3ff',
     surface: '#ffffff',
     foreground: '#162033',
@@ -11,8 +11,8 @@ export const widgetThemes: Record<WidgetThemeId, WidgetThemeTokens> = {
     accent: '#4f46e5',
     accent2: '#06b6d4',
     border: '#e3e8f2',
-    radius: 22,
-    shadow: '0 10px 30px rgba(79,70,229,.10)',
+    radius: 16,
+    shadow: '0 8px 24px rgba(15,23,42,.07)',
     headerWeight: 800,
   },
   flat: {
