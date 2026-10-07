@@ -1,156 +1,116 @@
-# Aurora Glass — Theme Notes
+# Cupertino (`ios`) Theme Notes
 
-Stable theme ID: `glass`
+## Scope
+
+This patch redesigns the complete `ios` widget family as a dedicated, reusable Cupertino renderer instead of continuing to layer iOS conditions into the generic renderer. It covers all 35 supported visual types across metrics, controls, charts, location, tables, and display widgets.
+
+The stable theme ID remains `ios`. No Material 3 or other theme implementation is included in this patch.
 
 ## Design direction
 
-Aurora Glass is redesigned as a **luminous instrumentation layer**, not Material 3 with transparency.
+Cupertino uses restrained system-like surfaces rather than a recolored Material card or a glass-heavy treatment. The visual language uses compact 18–20 px containers, subtle separators, quiet elevation, square-rounded semantic icon tiles, strong numeric hierarchy, restrained system colors, and clear active/inactive state treatment.
 
-Key principles used in this pass:
+The layout deliberately changes with widget size:
 
-- readable telemetry remains the highest-contrast layer;
-- blur/translucency is concentrated at the outer widget frame rather than repeatedly stacking glass-on-glass;
-- interior surfaces use light translucent fills, hairline highlights, and selective glow instead of heavy nested blur;
-- cyan/violet light is reserved for live data, focus, and active controls;
-- warning/critical states use amber/coral and remain visually distinct from decorative aurora light;
-- larger sizes add history, metadata, operational state, or control context instead of simply scaling a small widget;
-- semantic IoT widgets use shapes appropriate to the data: liquid tanks, battery shells, cellular bars, alarm beacons, process mimic, compass/map, etc.
+- `1x1`: glanceable value/state and only the most important indicator.
+- `2x1`: secondary context, trend/history, or a more useful compact control layout.
+- `1x2`: vertical space is used for semantic tank/control/history compositions rather than simply centering a small component.
+- `2x2+`: adds statistics, metadata, history, event/context rows, richer visualizations, or richer control feedback.
 
-## Research references
+Semantic IoT treatments are used for battery, radio signal, tanks, fire/smoke/leak alarms, thermostat, map/route, compass, and SCADA instead of rendering every device as a generic KPI tile.
 
-The design pass used these references for hierarchy and interaction ideas, without copying any one interface:
+Interactive mock controls keep local theme-renderer state: button feedback, switches, sliders, numeric stepper/input, thermostat setpoint, color controls, and direction pad all respond without requiring showcase-only state in `App.tsx`.
 
-- Microsoft Fluent 2 Material / Acrylic guidance: https://fluent2.microsoft.design/material
-- Apple Liquid Glass overview and hierarchy guidance: https://developer.apple.com/documentation/TechnologyOverviews/liquid-glass
-- Apple WWDC25 “Meet Liquid Glass” (especially restraint / avoiding glass-on-glass): https://developer.apple.com/videos/play/wwdc2025/219/
-- Grafana dashboard design best practices: https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/best-practices/
-- General contemporary glass-dashboard / IoT telemetry references were also reviewed for density, map, chart, and smart-control composition.
+Persian remains supported through localized labels and RTL layout where appropriate. Numeric, chart, coordinates, telemetry, and other technical content intentionally stays LTR where that improves readability.
+
+## Post-screenshot QA revision
+
+The first Cupertino patch was rendered by the user with the full QA screenshot pass and all six `ios` category sheets were inspected visually. The second revision in this ZIP addresses the issues that were visible in those sheets:
+
+- Large metric and line/area chart cards now let the chart consume the available flexible height instead of leaving a large blank middle region.
+- Large state/status widgets now use a centered semantic hero treatment plus metadata instead of stretching a small `1x1` composition across a `2x2` card.
+- `2x2` command, switch/lock/siren, slider, manual set-value, and directional controls now expose richer context and use the available vertical space intentionally.
+- Large state timeline/history cards now include availability/warning/fault summary context and distribute timeline rows through the available height.
+- Large coordinate widgets now include a GPS-lock/fix visualization instead of leaving the upper half unused.
+- Large tables now use otherwise-empty `3x2` / `3x3` space for trend/activity context plus refresh/window metadata.
+- Large fire/smoke/leak widgets now use semantic safety-zone hero treatments and richer event metadata.
+- The compass center label now masks the needle so the heading number remains readable.
+- Gauge needle geometry was corrected so the needle uses the same left-to-right semicircle as the visible gauge arc.
+
+## Reference direction
+
+The redesign was informed by current Apple Human Interface Guidelines for Widgets, Controls, Toggles, Sliders, Gauges, Charts, Layout, and right-to-left interfaces, plus Apple Home interaction patterns. The implementation uses those principles for glanceability, hierarchy, adaptive composition, familiar control behavior, and restrained status color without copying an Apple product interface pixel-for-pixel.
+
+The separate Aurora Glass theme exists in this project, so Cupertino intentionally avoids making translucent/liquid-glass material the dominant visual device.
+
+## Third QA revision (individual widget captures)
+
+The user supplied a second full-sheet archive plus per-widget captures and the generated `report.json`. This pass focused on edge defects rather than another visual redesign. The v3 patch adds:
+
+- Sparkline/chart endpoints are inset so the final marker is no longer clipped at the card edge.
+- Sparkline normalization now preserves small telemetry changes (for example 24.4–24.8 °C) instead of flattening sub-unit ranges.
+- Sparkline and SCADA SVGs render as block elements, removing the inline-SVG baseline that produced spurious vertical scroll/overflow in large table and SCADA cards.
+- Value/unit typography now uses an explicit baseline flex row and normal line box, addressing the QA detector's repeated text scroll-overflow hits across metric, gauge, slider, and related numeric widgets.
+- Cupertino switches constrain the hidden MUI input hit target to the visible switch bounds, reducing false outside-widget detections while preserving interaction.
+- Horizontal slider roots now use border-box containment so their rails do not extend beyond `1x1` card bounds.
+- `2x1` directional control uses the compact pad geometry and tighter caption spacing so the last-command row remains inside the available body height.
+- Decorative map roads were redrawn with endpoints inside the viewBox instead of relying on clipping beyond the map bounds.
+- Clock line-height was normalized to prevent a false text scroll-height overflow.
+
+## QA performed
+
+- Read `docs/profile.md`, `docs/agents.md`, and `docs/todo.md` completely before the initial edit.
+- Inspected the original `ios` source paths and original iOS full-screenshot category sheets before redesigning.
+- Verified dispatch coverage for all 35 `WidgetVisual` values.
+- Inspected the user's generated post-patch `metrics`, `controls`, `charts`, `location`, `tables`, and `display` full QA sheets at supported sizes.
+- Inspected the follow-up per-widget captures and `report.json` diagnostics from the second QA archive, including every category and the reported outside/scroll-overflow suspects.
+- Performed a TypeScript/JSX transpile syntax check on the v3 `IOSVisuals.tsx` and `IOSFrame.tsx`; both pass.
+- Full project `tsc` remains blocked in the supplied sandbox by the incomplete `node_modules` tree (missing React/Babel/etc. type packages), as in the first pass.
+- Playwright screenshot generation also remains unavailable in this sandbox because the supplied dependency tree is incomplete.
+
+A fresh screenshot pass should be run after applying v3. Both requested screenshot commands were attempted again in the sandbox, but the supplied dependency tree still lacks `node_modules/playwright/index.js`, so post-v3 rendering cannot be generated locally here.
 
 ## Files in this patch
 
-- `src/widgets/themes/GlassVisuals.tsx`
-- `src/widgets/themes/GlassFrame.tsx`
+- `src/widgets/themes/IOSVisuals.tsx`
+- `src/widgets/themes/IOSFrame.tsx`
 - `THEME_NOTES.md`
 - `INTEGRATION.md`
 
-No Material 3 files or other theme files are included in the patch.
+## Fourth QA revision — bilingual English / Persian bundle
 
-## Widget coverage
+The user supplied a single `ios-qa.zip` generated by the automated QA runner. Both English (`en`) and Persian (`fa`) outputs were inspected across all six categories, including full sheets, individual widget captures, and both `report.json` files.
 
-All currently registered visual types used by `glass` are handled in `GlassVisualRenderer`:
+Observed QA status before this revision:
 
-- metrics: metric, battery, cellular signal, tank, boolean status, gauge, fire/smoke/leak indicators;
-- controls: command/downlink button, switch/relay/lock/siren, slider/fan, manual set value, thermostat, RGB color, directional control;
-- charts: time-series/area, bar, histogram, donut, heatmap, state/status timeline, gauge;
-- location: map, coordinates, route/track, compass;
-- tables/events: device table, measurement list, alarms, event history, logs;
-- display/custom: clock, text/markdown, camera/image, iframe mock, SCADA/mimic.
+- English: widget QA PASS, full-page QA PASS, 0 console errors, 0 render errors.
+- Persian: widget QA PASS, full-page QA PASS, 0 console errors, 0 render errors.
+- RTL card/header/content alignment is behaving correctly; telemetry, coordinates, charts, SCADA labels, and other technical numeric content intentionally remain LTR where appropriate.
 
-## Size behavior
+The remaining findings were mostly detector-visible geometry rather than obvious visual breakage. This v4 cleanup therefore targets containment and compact-size composition only:
 
-The renderer uses width/height-aware compositions rather than scaling one card:
+- Numeric `ValueText` and clock line boxes now have enough line-height for the rendered glyph metrics, reducing false scroll-height overflow diagnostics without shrinking the text.
+- Battery terminal geometry is contained inside its own wrapper instead of extending outside the battery element's scroll bounds.
+- MUI switch hidden inputs are explicitly constrained to the visible switch bounds and unnecessary switch scaling was removed.
+- MUI slider thumb hit-area pseudo-elements are constrained to the thumb bounds, preventing invisible hit-target geometry from increasing card/body scroll dimensions.
+- Thermostat and color-control sliders use the same containment rules as the main slider/fan controls.
+- `3x1` time-series, area, bar, and histogram widgets now use a dedicated slim-wide composition with reduced chart minimum height so their content fits the short body without clipping.
+- `3x2` table widgets now cap their contextual trend panel to the actually available body height; `3x3` remains free to use the larger flexible context area.
+- Sparkline SVGs now explicitly cap their rendered height to their containing flex/grid cell to prevent intrinsic SVG sizing from expanding table context rows.
 
-- `1x1`: core value/state, compact semantic visual, minimal status context;
-- `2x1`: split compositions with trace/control context beside the primary value;
-- `1x2`: deliberately vertical layouts for metrics/tanks and stacked context;
-- `2x2+`: history charts, min/avg/max, recent-state strips, command metadata, richer map/SCADA context;
-- `3x1` / `3x2` chart widgets use the extra horizontal canvas for a real trace/history view.
+The v4 `IOSVisuals.tsx` and unchanged `IOSFrame.tsx` pass a TypeScript/JSX transpile syntax check. A fresh Playwright render could not be generated in this sandbox because the supplied project dependency tree still lacks the runnable Playwright/Vite package files; the user's QA runner should be used for the final confirmation pass.
 
-## Mock interaction behavior
+## Fifth QA revision — final v4 verification bundle
 
-Interactive widgets now visibly update local mock state:
+The user supplied `ios-qa(1).zip`, generated after applying v4. Both English and Persian runs completed with 0 render errors and 0 console/page errors. Location and table categories now report zero overflow suspects in both locales.
 
-- command/downlink button: queued/ACK-pending feedback;
-- relay / door lock / siren: state toggles;
-- slider / fan: live numeric value;
-- manual set value: editable field plus apply state on large layout;
-- thermostat: `−` / `+` controls update target;
-- RGB color: selectable swatches plus brightness slider;
-- directional control: last selected command remains highlighted.
+The remaining automated overflow counts are dominated by detector-only MUI geometry: text glyph/line-box scroll metrics and slider/thumb hit areas that remain visually contained in the screenshots. Those were not used as a reason for another broad visual rewrite.
 
-State is local to the reusable theme renderer; it is not coupled to `App.tsx` or showcase-global state.
+One real visual defect was still visible in the individual captures: the `2x1` RGB / Light Color card stacked two full MUI sliders inside the short body, causing the brightness slider thumb to be clipped at the bottom edge. v5 fixes that size specifically with a horizontal two-column composition:
 
-## Validation performed
+- left: live color preview plus color presets;
+- right: compact color and brightness slider rows;
+- both controls remain interactive in mock mode;
+- `1x1` and `2x2` compositions are unchanged.
 
-- Read `docs/profile.md`, `docs/agents.md`, and `docs/todo.md` completely before editing.
-- Reviewed the existing Glass screenshots for all six categories and the current Glass-specific branches in the shared renderer/frame.
-- Performed current web reference research before implementation.
-- `GlassFrame.tsx`: TypeScript JSX transpile check passed.
-- `GlassVisuals.tsx`: TypeScript JSX transpile check passed.
-- Both files passed an additional TypeScript check using temporary local module stubs to validate internal expressions/types without project dependencies.
-- Confirmed no Material 3 or other theme-specific source file is included in the patch.
-
-## Screenshot QA follow-up — pass 3
-
-The latest user-provided QA set was inspected in all three archives:
-
-- `full-screenshots.rar` — full Glass category pages;
-- `widget-screenshots.rar` — per-widget English captures;
-- `widget-screenshots(1).rar` — per-widget Persian captures.
-
-### Root-cause fix: broad white wash / long status bar
-
-The remaining glare was not merely an opacity-tuning problem. Three intended one-pixel rules in `GlassFrame.tsx` used numeric MUI `sx` sizing:
-
-```tsx
-height: 1
-width: 1
-```
-
-For MUI sizing transforms, values in the `0..1` range are percentage-like sizing values. As a result, the intended top hairline and left edge highlight expanded across the card, producing the broad white wash seen in almost every screenshot. The status-row divider had the same issue and expanded into the long pale horizontal bar.
-
-This pass changes those dimensions to explicit CSS pixels (`'1px'`) and fixes the same mistake in two internal semantic highlights in the battery/tank visuals. This keeps the Aurora glass edge treatment while removing the unintended full-surface overlays.
-
-### Additional composition fixes from the new captures
-
-- **State / status timeline:** large `3x2` layouts now use the available height deliberately, with framed channel rows plus Normal / Warning / Alarm summary context instead of leaving a large empty center.
-- **Command / downlink:** large layouts now show a three-row command/transport history and ACK state instead of one status line floating in a large empty plate.
-- **Heatmap:** cell intensity differentiation and high-intensity borders were strengthened so the matrix remains readable after the frame washout is removed.
-- **SCADA / mimic:** tall large layouts now add a flow-stability trace under the process mimic so `3x3` does not look like a small horizontal diagram floating in a tall card.
-- **Persian QA:** the supplied RTL run was checked for ordering/clipping; the new rich command text keeps Persian labels RTL while timestamps, RPC results, chart axes, and other technical data remain LTR where appropriate.
-
-## Validation performed after pass 3
-
-- Both theme files pass TypeScript JSX transpilation with TypeScript 5.8.3.
-- A sizing audit found no remaining positive numeric `width` / `height` values `<= 1` in the two Aurora theme files; intended hairlines are explicit pixel strings.
-- No Material 3 or other theme source is included in the patch.
-- Shared integration requirements are unchanged from the previous patch.
-
-The sandbox still does not have the project npm dependencies / Playwright installation, so the corrected code cannot be recaptured here. Re-run the Glass-only commands below in the normal project checkout and inspect the new Chromium output.
-
-## Screenshot QA follow-up — pass 4
-
-The supplied `glass-qa.zip` was reviewed in both English and Persian, including the full category pages and individual widget captures.
-
-### Confirmed fixed from pass 3
-
-- The accidental full-card white wash is gone.
-- The oversized pale status divider is gone.
-- Fire/smoke/leak alarm compositions, large timeline/history layouts, command history, heatmap contrast, and the richer SCADA layouts all render without the previous frame-sizing failure.
-- The Persian run keeps technical/numeric content LTR where appropriate and does not show a new frame-level RTL clipping problem.
-
-### Additional pass-4 fixes from the new captures
-
-- **Directional Control (`2x1`)**: the D-pad was slightly too tall for the available body after the frame metadata row, so the bottom key could clip. Wide compact layouts now use a smaller key matrix/padding while `2x2` keeps the larger control surface.
-- **Text / Markdown (`2x1`)**: replaced the vertically stacked rich layout with a deliberate split composition. Summary/metadata live on one side and the three live sensor rows on the other, avoiding the clipped third row seen in the QA capture.
-- **Text / Markdown (`2x2`)**: the sensor plate now distributes its rows through the available height instead of leaving a large dead lower area.
-- **RGB / Light Color (`2x2`)**: replaced the oversized empty metadata plate with a live RGB/PWM channel mixer showing effective R/G/B channel levels, plus compact HEX/mode context. Swatch and brightness interactions continue to update it.
-- **iFrame / External Content (`2x1`)**: now previews an embedded operational surface with live stats and a compact trace instead of showing a generic centered placeholder across a wide card. `1x1` stays intentionally minimal and `2x2+` keeps the richer embedded-app shell.
-- **SCADA / Mimic (`3x3`)**: added a dedicated process-status toolbar and a tighter tall-layout SVG viewport so the process train occupies more of the available mimic canvas instead of floating in excess vertical whitespace.
-
-## Validation performed after pass 4
-
-- `GlassFrame.tsx` and `GlassVisuals.tsx` both pass TypeScript JSX transpilation with TypeScript 5.8.3.
-- Both files pass the stricter isolated TypeScript check using the existing local React/MUI stubs plus the real project `types.ts` and `mockData.ts` definitions used for theme QA.
-- A sizing audit again found no positive numeric MUI `width` / `height` values `<= 1`; intended one-pixel rules remain explicit CSS pixel strings.
-- No Material 3 or other theme source is included in the patch.
-- Shared integration requirements are unchanged.
-
-The sandbox still does not contain the project Playwright/npm dependency installation, so pass-4 Chromium captures must be regenerated in the normal project checkout.
-
-## Remaining review targets
-
-1. Re-check `direction` at `2x1` and confirm the bottom key no longer clips.
-2. Re-check `text` at `2x1` / `2x2`, `color` at `2x2`, and `iframe` at `2x1` because those compositions changed materially in this pass.
-3. Re-check the `3x3` SCADA capture to confirm the tighter process viewport has the desired density on the real host font/rendering stack.
-4. Repeat the Persian widget screenshot command once after integration; no RTL-specific code issue is currently known.
+The v5 `IOSVisuals.tsx` and `IOSFrame.tsx` both pass TypeScript/JSX transpile syntax validation.
