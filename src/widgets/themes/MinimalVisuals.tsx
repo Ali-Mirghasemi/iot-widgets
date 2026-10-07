@@ -308,7 +308,7 @@ function Alarm({ def, locale, size }: Props) {
   </Box>;
 
   return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: p.compact ? '1fr auto' : '1fr auto', gap: 1.2, alignItems: 'center', direction: locale === 'fa' ? 'rtl' : 'ltr' }}>
-    <Box sx={{ minWidth: 0 }}><Eyebrow locale={locale} dim>{code}</Eyebrow><Typography sx={{ mt: .4, fontSize: p.compact ? 28 : 37, lineHeight: 12, letterSpacing: locale === 'fa' ? 0 : '-.045em', fontWeight: 500, color: active ? tone : ink }}>{active ? l(locale, 'ALARM', 'هشدار') : l(locale, 'SAFE', 'ایمن')}</Typography><Box sx={{ mt: 1.05, display: 'flex', alignItems: 'center', gap: .7 }}><Box sx={{ width: 22, height: '2px', bgcolor: tone }} /><Typography sx={{ fontSize: 9.5, fontWeight: 750, color: tone }}>{active ? l(locale, 'ACTION REQUIRED', 'نیازمند اقدام') : l(locale, 'MONITORING', 'پایش فعال')}</Typography></Box></Box>
+    <Box sx={{ minWidth: 0 }}><Eyebrow locale={locale} dim>{code}</Eyebrow><Typography sx={{ mt: .4, fontSize: p.compact ? 28 : 37, lineHeight: 1.12, letterSpacing: locale === 'fa' ? 0 : '-.045em', fontWeight: 500, color: active ? tone : ink }}>{active ? l(locale, 'ALARM', 'هشدار') : l(locale, 'SAFE', 'ایمن')}</Typography><Box sx={{ mt: 1.05, display: 'flex', alignItems: 'center', gap: .7 }}><Box sx={{ width: 22, height: '2px', bgcolor: tone }} /><Typography sx={{ fontSize: 9.5, fontWeight: 750, color: tone }}>{active ? l(locale, 'ACTION REQUIRED', 'نیازمند اقدام') : l(locale, 'MONITORING', 'پایش فعال')}</Typography></Box></Box>
     <Box sx={{ width: p.compact ? 52 : 66, height: p.compact ? 62 : 78, display: 'grid', placeItems: 'center', borderLeft: locale === 'fa' ? 'none' : `1px solid ${faint}`, borderRight: locale === 'fa' ? `1px solid ${faint}` : 'none', color: tone }}><Icon sx={{ fontSize: p.compact ? 34 : 42 }} /></Box>
   </Box>;
 }
@@ -511,8 +511,19 @@ function ColorControl({ locale, size }: Props) {
 
 function DirectionControl({ locale, size }: Props) {
   const p=profile(size); const [active,setActive]=useState('•'); const keys=[['↑',2],['←',4],['•',5],['→',6],['↓',8]] as const;
+
+  // A shallow 2x1 card cannot comfortably hold a full-size D-pad plus a footer.
+  // Keep the semantic cross, but make the secondary context a side rail instead.
+  if (p.wide && !p.large) {
+    const cellW=32; const cellH=27;
+    return <Box sx={{height:'100%',minHeight:0,display:'grid',gridTemplateColumns:'auto minmax(0,1fr)',gap:1.8,alignItems:'center',direction:'ltr'}}>
+      <Box sx={{display:'grid',gridTemplateColumns:`repeat(3,${cellW}px)`,gridTemplateRows:`repeat(3,${cellH}px)`,gap:3}}>{keys.map(([k,pos])=><Box key={k} component="button" onClick={()=>setActive(k)} sx={{appearance:'none',gridColumn:((pos-1)%3)+1,gridRow:Math.floor((pos-1)/3)+1,border:`1px solid ${active===k?ink:faint}`,bgcolor:active===k?ink:'#fff',color:active===k?'#fff':ink,borderRadius:0,cursor:'pointer',fontSize:k==='•'?11:15,p:0}}>{k}</Box>)}</Box>
+      <Box sx={{minWidth:0,borderLeft:`1px solid ${faint}`,pl:1.5}}><Eyebrow locale={locale} dim>{l(locale,'last command','آخرین فرمان')}</Eyebrow><Typography sx={{mt:.35,fontSize:26,lineHeight:1.12,fontWeight:520,color:ink}}>{active}</Typography><Typography sx={{mt:.65,fontSize:9.5,lineHeight:1.35,color:muted}}>{l(locale,'local directional step · 1×','گام جهت محلی · ۱×')}</Typography></Box>
+    </Box>;
+  }
+
   const cellW=p.large?58:36; const cellH=p.large?50:31;
-  return <Box sx={{height:'100%',display:'grid',gridTemplateRows:p.large?'1fr auto':'1fr auto',gap:p.large?1.2:.7,placeItems:'center',direction:'ltr'}}><Box sx={{display:'grid',gridTemplateColumns:`repeat(3,${cellW}px)`,gridTemplateRows:`repeat(3,${cellH}px)`,gap:p.large?4:3,alignSelf:'center'}}>{keys.map(([k,pos])=><Box key={k} component="button" onClick={()=>setActive(k)} sx={{appearance:'none',gridColumn:((pos-1)%3)+1,gridRow:Math.floor((pos-1)/3)+1,border:`1px solid ${active===k?ink:faint}`,bgcolor:active===k?ink:'#fff',color:active===k?'#fff':ink,borderRadius:0,cursor:'pointer',fontSize:k==='•'?12:p.large?20:17,p:0}}>{k}</Box>)}</Box>{p.large?<Box sx={{width:'100%',borderTop:`1px solid ${faint}`,pt:1,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1}}><MetaPair locale={locale} title={l(locale,'last command','آخرین فرمان')} value={active} /><MetaPair locale={locale} title={l(locale,'mode','حالت')} value="LOCAL" /><MetaPair locale={locale} title={l(locale,'step','گام')} value="1×" /></Box>:<Typography sx={{fontSize:9.5,lineHeight:1.12,color:muted,maxWidth:'100%',whiteSpace:'nowrap'}}>{l(locale,'last command','آخرین فرمان')}: <Box component="span" sx={{color:ink,fontWeight:800}}>{active}</Box></Typography>}</Box>;
+  return <Box sx={{height:'100%',display:'grid',gridTemplateRows:'1fr auto',gap:p.large?1.2:.7,placeItems:'center',direction:'ltr'}}><Box sx={{display:'grid',gridTemplateColumns:`repeat(3,${cellW}px)`,gridTemplateRows:`repeat(3,${cellH}px)`,gap:p.large?4:3,alignSelf:'center'}}>{keys.map(([k,pos])=><Box key={k} component="button" onClick={()=>setActive(k)} sx={{appearance:'none',gridColumn:((pos-1)%3)+1,gridRow:Math.floor((pos-1)/3)+1,border:`1px solid ${active===k?ink:faint}`,bgcolor:active===k?ink:'#fff',color:active===k?'#fff':ink,borderRadius:0,cursor:'pointer',fontSize:k==='•'?12:p.large?20:17,p:0}}>{k}</Box>)}</Box>{p.large?<Box sx={{width:'100%',borderTop:`1px solid ${faint}`,pt:1,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1}}><MetaPair locale={locale} title={l(locale,'last command','آخرین فرمان')} value={active} /><MetaPair locale={locale} title={l(locale,'mode','حالت')} value="LOCAL" /><MetaPair locale={locale} title={l(locale,'step','گام')} value="1×" /></Box>:<Typography sx={{fontSize:9.5,lineHeight:1.12,color:muted,maxWidth:'100%',whiteSpace:'nowrap'}}>{l(locale,'last command','آخرین فرمان')}: <Box component="span" sx={{color:ink,fontWeight:800}}>{active}</Box></Typography>}</Box>;
 }
 
 function TableVisual({ locale, mode, size }: Props & { mode: TableMode }) {

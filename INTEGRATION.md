@@ -1,58 +1,64 @@
-# Industrial Flat — Integration
+# Minimal Mono — Integration
 
-This patch intentionally does **not** modify coordinator-owned shared files. Two small shared integration edits are required.
+Shared integration is required only to route theme ID `minimal` to the new isolated renderer.
 
-## 1. Route `flat` to the dedicated renderer
+Do **not** rename the stable theme ID.
 
-File: `src/widgets/renderers/WidgetVisuals.tsx`
+## Required change
 
-Add this import next to the Material renderer import:
+Edit:
 
-```tsx
-import { FlatVisualRenderer } from '../themes/FlatVisuals';
+`src/widgets/renderers/WidgetVisuals.tsx`
+
+### 1. Add this import next to the Material renderer import
+
+```ts
+import { MinimalVisualRenderer } from '../themes/MinimalVisuals';
 ```
 
-Then add the `flat` early return in `WidgetVisualRenderer` immediately after the Material early return:
+### 2. Add this dispatcher branch immediately after the Material branch
 
-```tsx
+Current:
+
+```ts
 export function WidgetVisualRenderer(props: Props) {
   if (props.theme.id === 'material') return <MaterialVisualRenderer {...props} />;
-  if (props.theme.id === 'flat') return <FlatVisualRenderer {...props} />;
-
   const v = props.def.visual;
-  // existing fallback/theme rendering continues unchanged...
-}
 ```
 
-The early return is important: it isolates Industrial Flat from the older scattered `theme.id === 'flat'` branches in the generic renderer without requiring a risky shared-file cleanup during parallel theme work.
+Replace that opening with:
 
-## 2. Update only the visible theme label
-
-File: `src/widgets/core/themeTokens.ts`
-
-Keep the stable ID exactly as `flat`, but change the display label:
-
-```diff
- flat: {
-   id: 'flat',
--  label: 'Flat',
-+  label: 'Industrial Flat',
+```ts
+export function WidgetVisualRenderer(props: Props) {
+  if (props.theme.id === 'material') return <MaterialVisualRenderer {...props} />;
+  if (props.theme.id === 'minimal') return <MinimalVisualRenderer {...props} />;
+  const v = props.def.visual;
 ```
 
-No token rewrite is required for this patch; the existing flat frame/token plumbing remains compatible.
+No other shared renderer edits are required. The older scattered `theme.id === 'minimal'` branches may remain temporarily because this early return bypasses them. They can be removed later during shared-renderer cleanup by the coordinator.
 
-## Screenshot QA
+## Optional display-name cleanup
 
-PowerShell commands requested by the project:
+The shared token currently labels the theme as `Minimal`. If the coordinator wants the UI to match the working name used for this pass, change only the display label in `src/widgets/core/themeTokens.ts`:
+
+```ts
+minimal: {
+  id: 'minimal',
+  label: 'Minimal Mono',
+```
+
+This is optional and does not affect persistence/API compatibility.
+
+## QA commands
+
+PowerShell:
 
 ```powershell
-$env:WIDGET_QA_THEME="flat"
+$env:WIDGET_QA_THEME="minimal"
 npm run screenshots:full
 
-$env:WIDGET_QA_THEME="flat"
+$env:WIDGET_QA_THEME="minimal"
 npm run screenshots
 ```
 
-If your local scripts require an explicit Chromium executable, set `PLAYWRIGHT_CHROME_PATH` according to your existing project setup before running them.
-
-Inspect every generated `flat` category and the QA overflow diagnostics before merging.
+Then inspect all generated Minimal screenshots for metrics, controls, charts, location, tables, and display.
