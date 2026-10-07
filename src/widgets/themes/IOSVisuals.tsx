@@ -80,35 +80,40 @@ function Sparkline({
   const points = useMemo(() => {
     const min = Math.min(...values);
     const max = Math.max(...values);
-    const range = Math.max(1, max - min);
-    return values.map((v, i) => `${(i / Math.max(1, values.length - 1)) * 100},${36 - ((v - min) / range) * 27}`).join(' ');
+    const range = Math.max(0.0001, max - min);
+    const left = 2.5;
+    const span = 95;
+    return values.map((v, i) => `${left + (i / Math.max(1, values.length - 1)) * span},${36 - ((v - min) / range) * 27}`).join(' ');
   }, [values]);
-  const last = points.split(' ').at(-1)?.split(',') ?? ['100', '20'];
+  const last = points.split(' ').at(-1)?.split(',') ?? ['97.5', '20'];
 
-  return <svg viewBox="0 0 100 42" preserveAspectRatio="none" width="100%" height={height} aria-hidden>
+  return <svg viewBox="0 0 100 42" preserveAspectRatio="none" width="100%" height={height} aria-hidden style={{ display: 'block', overflow: 'hidden' }}>
     {grid && <>
-      <line x1="0" x2="100" y1="10" y2="10" stroke="rgba(60,60,67,.10)" strokeWidth=".45" />
-      <line x1="0" x2="100" y1="24" y2="24" stroke="rgba(60,60,67,.10)" strokeWidth=".45" />
-      <line x1="0" x2="100" y1="38" y2="38" stroke="rgba(60,60,67,.10)" strokeWidth=".45" />
+      <line x1="2.5" x2="97.5" y1="10" y2="10" stroke="rgba(60,60,67,.10)" strokeWidth=".45" />
+      <line x1="2.5" x2="97.5" y1="24" y2="24" stroke="rgba(60,60,67,.10)" strokeWidth=".45" />
+      <line x1="2.5" x2="97.5" y1="38" y2="38" stroke="rgba(60,60,67,.10)" strokeWidth=".45" />
     </>}
-    {fill && <polygon points={`0,42 ${points} 100,42`} fill={color} opacity=".09" />}
+    {fill && <polygon points={`2.5,42 ${points} 97.5,42`} fill={color} opacity=".09" />}
     <polyline points={points} fill="none" stroke={color} strokeWidth="2.2" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
     <circle cx={last[0]} cy={last[1]} r="1.8" fill="#fff" stroke={color} strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
   </svg>;
 }
 
 function ValueText({ value, unit, compact = false, large = false }: { value: string | number; unit?: string; compact?: boolean; large?: boolean }) {
-  return <Typography sx={{
+  return <Typography component="div" sx={{
     direction: 'ltr',
+    display: 'flex',
+    alignItems: 'baseline',
+    gap: .55,
     fontSize: compact ? 35 : large ? 46 : 40,
     fontWeight: 720,
-    lineHeight: .9,
+    lineHeight: 1,
     letterSpacing: '-.045em',
     color: C.label,
     fontVariantNumeric: 'tabular-nums',
   }}>
-    {value}
-    {!!unit && <Box component="span" sx={{ ml: .55, fontSize: compact ? 12 : 14, fontWeight: 620, letterSpacing: 0, color: C.tertiary }}>{unit}</Box>}
+    <Box component="span" sx={{ lineHeight: 1 }}>{value}</Box>
+    {!!unit && <Box component="span" sx={{ fontSize: compact ? 12 : 14, lineHeight: 1, fontWeight: 620, letterSpacing: 0, color: C.tertiary }}>{unit}</Box>}
   </Typography>;
 }
 
@@ -133,6 +138,15 @@ function SegmentedBar({ value, max = 100, tone = C.blue, segments = 10 }: { valu
 function SectionDivider() {
   return <Box sx={{ height: '1px', bgcolor: C.separator }} />;
 }
+
+const iosSwitchSx = {
+  '& .MuiSwitch-input': { left: 0, top: 0, width: '100%', height: '100%' },
+  '& .MuiSwitch-switchBase.Mui-checked': { color: '#fff' },
+  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: C.green, opacity: 1 },
+  '& .MuiSwitch-track': { bgcolor: '#C7C7CC', opacity: 1 },
+};
+
+const iosSliderContainSx = { boxSizing: 'border-box' as const, px: .75 };
 
 function Metric({ def, locale, size }: Props) {
   const p = sizeProfile(size);
@@ -246,7 +260,7 @@ function BooleanStatus({ def, locale, size }: Props) {
   const tone = on ? C.blue : C.tertiary;
 
   if (p.large) return <Box onClick={() => setOn(v => !v)} role="button" tabIndex={0} sx={{ height: '100%', cursor: 'pointer', display: 'flex', flexDirection: 'column', userSelect: 'none', direction: locale === 'fa' ? 'rtl' : 'ltr' }}>
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}><Box><MicroLabel>{localeText(locale, 'Device state', 'وضعیت دستگاه')}</MicroLabel><Typography sx={{ mt: .35, fontSize: 13, fontWeight: 700, color: on ? C.green : C.tertiary }}>{on ? localeText(locale, 'Online and responding', 'آنلاین و پاسخ‌گو') : localeText(locale, 'Output disabled', 'خروجی غیرفعال')}</Typography></Box><Switch checked={on} onChange={(_, v) => setOn(v)} onClick={e => e.stopPropagation()} sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: '#fff' }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: C.green, opacity: 1 }, '& .MuiSwitch-track': { bgcolor: '#C7C7CC', opacity: 1 } }} /></Box>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}><Box><MicroLabel>{localeText(locale, 'Device state', 'وضعیت دستگاه')}</MicroLabel><Typography sx={{ mt: .35, fontSize: 13, fontWeight: 700, color: on ? C.green : C.tertiary }}>{on ? localeText(locale, 'Online and responding', 'آنلاین و پاسخ‌گو') : localeText(locale, 'Output disabled', 'خروجی غیرفعال')}</Typography></Box><Switch checked={on} onChange={(_, v) => setOn(v)} onClick={e => e.stopPropagation()} sx={iosSwitchSx} /></Box>
     <Box sx={{ flex: 1, minHeight: 0, display: 'grid', placeItems: 'center', py: 1.3 }}><Box sx={{ textAlign: 'center' }}><Box sx={{ mx: 'auto', width: 88, height: 88, borderRadius: '26px', display: 'grid', placeItems: 'center', bgcolor: on ? 'rgba(10,132,255,.10)' : C.fill, color: tone, border: `1px solid ${on ? 'rgba(10,132,255,.16)' : C.separator}` }}><Icon sx={{ fontSize: 43 }} /></Box><Typography sx={{ mt: 1.2, fontSize: 31, fontWeight: 720, lineHeight: 1, color: C.label }}>{label}</Typography><Typography sx={{ mt: .65, fontSize: 11.5, color: C.tertiary }}>{on ? localeText(locale, 'Tap anywhere to disable', 'برای غیرفعال‌سازی روی کارت بزنید') : localeText(locale, 'Tap anywhere to enable', 'برای فعال‌سازی روی کارت بزنید')}</Typography></Box></Box>
     <SectionDivider /><Box sx={{ pt: 1, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1 }}><StatCell label={localeText(locale, 'State', 'وضعیت')} value={on ? 'ON' : 'OFF'} accent={on ? C.green : C.tertiary} /><StatCell label={localeText(locale, 'Control', 'کنترل')} value="Manual" /><StatCell label={localeText(locale, 'Last change', 'آخرین تغییر')} value="09:38" /></Box>
   </Box>;
@@ -254,7 +268,7 @@ function BooleanStatus({ def, locale, size }: Props) {
   return <Box onClick={() => setOn(v => !v)} role="button" tabIndex={0} sx={{ height: '100%', cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 1, userSelect: 'none', direction: locale === 'fa' ? 'rtl' : 'ltr' }}>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
       <Box sx={{ width: p.compact ? 46 : 54, height: p.compact ? 46 : 54, borderRadius: '15px', display: 'grid', placeItems: 'center', bgcolor: on ? tone : C.fillStrong, color: on ? '#fff' : C.secondary, transition: '.18s ease' }}><Icon sx={{ fontSize: p.compact ? 23 : 27 }} /></Box>
-      {!p.compact && <Switch checked={on} onChange={(_, v) => setOn(v)} onClick={e => e.stopPropagation()} size="small" sx={{ mt: .2, '& .MuiSwitch-switchBase.Mui-checked': { color: '#fff' }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: C.green, opacity: 1 }, '& .MuiSwitch-track': { bgcolor: '#C7C7CC', opacity: 1 } }} />}
+      {!p.compact && <Switch checked={on} onChange={(_, v) => setOn(v)} onClick={e => e.stopPropagation()} size="small" sx={{ ...iosSwitchSx, mt: .2 }} />}
     </Box>
     <Box><Typography sx={{ fontSize: p.compact ? 20 : 24, fontWeight: 720, lineHeight: 1, color: C.label }}>{label}</Typography><Typography sx={{ mt: .55, fontSize: 11.5, color: C.tertiary }}>{on ? localeText(locale, 'Tap to turn off', 'برای خاموش کردن بزنید') : localeText(locale, 'Tap to turn on', 'برای روشن کردن بزنید')}</Typography>{p.roomy && <Box sx={{ mt: 1.1 }}><SectionDivider /><Box sx={{ pt: .9, display: 'flex', justifyContent: 'space-between' }}><MicroLabel>{localeText(locale, 'State', 'وضعیت')}</MicroLabel><MicroLabel tone={on ? C.green : C.tertiary}>{on ? 'ON' : 'OFF'}</MicroLabel></Box></Box>}</Box>
   </Box>;
@@ -344,7 +358,7 @@ function Donut({ def, locale, size }: Props) {
   const c = 2 * Math.PI * r;
   const diameter = p.large ? 176 : p.compact ? 130 : 150;
   return <Box sx={{ height: '100%', display: p.wide && !p.large ? 'grid' : 'flex', gridTemplateColumns: p.wide && !p.large ? 'auto 1fr' : undefined, flexDirection: p.wide && !p.large ? undefined : 'column', alignItems: 'center', justifyContent: 'center', gap: 1.6, direction: 'ltr' }}>
-    <Box sx={{ width: diameter, height: diameter, flex: '0 0 auto' }}><svg viewBox="0 0 120 120" width="100%" height="100%"><circle cx="60" cy="60" r={r} fill="none" stroke="rgba(118,118,128,.12)" strokeWidth="12" /><circle cx="60" cy="60" r={r} fill="none" stroke={C.blue} strokeWidth="12" strokeLinecap="round" strokeDasharray={`${c * value / 100} ${c}`} transform="rotate(-90 60 60)" /><text x="60" y="57" textAnchor="middle" dominantBaseline="middle" fill={C.label} fontSize="22" fontWeight="720">{value}%</text><text x="60" y="77" textAnchor="middle" fill={C.tertiary} fontSize="10.5">{localeText(locale, 'used', 'مصرف')}</text></svg></Box>
+    <Box sx={{ width: diameter, height: diameter, flex: '0 0 auto' }}><svg viewBox="0 0 120 120" width="100%" height="100%" style={{ display: 'block' }}><circle cx="60" cy="60" r={r} fill="none" stroke="rgba(118,118,128,.12)" strokeWidth="12" /><circle cx="60" cy="60" r={r} fill="none" stroke={C.blue} strokeWidth="12" strokeLinecap="round" strokeDasharray={`${c * value / 100} ${c}`} transform="rotate(-90 60 60)" /><text x="60" y="57" textAnchor="middle" dominantBaseline="middle" fill={C.label} fontSize="22" fontWeight="720">{value}%</text><text x="60" y="77" textAnchor="middle" fill={C.tertiary} fontSize="10.5">{localeText(locale, 'used', 'مصرف')}</text></svg></Box>
     {!p.compact && <Box sx={{ minWidth: p.wide ? 120 : 180, width: p.wide ? 'auto' : '100%' }}><Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: .6 }}><Box sx={{ display: 'flex', alignItems: 'center', gap: .7 }}><Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: C.blue }} /><MicroLabel>{localeText(locale, 'Used', 'مصرف‌شده')}</MicroLabel></Box><Typography sx={{ fontSize: 12, fontWeight: 700 }}>{value}%</Typography></Box><SectionDivider /><Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: .6 }}><Box sx={{ display: 'flex', alignItems: 'center', gap: .7 }}><Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'rgba(118,118,128,.18)' }} /><MicroLabel>{localeText(locale, 'Available', 'آزاد')}</MicroLabel></Box><Typography sx={{ fontSize: 12, fontWeight: 700 }}>{100 - value}%</Typography></Box></Box>}
   </Box>;
 }
@@ -381,11 +395,11 @@ function MapVisual({ def, locale, size }: Props) {
   const isRoute = def.visual === 'route';
   return <Box sx={{ height: '100%', minHeight: 0, borderRadius: '14px', overflow: 'hidden', position: 'relative', border: '1px solid rgba(60,60,67,.12)', bgcolor: '#E9EEF3', direction: 'ltr' }}>
     <Box sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg,#eef3f6,#e5eaef)' }} />
-    <svg viewBox="0 0 520 300" preserveAspectRatio="none" width="100%" height="100%" style={{ position: 'absolute', inset: 0 }}>
-      <path d="M-30 65 C80 15 120 130 225 95 S390 25 560 70" fill="none" stroke="rgba(255,255,255,.9)" strokeWidth="18" />
-      <path d="M-20 210 C90 160 150 235 245 185 S385 140 545 205" fill="none" stroke="rgba(255,255,255,.82)" strokeWidth="13" />
-      <path d="M35 -20 C95 70 40 170 120 330" fill="none" stroke="rgba(255,255,255,.72)" strokeWidth="10" />
-      <path d="M430 -30 C370 60 445 160 395 330" fill="none" stroke="rgba(255,255,255,.68)" strokeWidth="9" />
+    <svg viewBox="0 0 520 300" preserveAspectRatio="none" width="100%" height="100%" style={{ position: 'absolute', inset: 0, display: 'block', overflow: 'hidden' }}>
+      <path d="M12 65 C90 18 135 126 225 95 S385 28 508 70" fill="none" stroke="rgba(255,255,255,.9)" strokeWidth="18" />
+      <path d="M12 210 C95 164 155 232 245 185 S380 145 508 205" fill="none" stroke="rgba(255,255,255,.82)" strokeWidth="13" />
+      <path d="M42 12 C95 75 48 172 118 288" fill="none" stroke="rgba(255,255,255,.72)" strokeWidth="10" />
+      <path d="M425 12 C378 66 438 165 397 288" fill="none" stroke="rgba(255,255,255,.68)" strokeWidth="9" />
       <path d="M25 225 C105 150 160 170 225 200 S355 230 485 125" fill="none" stroke={C.blue} strokeWidth={isRoute ? 5 : 3} strokeLinecap="round" opacity={isRoute ? .95 : .58} />
       {[[116,171],[226,200],[385,190]].map(([x,y],i)=><g key={i}><circle cx={x} cy={y} r={i===2?12:9} fill="rgba(10,132,255,.16)"/><circle cx={x} cy={y} r={i===2?6:4.5} fill={C.blue}/></g>)}
     </svg>
@@ -456,14 +470,14 @@ function SwitchControl({ def, locale, size }: Props) {
   const Icon = def.icon;
 
   if (p.large) return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', direction: locale === 'fa' ? 'rtl' : 'ltr' }}>
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1.2 }}><Box><MicroLabel>{localeText(locale, 'Manual output', 'خروجی دستی')}</MicroLabel><Typography sx={{ mt: .35, fontSize: 13, fontWeight: 700, color: checked ? C.green : C.tertiary }}>{checked ? localeText(locale, 'Channel energized', 'کانال فعال است') : localeText(locale, 'Channel disabled', 'کانال غیرفعال است')}</Typography></Box><Switch checked={checked} onChange={(_, v) => setChecked(v)} sx={{ transform: 'scale(1.16)', '& .MuiSwitch-switchBase.Mui-checked': { color: '#fff' }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: C.green, opacity: 1 }, '& .MuiSwitch-track': { bgcolor: '#C7C7CC', opacity: 1 } }} /></Box>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1.2 }}><Box><MicroLabel>{localeText(locale, 'Manual output', 'خروجی دستی')}</MicroLabel><Typography sx={{ mt: .35, fontSize: 13, fontWeight: 700, color: checked ? C.green : C.tertiary }}>{checked ? localeText(locale, 'Channel energized', 'کانال فعال است') : localeText(locale, 'Channel disabled', 'کانال غیرفعال است')}</Typography></Box><Switch checked={checked} onChange={(_, v) => setChecked(v)} sx={{ ...iosSwitchSx, transform: 'scale(1.16)' }} /></Box>
     <Box sx={{ flex: 1, minHeight: 0, display: 'grid', placeItems: 'center', py: 1.2 }}><Box sx={{ textAlign: 'center' }}><Box sx={{ width: 92, height: 92, mx: 'auto', borderRadius: '28px', display: 'grid', placeItems: 'center', bgcolor: checked ? 'rgba(48,209,88,.10)' : C.fill, color: checked ? C.green : C.secondary, border: `1px solid ${checked ? 'rgba(48,209,88,.18)' : C.separator}` }}><Icon sx={{ fontSize: 45 }} /></Box><Typography sx={{ mt: 1.2, fontSize: 34, fontWeight: 720, lineHeight: 1 }}>{checked ? localeText(locale, 'On', 'روشن') : localeText(locale, 'Off', 'خاموش')}</Typography><Typography sx={{ mt: .65, fontSize: 11.5, color: C.tertiary }}>{checked ? localeText(locale, 'Output energized', 'خروجی فعال است') : localeText(locale, 'Output disabled', 'خروجی غیرفعال است')}</Typography></Box></Box>
     <Box sx={{ mb: 1 }}><SegmentedBar value={checked ? 100 : 0} tone={C.green} segments={8} /></Box>
     <SectionDivider /><Box sx={{ pt: 1, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1 }}><StatCell label={localeText(locale, 'State', 'وضعیت')} value={checked ? 'ON' : 'OFF'} accent={checked ? C.green : C.tertiary} /><StatCell label={localeText(locale, 'Control', 'کنترل')} value="Manual" /><StatCell label={localeText(locale, 'Last change', 'آخرین تغییر')} value="09:38" /></Box>
   </Box>;
 
   return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 1.2, direction: locale === 'fa' ? 'rtl' : 'ltr' }}>
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1.2 }}><Box sx={{ width: p.compact ? 48 : 56, height: p.compact ? 48 : 56, borderRadius: '16px', display: 'grid', placeItems: 'center', bgcolor: checked ? C.green : C.fillStrong, color: checked ? '#fff' : C.secondary }}><Icon sx={{ fontSize: p.compact ? 23 : 28 }} /></Box><Switch checked={checked} onChange={(_, v) => setChecked(v)} sx={{ transform: p.compact ? 'scale(1.05)' : 'scale(1.18)', '& .MuiSwitch-switchBase.Mui-checked': { color: '#fff' }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: C.green, opacity: 1 }, '& .MuiSwitch-track': { bgcolor: '#C7C7CC', opacity: 1 } }} /></Box>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1.2 }}><Box sx={{ width: p.compact ? 48 : 56, height: p.compact ? 48 : 56, borderRadius: '16px', display: 'grid', placeItems: 'center', bgcolor: checked ? C.green : C.fillStrong, color: checked ? '#fff' : C.secondary }}><Icon sx={{ fontSize: p.compact ? 23 : 28 }} /></Box><Switch checked={checked} onChange={(_, v) => setChecked(v)} sx={{ ...iosSwitchSx, transform: p.compact ? 'scale(1.05)' : 'scale(1.18)' }} /></Box>
     <Box><Typography sx={{ fontSize: p.compact ? 24 : 28, fontWeight: 720, lineHeight: 1 }}>{checked ? localeText(locale, 'On', 'روشن') : localeText(locale, 'Off', 'خاموش')}</Typography><Typography sx={{ mt: .55, fontSize: 11.5, color: C.tertiary }}>{checked ? localeText(locale, 'Output energized', 'خروجی فعال است') : localeText(locale, 'Output disabled', 'خروجی غیرفعال است')}</Typography></Box>
     {p.roomy && <Box><SectionDivider /><Box sx={{ pt: .9, display: 'flex', justifyContent: 'space-between' }}><MicroLabel>{localeText(locale, 'Control mode', 'حالت کنترل')}</MicroLabel><MicroLabel>Manual</MicroLabel></Box></Box>}
   </Box>;
@@ -477,12 +491,12 @@ function SliderControl({ def, locale, size }: Props) {
   if (p.tall) return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto 1fr auto', justifyItems: 'center', gap: 1.1, direction: 'ltr' }}><Box sx={{ textAlign: 'center' }}><ValueText value={value} unit={unit} /><MicroLabel>{localeText(locale, 'Set level', 'تنظیم سطح')}</MicroLabel></Box><Box sx={{ minHeight: 120, width: 76, borderRadius: '20px', bgcolor: C.fill, display: 'grid', placeItems: 'center', py: 1 }}><Slider orientation="vertical" min={min} max={max} value={value} onChange={(_, v) => setValue(v as number)} sx={{ height: '100%', color: C.blue, '& .MuiSlider-thumb': { width: 22, height: 22, bgcolor: '#fff', border: '1px solid rgba(60,60,67,.12)', boxShadow: '0 2px 8px rgba(0,0,0,.15)' }, '& .MuiSlider-rail': { opacity: .18 }, '& .MuiSlider-track': { border: 0 } }} /></Box><Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-between' }}><MicroLabel>0</MicroLabel><MicroLabel>100</MicroLabel></Box></Box>;
   if (p.large) return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 1.15, direction: 'ltr' }}>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}><Box><MicroLabel>{localeText(locale, 'Output level', 'سطح خروجی')}</MicroLabel><Box sx={{ mt: .7 }}><ValueText value={value} unit={unit} large /></Box></Box><Box sx={{ px: .9, py: .5, borderRadius: '10px', bgcolor: 'rgba(10,132,255,.08)' }}><MicroLabel tone={C.blue}>{localeText(locale, 'LIVE', 'زنده')}</MicroLabel></Box></Box>
-    <Box sx={{ py: 1.2 }}><Slider min={min} max={max} value={value} onChange={(_, v) => setValue(v as number)} sx={{ color: C.blue, px: .5, '& .MuiSlider-thumb': { width: 26, height: 26, bgcolor: '#fff', border: '1px solid rgba(60,60,67,.12)', boxShadow: '0 2px 8px rgba(0,0,0,.16)' }, '& .MuiSlider-track': { border: 0, height: 8 }, '& .MuiSlider-rail': { height: 8, opacity: .15 } }} /><Box sx={{ mt: .8, display: 'flex', justifyContent: 'space-between' }}><MicroLabel>0</MicroLabel><MicroLabel>{localeText(locale, 'Current setpoint', 'نقطه تنظیم فعلی')}</MicroLabel><MicroLabel>100</MicroLabel></Box></Box>
+    <Box sx={{ py: 1.2 }}><Slider min={min} max={max} value={value} onChange={(_, v) => setValue(v as number)} sx={{ ...iosSliderContainSx, color: C.blue, '& .MuiSlider-thumb': { width: 26, height: 26, bgcolor: '#fff', border: '1px solid rgba(60,60,67,.12)', boxShadow: '0 2px 8px rgba(0,0,0,.16)' }, '& .MuiSlider-track': { border: 0, height: 8 }, '& .MuiSlider-rail': { height: 8, opacity: .15 } }} /><Box sx={{ mt: .8, display: 'flex', justifyContent: 'space-between' }}><MicroLabel>0</MicroLabel><MicroLabel>{localeText(locale, 'Current setpoint', 'نقطه تنظیم فعلی')}</MicroLabel><MicroLabel>100</MicroLabel></Box></Box>
     <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: .7 }}>{[25, 50, 75, 100].map(v => <Button key={v} onClick={() => setValue(v)} sx={{ minWidth: 0, borderRadius: '11px', bgcolor: value === v ? 'rgba(10,132,255,.12)' : C.fill, color: value === v ? C.blue : C.secondary, fontWeight: 700, textTransform: 'none' }}>{v}%</Button>)}</Box>
     <SectionDivider /><Box sx={{ pt: .2, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1 }}><StatCell label={localeText(locale, 'Minimum', 'کمینه')} value="0" /><StatCell label={localeText(locale, 'Current', 'فعلی')} value={`${value}${unit}`} accent={C.blue} /><StatCell label={localeText(locale, 'Maximum', 'بیشینه')} value="100" /></Box>
   </Box>;
 
-  return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: p.compact ? 1.1 : 1.3, direction: 'ltr' }}><Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 1 }}><ValueText value={value} unit={unit} compact={p.compact} />{!p.compact && <MicroLabel>{localeText(locale, '0 to 100', '۰ تا ۱۰۰')}</MicroLabel>}</Box><Slider min={min} max={max} value={value} onChange={(_, v) => setValue(v as number)} sx={{ color: C.blue, px: .5, '& .MuiSlider-thumb': { width: 22, height: 22, bgcolor: '#fff', border: '1px solid rgba(60,60,67,.12)', boxShadow: '0 2px 8px rgba(0,0,0,.16)' }, '& .MuiSlider-track': { border: 0, height: 6 }, '& .MuiSlider-rail': { height: 6, opacity: .15 } }} />{p.roomy && <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1 }}><StatCell label={localeText(locale, 'Minimum', 'کمینه')} value="0" /><StatCell label={localeText(locale, 'Current', 'فعلی')} value={`${value}${unit}`} accent={C.blue} /><StatCell label={localeText(locale, 'Maximum', 'بیشینه')} value="100" /></Box>}</Box>;
+  return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: p.compact ? 1.1 : 1.3, direction: 'ltr' }}><Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 1 }}><ValueText value={value} unit={unit} compact={p.compact} />{!p.compact && <MicroLabel>{localeText(locale, '0 to 100', '۰ تا ۱۰۰')}</MicroLabel>}</Box><Slider min={min} max={max} value={value} onChange={(_, v) => setValue(v as number)} sx={{ ...iosSliderContainSx, color: C.blue, '& .MuiSlider-thumb': { width: 22, height: 22, bgcolor: '#fff', border: '1px solid rgba(60,60,67,.12)', boxShadow: '0 2px 8px rgba(0,0,0,.16)' }, '& .MuiSlider-track': { border: 0, height: 6 }, '& .MuiSlider-rail': { height: 6, opacity: .15 } }} />{p.roomy && <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1 }}><StatCell label={localeText(locale, 'Minimum', 'کمینه')} value="0" /><StatCell label={localeText(locale, 'Current', 'فعلی')} value={`${value}${unit}`} accent={C.blue} /><StatCell label={localeText(locale, 'Maximum', 'بیشینه')} value="100" /></Box>}</Box>;
 }
 
 function InputControl({ def, locale, size }: Props) {
@@ -520,10 +534,10 @@ function DirectionControl({ locale, size }: Props) {
   const p = sizeProfile(size);
   const [active, setActive] = useState('•');
   const keys = ['↑', '←', '•', '→', '↓'];
-  const cell = p.compact ? 42 : p.large ? 66 : 50;
+  const cell = p.compact || (p.wide && !p.large) ? 42 : p.large ? 66 : 50;
   const pad = <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(3,${cell}px)`, gridTemplateRows: `repeat(3,${cell}px)`, gap: p.compact ? .45 : .7 }}>{keys.map((k, i) => { const pos = [2,4,5,6,8][i]; const chosen = active === k; return <Button key={k} onClick={() => setActive(k)} sx={{ gridColumn: ((pos - 1) % 3) + 1, gridRow: Math.floor((pos - 1) / 3) + 1, minWidth: 0, p: 0, borderRadius: p.compact ? '12px' : '17px', bgcolor: chosen ? C.blue : C.fill, color: chosen ? '#fff' : C.label, fontSize: k === '•' ? 16 : p.large ? 23 : 20, '&:hover': { bgcolor: chosen ? C.blue : C.fillStrong } }}>{k}</Button>; })}</Box>;
   if (p.large) return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', direction: 'ltr' }}><Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><Box><MicroLabel>{localeText(locale, 'Directional command', 'فرمان جهت')}</MicroLabel><Typography sx={{ mt: .35, fontSize: 14, fontWeight: 700 }}>{localeText(locale, 'Tap a direction to jog', 'برای حرکت کوتاه جهت را انتخاب کنید')}</Typography></Box><Box sx={{ px: .9, py: .45, borderRadius: '9px', bgcolor: 'rgba(10,132,255,.08)' }}><MicroLabel tone={C.blue}>{localeText(locale, 'LOCAL', 'محلی')}</MicroLabel></Box></Box><Box sx={{ flex: 1, minHeight: 0, display: 'grid', placeItems: 'center', py: .7 }}>{pad}</Box><SectionDivider /><Box sx={{ pt: 1, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1 }}><StatCell label={localeText(locale, 'Last command', 'آخرین فرمان')} value={active} accent={C.blue} /><StatCell label={localeText(locale, 'Pulse', 'پالس')} value="250 ms" /><StatCell label={localeText(locale, 'Mode', 'حالت')} value="Jog" /></Box></Box>;
-  return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', direction: 'ltr' }}><Box>{pad}<Typography sx={{ mt: .85, textAlign: 'center', fontSize: 10.5, color: C.tertiary }}>{localeText(locale, 'Last command', 'آخرین فرمان')}: <Box component="span" sx={{ color: C.blue, fontWeight: 800 }}>{active}</Box></Typography></Box></Box>;
+  return <Box sx={{ height: '100%', minHeight: 0, overflow: 'hidden', display: 'grid', placeItems: 'center', direction: 'ltr' }}><Box sx={{ maxHeight: '100%' }}>{pad}<Typography sx={{ mt: p.wide ? .35 : .7, textAlign: 'center', fontSize: 10.5, lineHeight: 1.2, color: C.tertiary }}>{localeText(locale, 'Last command', 'آخرین فرمان')}: <Box component="span" sx={{ color: C.blue, fontWeight: 800 }}>{active}</Box></Typography></Box></Box>;
 }
 
 function statusTone(cell: string, mode: TableMode) {
@@ -551,14 +565,14 @@ function TableVisual({ locale, mode, size }: Props & { mode: TableMode }) {
   return <Box sx={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', direction: 'ltr', overflow: 'hidden' }}>
     {p.large && <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(${headings.length},minmax(0,1fr))`, gap: 1, px: .5, pb: .7 }}>{headings.map(h => <MicroLabel key={h}>{h}</MicroLabel>)}</Box>}
     <Box sx={{ borderTop: `1px solid ${C.separator}`, borderBottom: `1px solid ${C.separator}`, overflow: 'hidden' }}>{rows.map((row, i) => <Box key={i} sx={{ minHeight: p.large ? 43 : 38, display: 'grid', gridTemplateColumns: `repeat(${row.length},minmax(0,1fr))`, gap: 1, alignItems: 'center', px: .55, borderTop: i ? `1px solid ${C.separator}` : 0, bgcolor: mode === 'alarms' && i === 0 ? 'rgba(255,69,58,.055)' : 'transparent' }}>{row.map((cell, j) => <Typography key={j} sx={{ fontSize: p.large ? 12.2 : 11.2, fontWeight: j === 0 ? 700 : 600, color: j === 1 ? statusTone(cell, mode) : j === 0 ? C.label : C.tertiary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{cell}</Typography>)}</Box>)}</Box>
-    {p.veryLarge && <Box sx={{ flex: 1, minHeight: 108, display: 'grid', gridTemplateColumns: 'minmax(0,1.45fr) minmax(150px,.55fr)', gap: 1.8, alignItems: 'stretch', py: 1.2 }}><Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}><Box sx={{ display: 'flex', justifyContent: 'space-between', mb: .4 }}><MicroLabel>{contextTitle}</MicroLabel><MicroLabel>{localeText(locale, 'last hour', 'یک ساعت اخیر')}</MicroLabel></Box><Box sx={{ flex: 1, minHeight: 0 }}><Sparkline values={contextValues} color={mode === 'alarms' ? C.orange : C.blue} fill={mode !== 'alarms'} grid height="100%" /></Box></Box><Box sx={{ display: 'grid', alignContent: 'center', gap: 1.2 }}><StatCell label={localeText(locale, 'Visible rows', 'ردیف‌ها')} value={`${rows.length}`} /><StatCell label={localeText(locale, 'Refresh', 'نوسازی')} value="Live" accent={C.green} /><StatCell label={localeText(locale, 'Window', 'بازه')} value="60 min" /></Box></Box>}
+    {p.veryLarge && <Box sx={{ flex: 1, minHeight: 108, display: 'grid', gridTemplateColumns: 'minmax(0,1.45fr) minmax(150px,.55fr)', gap: 1.8, alignItems: 'stretch', py: 1.2 }}><Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}><Box sx={{ display: 'flex', justifyContent: 'space-between', mb: .4 }}><MicroLabel>{contextTitle}</MicroLabel><MicroLabel>{localeText(locale, 'last hour', 'یک ساعت اخیر')}</MicroLabel></Box><Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}><Sparkline values={contextValues} color={mode === 'alarms' ? C.orange : C.blue} fill={mode !== 'alarms'} grid height="100%" /></Box></Box><Box sx={{ display: 'grid', alignContent: 'center', gap: 1.2 }}><StatCell label={localeText(locale, 'Visible rows', 'ردیف‌ها')} value={`${rows.length}`} /><StatCell label={localeText(locale, 'Refresh', 'نوسازی')} value="Live" accent={C.green} /><StatCell label={localeText(locale, 'Window', 'بازه')} value="60 min" /></Box></Box>}
     {p.roomy && <Box sx={{ mt: 'auto', pt: .9, display: 'flex', justifyContent: 'space-between' }}><MicroLabel>{rows.length} {localeText(locale, 'items', 'مورد')}</MicroLabel><MicroLabel>{localeText(locale, 'Updated now', 'به‌روز')}</MicroLabel></Box>}
   </Box>;
 }
 
 function Clock({ locale, size }: Props) {
   const p = sizeProfile(size);
-  return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: p.wide ? 'flex-start' : 'center', textAlign: p.wide ? 'left' : 'center', direction: locale === 'fa' ? 'rtl' : 'ltr' }}><Typography sx={{ direction: 'ltr', fontSize: p.compact ? 42 : p.large ? 66 : 52, fontWeight: 300, letterSpacing: '-.055em', lineHeight: .95, fontVariantNumeric: 'tabular-nums' }}>09:44</Typography><Typography sx={{ mt: .9, fontSize: p.compact ? 11.5 : 13, color: C.secondary, fontWeight: 560 }}>{localeText(locale, 'Wednesday, Oct 7', 'چهارشنبه، ۱۵ مهر ۱۴۰۵')}</Typography>{p.roomy && <Typography sx={{ mt: .6, fontSize: 10.5, color: C.tertiary }}>GMT +03:30 · {localeText(locale, 'Local site time', 'زمان محلی سایت')}</Typography>}</Box>;
+  return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: p.wide ? 'flex-start' : 'center', textAlign: p.wide ? 'left' : 'center', direction: locale === 'fa' ? 'rtl' : 'ltr' }}><Typography sx={{ direction: 'ltr', fontSize: p.compact ? 42 : p.large ? 66 : 52, fontWeight: 300, letterSpacing: '-.055em', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>09:44</Typography><Typography sx={{ mt: .9, fontSize: p.compact ? 11.5 : 13, color: C.secondary, fontWeight: 560 }}>{localeText(locale, 'Wednesday, Oct 7', 'چهارشنبه، ۱۵ مهر ۱۴۰۵')}</Typography>{p.roomy && <Typography sx={{ mt: .6, fontSize: 10.5, color: C.tertiary }}>GMT +03:30 · {localeText(locale, 'Local site time', 'زمان محلی سایت')}</Typography>}</Box>;
 }
 
 function TextVisual({ locale, size }: Props) {
@@ -581,7 +595,7 @@ function IframeVisual({ locale, size }: Props) {
 function ScadaVisual({ locale, size }: Props) {
   const p = sizeProfile(size);
   const h = p.large ? 255 : 190;
-  return <Box sx={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', direction: 'ltr' }}><Box sx={{ flex: 1, minHeight: h, position: 'relative' }}><svg viewBox="0 0 560 250" width="100%" height="100%">
+  return <Box sx={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', direction: 'ltr' }}><Box sx={{ flex: 1, minHeight: h, position: 'relative' }}><svg viewBox="0 0 560 250" width="100%" height="100%" style={{ display: 'block' }}>
     <rect x="18" y="52" width="120" height="136" rx="20" fill="rgba(10,132,255,.07)" stroke="rgba(10,132,255,.28)" />
     <rect x="30" y="102" width="96" height="74" rx="13" fill="rgba(10,132,255,.64)" />
     <text x="78" y="82" textAnchor="middle" fill={C.secondary} fontSize="12" fontWeight="650">TANK 01</text><text x="78" y="146" textAnchor="middle" fill="#fff" fontSize="25" fontWeight="720">63%</text>
