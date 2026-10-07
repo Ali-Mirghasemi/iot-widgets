@@ -2,3 +2,5 @@ node_modules/
 full-screenshots/
 widget-screenshots/
 screenshots/
+*.zip
+*.rar
