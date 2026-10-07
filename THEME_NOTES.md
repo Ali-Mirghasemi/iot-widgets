@@ -1,91 +1,107 @@
-# HUD / Cyber (`gaming`) theme notes
+# Aurora Glass — Theme Notes
 
-## Scope
-
-This patch redesigns the complete `gaming` theme only. Stable theme ID and widget IDs are unchanged. Material 3 and all other themes are untouched.
-
-The theme implementation is isolated in:
-
-- `src/widgets/themes/GamingVisuals.tsx`
-
-It exports both the gaming visual renderer and the gaming frame so the theme can move to another React + MUI project without depending on showcase-only state.
+Stable theme ID: `glass`
 
 ## Design direction
 
-The previous gaming theme behaved mostly like a dark recolor. This version is built as an operational telemetry/HUD system instead:
+Aurora Glass is redesigned as a **luminous instrumentation layer**, not Material 3 with transparency.
 
-- angular instrument-frame geometry rather than rounded cards/pills;
-- restrained cyan for live telemetry, green for healthy/confirmed state, amber for caution, red for critical state;
-- machine-readable IDs, channel/state labels, compact status rails, segmented meters, scan/grid structure, and tabular numeric readouts;
-- composition changes by widget size rather than simple scaling;
-- semantic visual language for tank level, battery reserve, cellular signal, alarm loops, map/route, compass, SCADA, state history, etc.;
-- richer 2x2+ cards use history, metadata, state context, or secondary measurements instead of leaving dead space.
+Key principles used in this pass:
+
+- readable telemetry remains the highest-contrast layer;
+- blur/translucency is concentrated at the outer widget frame rather than repeatedly stacking glass-on-glass;
+- interior surfaces use light translucent fills, hairline highlights, and selective glow instead of heavy nested blur;
+- cyan/violet light is reserved for live data, focus, and active controls;
+- warning/critical states use amber/coral and remain visually distinct from decorative aurora light;
+- larger sizes add history, metadata, operational state, or control context instead of simply scaling a small widget;
+- semantic IoT widgets use shapes appropriate to the data: liquid tanks, battery shells, cellular bars, alarm beacons, process mimic, compass/map, etc.
+
+## Research references
+
+The design pass used these references for hierarchy and interaction ideas, without copying any one interface:
+
+- Microsoft Fluent 2 Material / Acrylic guidance: https://fluent2.microsoft.design/material
+- Apple Liquid Glass overview and hierarchy guidance: https://developer.apple.com/documentation/TechnologyOverviews/liquid-glass
+- Apple WWDC25 “Meet Liquid Glass” (especially restraint / avoiding glass-on-glass): https://developer.apple.com/videos/play/wwdc2025/219/
+- Grafana dashboard design best practices: https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/best-practices/
+- General contemporary glass-dashboard / IoT telemetry references were also reviewed for density, map, chart, and smart-control composition.
+
+## Files in this patch
+
+- `src/widgets/themes/GlassVisuals.tsx`
+- `src/widgets/themes/GlassFrame.tsx`
+- `THEME_NOTES.md`
+- `INTEGRATION.md`
+
+No Material 3 files or other theme files are included in the patch.
+
+## Widget coverage
+
+All currently registered visual types used by `glass` are handled in `GlassVisualRenderer`:
+
+- metrics: metric, battery, cellular signal, tank, boolean status, gauge, fire/smoke/leak indicators;
+- controls: command/downlink button, switch/relay/lock/siren, slider/fan, manual set value, thermostat, RGB color, directional control;
+- charts: time-series/area, bar, histogram, donut, heatmap, state/status timeline, gauge;
+- location: map, coordinates, route/track, compass;
+- tables/events: device table, measurement list, alarms, event history, logs;
+- display/custom: clock, text/markdown, camera/image, iframe mock, SCADA/mimic.
 
 ## Size behavior
 
-- **1x1:** primary value/state only, strongly glanceable.
-- **2x1 / 3x1:** compact secondary context, segmented scale, trend, or operational metadata.
-- **1x2:** deliberately vertical composition where supported, especially tank-level use.
-- **2x2+ / 3x2 / 3x3:** history traces, multiple metadata fields, state lanes, process context, richer maps/tables.
+The renderer uses width/height-aware compositions rather than scaling one card:
 
-Wide one-row controls/gauges use reduced circular/control geometry so nothing is cut by the shorter content region.
+- `1x1`: core value/state, compact semantic visual, minimal status context;
+- `2x1`: split compositions with trace/control context beside the primary value;
+- `1x2`: deliberately vertical layouts for metrics/tanks and stacked context;
+- `2x2+`: history charts, min/avg/max, recent-state strips, command metadata, richer map/SCADA context;
+- `3x1` / `3x2` chart widgets use the extra horizontal canvas for a real trace/history view.
 
-## Semantic widgets
+## Mock interaction behavior
 
-Notable non-generic treatments include:
+Interactive widgets now visibly update local mock state:
 
-- Fire / smoke / leak alarms: dedicated alarm-loop indicator with zone/test context.
-- Tank / water level: actual vessel fill geometry plus volume/inlet context.
-- Battery: segmented reserve pack plus voltage/remaining runtime and discharge trace at larger sizes.
-- Cellular signal: RF bars, dBm readout, RSRQ/SINR context and history.
-- State timeline / status history: discrete state rails rather than a generic line chart.
-- Map / route: HUD grid, path/track, location markers, lock/accuracy metadata.
-- SCADA: process-loop mimic with tank, pump, valve, flow and pressure/temperature context.
+- command/downlink button: queued/ACK-pending feedback;
+- relay / door lock / siren: state toggles;
+- slider / fan: live numeric value;
+- manual set value: editable field plus apply state on large layout;
+- thermostat: `−` / `+` controls update target;
+- RGB color: selectable swatches plus brightness slider;
+- directional control: last selected command remains highlighted.
 
-## Mock interactions
+State is local to the reusable theme renderer; it is not coupled to `App.tsx` or showcase-global state.
 
-Controls keep local mock state and visibly respond without showcase-only state coupling:
+## Validation performed
 
-- command button: Ready → Queued → Acknowledged → Ready;
-- relay/switch and boolean state: toggle locally;
-- slider/fan level: updates target value and segmented output;
-- manual setpoint: editable local value;
-- thermostat: local setpoint slider;
-- RGB control: on/off preview, hue presets, hue slider, brightness slider on larger cards;
-- directional control: last-command highlight.
+- Read `docs/profile.md`, `docs/agents.md`, and `docs/todo.md` completely before editing.
+- Reviewed the existing Glass screenshots for all six categories and the current Glass-specific branches in the shared renderer/frame.
+- Performed current web reference research before implementation.
+- `GlassFrame.tsx`: TypeScript JSX transpile check passed.
+- `GlassVisuals.tsx`: TypeScript JSX transpile check passed.
+- Both files passed an additional TypeScript check using temporary local module stubs to validate internal expressions/types without project dependencies.
+- Confirmed no Material 3 or other theme-specific source file is included in the patch.
 
-## English / Persian
+## Screenshot QA follow-up
 
-- Widget titles and appropriate UI labels support Persian.
-- Frame titles use RTL in Persian.
-- Numeric telemetry, units, coordinates, machine IDs, chart axes, and SCADA notation remain LTR where technically appropriate.
-- Persian QA was visually checked with representative metrics and table widgets.
+A complete post-integration Glass screenshot set (`full-screenshots(7).zip`) was reviewed across metrics, controls, charts, location, tables, and display.
 
-## Reference direction
+The follow-up pass fixed the issues visible in that capture:
 
-The redesign used current telemetry/operations patterns rather than generic RGB gaming-card references, especially:
+- removed the broad overexposed white glare band that was washing out nearly every card;
+- darkened and localized the frosted surface treatment so telemetry remains the visual priority;
+- increased secondary/axis contrast without turning the theme into a bright card UI;
+- enlarged the `2x2` directional control instead of leaving a small `1x1` control island in the center;
+- expanded large device-status cards with heartbeat, availability, RTT, and uptime context;
+- expanded fire/smoke/leak large layouts with a larger semantic alarm badge plus loop/channel/event/ACK information;
+- made large table widgets consume their available height and added a compact operational summary footer;
+- strengthened heatmap cell contrast, which was too faint under the previous surface treatment.
 
-- NASA Open MCT — telemetry hierarchy and operational information density: https://github.com/nasa/openmct
-- Grafana State timeline — discrete state periods: https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/state-timeline/
-- Grafana Status history — multi-series state inspection: https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/status-history/
+The two theme files pass a TypeScript/TSX check with local dependency stubs after these changes.
 
-The implementation is original and does not copy any proprietary UI pixel-for-pixel.
+This sandbox still cannot execute the project screenshot scripts because the extracted project does not contain the required npm dependencies and registry access is unavailable. Re-run the commands below in the normal project environment to verify the corrected visual treatment in-browser.
 
-## QA performed
+## Remaining review targets
 
-The requested project commands were attempted with `WIDGET_QA_THEME=gaming`:
-
-- `npm run screenshots:full`
-- `npm run screenshots`
-
-Both stop before rendering because the uploaded project archive does not contain installed Node packages and `playwright` is unavailable in `node_modules`. The sandbox package registry was also unreachable, so the project dependency set could not be restored here.
-
-Additional checks completed:
-
-- TypeScript JSX syntax transpile: **0 diagnostics**.
-- All **35 registered visual types** are explicitly handled by `GamingVisualRenderer`.
-- Offline visual smoke sheets were rendered for all six categories at the project's deterministic QA base dimensions (280×228, including all supported size shapes) and inspected manually.
-- Representative Persian sheets were rendered and inspected.
-- A wide-row pass reduced circular/control geometry where the short row could otherwise clip.
-
-Exact MUI/Playwright screenshot verification should still be rerun after applying the small integration described in `INTEGRATION.md` on a machine with dependencies installed.
+1. Re-run the Glass-only English screenshot QA after replacing these files and confirm the glare band is gone in Chromium.
+2. Run a Persian pass (`WIDGET_QA_LOCALE=fa`) after English QA.
+3. Check the frame over a lighter/complex host-app background; the showcase uses a dark teal gradient.
+4. If desired, update the shared display label from `Glass` to `Aurora Glass`; this remains optional and is intentionally not included as a shared-file edit.

@@ -1,66 +1,79 @@
-# Gaming theme integration
+# Aurora Glass integration
 
-Shared integration **is required**, but this patch intentionally does not modify shared files because theme work is happening in parallel.
+This patch intentionally does **not** package coordinator-owned shared files.
 
-The new theme file exports:
-
-- `GamingVisualRenderer`
-- `GamingFrame`
-
-Apply only the following small dispatcher changes.
+Two small shared dispatcher changes are required so the isolated Aurora Glass renderer/frame are used.
 
 ## 1. `src/widgets/renderers/WidgetVisuals.tsx`
 
-Add this import next to the Material theme renderer import:
+Add this import next to the existing Material renderer import:
 
 ```tsx
-import { GamingVisualRenderer } from '../themes/GamingVisuals';
+import { GlassVisualRenderer } from '../themes/GlassVisuals';
 ```
 
-Then, at the start of `WidgetVisualRenderer`, immediately after the existing Material branch, add:
+Then in `WidgetVisualRenderer`, immediately after the Material dispatch, add:
 
 ```tsx
-if (props.theme.id === 'gaming') return <GamingVisualRenderer {...props} />;
+if (props.theme.id === 'glass') return <GlassVisualRenderer {...props} />;
 ```
 
-Resulting dispatcher start:
+Resulting opening should be:
 
 ```tsx
 export function WidgetVisualRenderer(props: Props) {
   if (props.theme.id === 'material') return <MaterialVisualRenderer {...props} />;
-  if (props.theme.id === 'gaming') return <GamingVisualRenderer {...props} />;
+  if (props.theme.id === 'glass') return <GlassVisualRenderer {...props} />;
+
   const v = props.def.visual;
-  // existing shared renderer continues unchanged...
+  // existing generic theme dispatcher continues here...
 }
 ```
+
+Do not remove the existing generic Glass branches in the same merge unless the coordinator is already cleaning up the shared renderer. They simply become unreachable for theme ID `glass` after the early dispatch, which keeps this integration patch minimal and parallel-safe.
 
 ## 2. `src/widgets/core/WidgetFrame.tsx`
 
 Add this import:
 
 ```tsx
-import { GamingFrame as GamingThemeFrame } from '../themes/GamingVisuals';
+import { GlassFrame as AuroraGlassFrame } from '../themes/GlassFrame';
 ```
 
-In the existing theme switch, replace only the `gaming` case:
+Then change only the `glass` switch case in `WidgetFrame`:
 
 ```tsx
-case 'gaming': return <GamingThemeFrame {...props}/>;
+case 'glass': return <AuroraGlassFrame {...props}/>;
 ```
 
-So that section becomes:
+The existing local `GlassFrame` function can remain temporarily to minimize merge conflicts. It can be removed later during the coordinator's shared cleanup.
+
+## Optional display-name change
+
+If the coordinator wants the showcase label to match the working theme name, change only the `glass` label in `src/widgets/core/themeTokens.ts`:
 
 ```tsx
-switch (props.theme.id) {
-  case 'flat': return <FlatFrame {...props}/>;
-  case 'minimal': return <MinimalFrame {...props}/>;
-  case 'gaming': return <GamingThemeFrame {...props}/>;
-  case 'ios': return <IOSFrame {...props}/>;
-  case 'glass': return <GlassFrame {...props}/>;
-  default: return <MaterialFrame {...props}/>;
-}
+label: 'Aurora Glass',
 ```
 
-The old shared-file `GamingFrame` implementation can remain temporarily unused to keep this merge minimal. A coordinator may remove it later after all parallel theme branches are merged.
+This label change is optional. The stable theme ID remains exactly `glass`.
 
-No changes are needed in `registry.ts`, `types.ts`, `themeTokens.ts`, `App.tsx`, or `styles.css`.
+## QA commands after integration
+
+PowerShell:
+
+```powershell
+$env:WIDGET_QA_THEME="glass"
+npm run screenshots:full
+
+$env:WIDGET_QA_THEME="glass"
+npm run screenshots
+```
+
+Persian follow-up:
+
+```powershell
+$env:WIDGET_QA_THEME="glass"
+$env:WIDGET_QA_LOCALE="fa"
+npm run screenshots
+```
