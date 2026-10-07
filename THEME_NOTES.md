@@ -1,104 +1,77 @@
-# Aurora Glass — Theme Notes
+# Industrial Flat — Theme Notes
 
-Stable theme ID: `glass`
+- Stable theme ID: `flat`
+- Working/display name: **Industrial Flat**
+- Scope: theme-local visual renderer only. Material 3 and every other theme are untouched.
 
 ## Design direction
 
-Aurora Glass is redesigned as a **luminous instrumentation layer**, not Material 3 with transparency.
+Industrial Flat is intentionally closer to a compact operator/HMI surface than a consumer dashboard. The renderer uses hard rectangular zones, thin borders, neutral process surfaces, dense numeric hierarchy, square segmented indicators, setpoint/deviation scales, orthogonal schematics, and restrained rounding. Saturated color is reserved for state and exception meaning rather than decoration.
 
-Key principles used in this pass:
+Current references reviewed before implementation included ISA-101 / high-performance HMI guidance and current industrial/SCADA dashboard examples such as Siemens WinCC OA-style monitoring surfaces. The useful patterns were: grayscale/neutral normal-state UI, report-by-exception color, compact trends beside live values, explicit setpoint/feedback context, dense status tables, and process-specific schematics instead of generic KPI cards.
 
-- readable telemetry remains the highest-contrast layer;
-- blur/translucency is concentrated at the outer widget frame rather than repeatedly stacking glass-on-glass;
-- interior surfaces use light translucent fills, hairline highlights, and selective glow instead of heavy nested blur;
-- cyan/violet light is reserved for live data, focus, and active controls;
-- warning/critical states use amber/coral and remain visually distinct from decorative aurora light;
-- larger sizes add history, metadata, operational state, or control context instead of simply scaling a small widget;
-- semantic IoT widgets use shapes appropriate to the data: liquid tanks, battery shells, cellular bars, alarm beacons, process mimic, compass/map, etc.
+## What changed
 
-## Research references
+### Metrics
 
-The design pass used these references for hierarchy and interaction ideas, without copying any one interface:
+- Metric values now change composition by size: glanceable value/state at 1x1, scale/trend context at 2x1, and history + secondary readouts at 2x2+.
+- Gauges use industrial segmented bargraphs rather than Material-style radial gauges.
+- Battery and signal are equipment/status displays with operational metadata.
+- Tank is a semantic vessel/level visualization and deliberately uses vertical space for 1x2.
+- Boolean/state widgets read like digital I/O feedback instead of generic badges.
+- Fire/alarm widgets use bounded alarm fields and severity/state treatment.
 
-- Microsoft Fluent 2 Material / Acrylic guidance: https://fluent2.microsoft.design/material
-- Apple Liquid Glass overview and hierarchy guidance: https://developer.apple.com/documentation/TechnologyOverviews/liquid-glass
-- Apple WWDC25 “Meet Liquid Glass” (especially restraint / avoiding glass-on-glass): https://developer.apple.com/videos/play/wwdc2025/219/
-- Grafana dashboard design best practices: https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/best-practices/
-- General contemporary glass-dashboard / IoT telemetry references were also reviewed for density, map, chart, and smart-control composition.
+### Controls
 
-## Files in this patch
+- Command buttons provide local sent feedback in mock mode.
+- Switches use explicit two-position operator controls with local feedback state.
+- Sliders expose setpoint, feedback and (large sizes) output history.
+- Numeric inputs are editable and expose apply state, range and current value.
+- Thermostat +/- controls change target locally; large layouts add deviation and temperature history.
+- Color controls change swatch/brightness locally.
+- Direction controls respond to directional/stop commands and show the last command.
 
-- `src/widgets/themes/GlassVisuals.tsx`
-- `src/widgets/themes/GlassFrame.tsx`
-- `THEME_NOTES.md`
-- `INTEGRATION.md`
+### Charts
 
-No Material 3 files or other theme files are included in the patch.
+- Line/area charts use industrial grid plots with compact summary bands.
+- Bar/histogram views use hard rectangular marks rather than rounded decorative bars.
+- Donut/capacity content is rendered as a block-capacity display to keep this theme structurally distinct.
+- Heatmap and timeline views use square status cells/blocks.
 
-## Widget coverage
+### Location
 
-All currently registered visual types used by `glass` are handled in `GlassVisualRenderer`:
+- Map/route visuals are schematic/orthogonal rather than consumer-map styled.
+- Coordinates expose fix/accuracy metadata in larger sizes.
+- Compass uses a square instrument plate and axis-based pointer.
 
-- metrics: metric, battery, cellular signal, tank, boolean status, gauge, fire/smoke/leak indicators;
-- controls: command/downlink button, switch/relay/lock/siren, slider/fan, manual set value, thermostat, RGB color, directional control;
-- charts: time-series/area, bar, histogram, donut, heatmap, state/status timeline, gauge;
-- location: map, coordinates, route/track, compass;
-- tables/events: device table, measurement list, alarms, event history, logs;
-- display/custom: clock, text/markdown, camera/image, iframe mock, SCADA/mimic.
+### Tables
 
-## Size behavior
+- Tables, measurement lists, alarms, events and logs use compact industrial headers, alternating rows, semantic state color and live status footers.
+- Large fleet tables use spare vertical space for a 24-hour fleet-health trend instead of leaving a large blank region.
 
-The renderer uses width/height-aware compositions rather than scaling one card:
+### Display
 
-- `1x1`: core value/state, compact semantic visual, minimal status context;
-- `2x1`: split compositions with trace/control context beside the primary value;
-- `1x2`: deliberately vertical layouts for metrics/tanks and stacked context;
-- `2x2+`: history charts, min/avg/max, recent-state strips, command metadata, richer map/SCADA context;
-- `3x1` / `3x2` chart widgets use the extra horizontal canvas for a real trace/history view.
+- Clock uses a monospaced operations readout with sync/drift metadata at large sizes.
+- Text/status widgets add sensor/update/alarm metadata.
+- Image is a semantic CCTV/live-monitor surface.
+- Iframe is shown as an embedded operations panel rather than an empty placeholder.
+- SCADA is a process schematic with tank, pump, valve, flow, pressure and state readouts.
 
-## Mock interaction behavior
+## Responsiveness and locale
 
-Interactive widgets now visibly update local mock state:
+The renderer derives layout from the supported `WidgetSize` and changes composition when area/aspect ratio changes. User-facing Persian text uses RTL where useful, while numeric, chart, process and technical instrument content intentionally remains LTR.
 
-- command/downlink button: queued/ACK-pending feedback;
-- relay / door lock / siren: state toggles;
-- slider / fan: live numeric value;
-- manual set value: editable field plus apply state on large layout;
-- thermostat: `−` / `+` controls update target;
-- RGB color: selectable swatches plus brightness slider;
-- directional control: last selected command remains highlighted.
-
-State is local to the reusable theme renderer; it is not coupled to `App.tsx` or showcase-global state.
-
-## Validation performed
+## QA performed
 
 - Read `docs/profile.md`, `docs/agents.md`, and `docs/todo.md` completely before editing.
-- Reviewed the existing Glass screenshots for all six categories and the current Glass-specific branches in the shared renderer/frame.
-- Performed current web reference research before implementation.
-- `GlassFrame.tsx`: TypeScript JSX transpile check passed.
-- `GlassVisuals.tsx`: TypeScript JSX transpile check passed.
-- Both files passed an additional TypeScript check using temporary local module stubs to validate internal expressions/types without project dependencies.
-- Confirmed no Material 3 or other theme-specific source file is included in the patch.
+- Inspected the existing `flat` screenshots for metrics, controls, charts, location, tables and display.
+- Verified renderer coverage against the visual IDs used by the registry.
+- Ran an isolated strict TypeScript check for `FlatVisuals.tsx`; it passes.
+- Temporarily wired the renderer into the `flat` dispatcher only for QA, then restored the shared files before packaging.
+- Attempted both requested screenshot scripts with `WIDGET_QA_THEME=flat` and Chromium configured. Both stop before capture because the supplied project has an incomplete `node_modules/playwright` installation (`playwright/index.js` is missing). Outbound DNS is disabled in the execution sandbox, so dependencies could not be repaired with `npm ci`.
 
-## Screenshot QA status / blocker
+Because of that environment limitation, **new post-redesign screenshots could not be generated or visually inspected here**. The pre-change flat screenshot set was inspected and preserved. Run the commands in `INTEGRATION.md` after installing the project dependencies to complete pixel/overflow QA.
 
-Both requested commands were attempted with `WIDGET_QA_THEME=glass` and `/usr/bin/chromium`:
+## Known follow-up
 
-```powershell
-$env:WIDGET_QA_THEME="glass"
-npm run screenshots:full
-
-$env:WIDGET_QA_THEME="glass"
-npm run screenshots
-```
-
-They could not run in this sandbox because the uploaded ZIP does not contain an installed `playwright` package. An attempted `npm ci` could not complete because this sandbox has no DNS/network access to `registry.npmjs.org`.
-
-The coordinator should therefore run the screenshot pass after applying `INTEGRATION.md` in the normal project environment. The new screenshots still need final visual inspection for any browser-specific overflow and Persian layout edge cases.
-
-## Remaining review targets
-
-1. Run full Glass-only screenshot QA after integration and inspect every generated widget sheet.
-2. Run a Persian pass (`WIDGET_QA_LOCALE=fa`) after English visual QA.
-3. Test the outer Glass frame over at least one lighter/complex application background as part of final integration; the showcase currently supplies the shared dark teal gradient.
-4. If desired, update the shared display label from `Glass` to `Aurora Glass`; this is optional and intentionally not included as a shared-file edit.
+The implementation is type-checked and size-aware, but the coordinator should still run the project's Playwright screenshot/overflow diagnostics after applying the small shared integration. Any pixel-level issue that only appears with the project's actual browser/font environment should be fixed in `FlatVisuals.tsx`, not by changing Material 3 or another theme.
