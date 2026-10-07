@@ -1,79 +1,64 @@
-# Aurora Glass integration
+# Minimal Mono — Integration
 
-This patch intentionally does **not** package coordinator-owned shared files.
+Shared integration is required only to route theme ID `minimal` to the new isolated renderer.
 
-Two small shared dispatcher changes are required so the isolated Aurora Glass renderer/frame are used.
+Do **not** rename the stable theme ID.
 
-## 1. `src/widgets/renderers/WidgetVisuals.tsx`
+## Required change
 
-Add this import next to the existing Material renderer import:
+Edit:
 
-```tsx
-import { GlassVisualRenderer } from '../themes/GlassVisuals';
+`src/widgets/renderers/WidgetVisuals.tsx`
+
+### 1. Add this import next to the Material renderer import
+
+```ts
+import { MinimalVisualRenderer } from '../themes/MinimalVisuals';
 ```
 
-Then in `WidgetVisualRenderer`, immediately after the Material dispatch, add:
+### 2. Add this dispatcher branch immediately after the Material branch
 
-```tsx
-if (props.theme.id === 'glass') return <GlassVisualRenderer {...props} />;
-```
+Current:
 
-Resulting opening should be:
-
-```tsx
+```ts
 export function WidgetVisualRenderer(props: Props) {
   if (props.theme.id === 'material') return <MaterialVisualRenderer {...props} />;
-  if (props.theme.id === 'glass') return <GlassVisualRenderer {...props} />;
-
   const v = props.def.visual;
-  // existing generic theme dispatcher continues here...
-}
 ```
 
-Do not remove the existing generic Glass branches in the same merge unless the coordinator is already cleaning up the shared renderer. They simply become unreachable for theme ID `glass` after the early dispatch, which keeps this integration patch minimal and parallel-safe.
+Replace that opening with:
 
-## 2. `src/widgets/core/WidgetFrame.tsx`
-
-Add this import:
-
-```tsx
-import { GlassFrame as AuroraGlassFrame } from '../themes/GlassFrame';
+```ts
+export function WidgetVisualRenderer(props: Props) {
+  if (props.theme.id === 'material') return <MaterialVisualRenderer {...props} />;
+  if (props.theme.id === 'minimal') return <MinimalVisualRenderer {...props} />;
+  const v = props.def.visual;
 ```
 
-Then change only the `glass` switch case in `WidgetFrame`:
+No other shared renderer edits are required. The older scattered `theme.id === 'minimal'` branches may remain temporarily because this early return bypasses them. They can be removed later during shared-renderer cleanup by the coordinator.
 
-```tsx
-case 'glass': return <AuroraGlassFrame {...props}/>;
+## Optional display-name cleanup
+
+The shared token currently labels the theme as `Minimal`. If the coordinator wants the UI to match the working name used for this pass, change only the display label in `src/widgets/core/themeTokens.ts`:
+
+```ts
+minimal: {
+  id: 'minimal',
+  label: 'Minimal Mono',
 ```
 
-The existing local `GlassFrame` function can remain temporarily to minimize merge conflicts. It can be removed later during the coordinator's shared cleanup.
+This is optional and does not affect persistence/API compatibility.
 
-## Optional display-name change
-
-If the coordinator wants the showcase label to match the working theme name, change only the `glass` label in `src/widgets/core/themeTokens.ts`:
-
-```tsx
-label: 'Aurora Glass',
-```
-
-This label change is optional. The stable theme ID remains exactly `glass`.
-
-## QA commands after integration
+## QA commands
 
 PowerShell:
 
 ```powershell
-$env:WIDGET_QA_THEME="glass"
+$env:WIDGET_QA_THEME="minimal"
 npm run screenshots:full
 
-$env:WIDGET_QA_THEME="glass"
+$env:WIDGET_QA_THEME="minimal"
 npm run screenshots
 ```
 
-Persian follow-up:
-
-```powershell
-$env:WIDGET_QA_THEME="glass"
-$env:WIDGET_QA_LOCALE="fa"
-npm run screenshots
-```
+Then inspect all generated Minimal screenshots for metrics, controls, charts, location, tables, and display.
