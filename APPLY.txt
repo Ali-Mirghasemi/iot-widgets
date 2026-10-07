@@ -1,25 +1,24 @@
-Material 3 patch v5
+Material 3 patch v6
 
-Replace only:
+Scope:
+  Material theme only.
+
+Replace:
   src/widgets/themes/MaterialVisuals.tsx
 
-Apply on top of Material patch v4.
+Main changes:
+  - Better 1x2 tank composition and level scale.
+  - Better 2x1 coordinates composition.
+  - Better 2x1 compass composition.
+  - Stronger compact Switch / Door Lock / Siren controls.
+  - Larger directional pad at compact and 2x1 sizes.
+  - Larger donut/ring visualization.
+  - More realistic camera snapshot visual.
 
-Then clear Vite cache:
+After copying:
   Remove-Item -Recurse -Force .\node_modules\.vite -ErrorAction SilentlyContinue
-
-Run:
   npm run dev
 
 Generate Material screenshots:
   $env:WIDGET_QA_THEME="material"
   npm run screenshots:full
-
-Focus of v5:
-- denser 1x1 controls
-- richer large status/alarm history panels
-- less form-like compact coordinates
-- larger compass/gauges
-- improved large clock/text layouts
-- better 2x1 iframe preview
-- richer 3x3 SCADA composition
