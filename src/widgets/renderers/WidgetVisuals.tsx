@@ -7,6 +7,7 @@ import { bars, heat, spark, spark2 } from '../data/mockData';
 import { MaterialVisualRenderer } from '../themes/MaterialVisuals';
 import { MinimalVisualRenderer } from '../themes/MinimalVisuals';
 import { IOSVisualRenderer } from '../themes/IOSVisuals';
+import { GlassVisualRenderer } from '../themes/GlassVisuals';
 
 interface Props { def: WidgetDefinition; theme: WidgetThemeTokens; locale: Locale; size: WidgetSize; }
 
@@ -442,6 +443,7 @@ export function WidgetVisualRenderer(props: Props) {
   if (props.theme.id === 'material') return <MaterialVisualRenderer {...props} />;
   if (props.theme.id === 'minimal') return <MinimalVisualRenderer {...props} />;
   if (props.theme.id === 'ios') return <IOSVisualRenderer {...props} />;
+  if (props.theme.id === 'glass') return <GlassVisualRenderer {...props} />;
   const v = props.def.visual;
   if (v === 'metric') return <Metric {...props} />;
   if (v === 'battery') return <Battery {...props} />;
