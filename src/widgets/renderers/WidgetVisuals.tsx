@@ -9,6 +9,7 @@ import { MinimalVisualRenderer } from '../themes/MinimalVisuals';
 import { IOSVisualRenderer } from '../themes/IOSVisuals';
 import { GlassVisualRenderer } from '../themes/GlassVisuals';
 import { FlatVisualRenderer } from '../themes/FlatVisuals';
+import { GamingVisualRenderer } from '../themes/GamingVisuals';
 
 interface Props { def: WidgetDefinition; theme: WidgetThemeTokens; locale: Locale; size: WidgetSize; }
 
@@ -446,6 +447,7 @@ export function WidgetVisualRenderer(props: Props) {
   if (props.theme.id === 'ios') return <IOSVisualRenderer {...props} />;
   if (props.theme.id === 'glass') return <GlassVisualRenderer {...props} />;
   if (props.theme.id === 'flat') return <FlatVisualRenderer {...props} />;
+  if (props.theme.id === 'gaming') return <GamingVisualRenderer {...props} />;
   const v = props.def.visual;
   if (v === 'metric') return <Metric {...props} />;
   if (v === 'battery') return <Battery {...props} />;
