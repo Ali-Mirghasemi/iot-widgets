@@ -1,4 +1,4 @@
-Material 3 patch v8
+Material 3 patch v9
 
 Scope:
   Material theme only.
@@ -6,18 +6,15 @@ Scope:
 Replace:
   src/widgets/themes/MaterialVisuals.tsx
 
-This pass was made from the combined EN + FA QA package.
+This pass was based on the latest EN + FA material-qa(1).zip.
 
 Main fixes:
-  - Fix compact/wide metric layouts that were vertically overflowing in 1x1/2x1.
-  - Fix 3x1 Time Series and Area Chart clipping.
-  - Fix 3x1 Bar Chart clipping.
-  - Fix 3x1 Histogram clipping.
-  - Fix 2x1 Donut / Pie ring clipping and add a deliberate horizontal composition.
-  - Fix 2x2 Thermostat overlap between dial/control area and trend chart.
-  - Fix 2x1 Directional Control bottom button clipping.
-  - Improve Persian labels in new/affected compositions.
-  - Reduce large tank trend intrinsic overflow.
+  - Replaced transformed MUI switches with a native-sized Material toggle to remove real body overflow in Switch / Door Lock / Siren.
+  - Fixed 3x2 iFrame / External Content vertical overflow and clipped chart.
+  - Tightened iFrame 2x1 / 2x2 layouts and made all inner grid tracks overflow-safe.
+  - Made SVG charts/gauges block-level to eliminate baseline-induced 4–6 px false overflow.
+  - Tightened tall SCADA trend charts so they no longer force intrinsic extra height.
+  - Kept all changes isolated to Material theme renderer.
 
 After copying:
   Remove-Item -Recurse -Force .\node_modules\.vite -ErrorAction SilentlyContinue
@@ -27,6 +24,7 @@ Generate Material QA:
   $env:WIDGET_QA_THEME="material"
   npm run screenshots:full
 
-For bilingual QA:
+Bilingual widget QA:
+  $env:WIDGET_QA_THEME="material"
   $env:WIDGET_QA_LOCALE="fa"
   npm run screenshots
