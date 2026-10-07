@@ -39,8 +39,8 @@ const l = (locale: Locale, en: string, fa: string) => locale === 'fa' ? fa : en;
 
 function MonoRule({ strong = false, vertical = false }: { strong?: boolean; vertical?: boolean }) {
   return <Box sx={vertical
-    ? { width: strong ? 2 : 1, height: '100%', bgcolor: strong ? ink : faint, flex: '0 0 auto' }
-    : { height: strong ? 2 : 1, width: '100%', bgcolor: strong ? ink : faint, flex: '0 0 auto' }
+    ? { width: strong ? '2px' : '1px', height: '100%', bgcolor: strong ? ink : faint, flex: '0 0 auto' }
+    : { height: strong ? '2px' : '1px', width: '100%', bgcolor: strong ? ink : faint, flex: '0 0 auto' }
   } />;
 }
 
@@ -64,7 +64,7 @@ function MetaPair({ title, value, locale, strong = false }: { title: string; val
   </Box>;
 }
 
-function MonoSpark({ values = spark, height = 58, area = false, dots = false }: { values?: number[]; height?: number; area?: boolean; dots?: boolean }) {
+function MonoSpark({ values = spark, height = 58, area = false, dots = false }: { values?: number[]; height?: number | string; area?: boolean; dots?: boolean }) {
   const geom = useMemo(() => {
     const lo = Math.min(...values);
     const hi = Math.max(...values);
@@ -87,14 +87,14 @@ function MonoSpark({ values = spark, height = 58, area = false, dots = false }: 
 function TickScale({ pct, labels = true, vertical = false }: { pct: number; labels?: boolean; vertical?: boolean }) {
   const p = clamp(pct, 0, 100);
   if (vertical) return <Box sx={{ position: 'relative', height: '100%', minHeight: 95, width: 34, flex: '0 0 34px' }}>
-    <Box sx={{ position: 'absolute', left: 16, top: 0, bottom: 0, width: 1, bgcolor: faint }} />
-    {[0, 25, 50, 75, 100].map(t => <Box key={t} sx={{ position: 'absolute', left: t % 50 === 0 ? 8 : 11, bottom: `calc(${t}% - .5px)`, width: t % 50 === 0 ? 16 : 10, height: 1, bgcolor: t === 0 || t === 100 ? graphite : muted }} />)}
+    <Box sx={{ position: 'absolute', left: 16, top: 0, bottom: 0, width: '1px', bgcolor: faint }} />
+    {[0, 25, 50, 75, 100].map(t => <Box key={t} sx={{ position: 'absolute', left: t % 50 === 0 ? 8 : 11, bottom: `calc(${t}% - .5px)`, width: t % 50 === 0 ? 16 : 10, height: '1px', bgcolor: t === 0 || t === 100 ? graphite : muted }} />)}
     <Box sx={{ position: 'absolute', left: 5, bottom: `calc(${p}% - 4px)`, width: 23, height: 8, bgcolor: ink }} />
   </Box>;
   return <Box sx={{ width: '100%' }}>
     <Box sx={{ position: 'relative', height: 17 }}>
-      <Box sx={{ position: 'absolute', left: 0, right: 0, top: 8, height: 1, bgcolor: faint }} />
-      {[0, 25, 50, 75, 100].map(t => <Box key={t} sx={{ position: 'absolute', left: `${t}%`, top: t % 50 === 0 ? 4 : 6, width: 1, height: t % 50 === 0 ? 9 : 5, bgcolor: t === 0 || t === 100 ? graphite : muted, transform: 'translateX(-.5px)' }} />)}
+      <Box sx={{ position: 'absolute', left: 0, right: 0, top: 8, height: '1px', bgcolor: faint }} />
+      {[0, 25, 50, 75, 100].map(t => <Box key={t} sx={{ position: 'absolute', left: `${t}%`, top: t % 50 === 0 ? 4 : 6, width: '1px', height: t % 50 === 0 ? 9 : 5, bgcolor: t === 0 || t === 100 ? graphite : muted, transform: 'translateX(-.5px)' }} />)}
       <Box sx={{ position: 'absolute', left: `${p}%`, top: 2, width: 2, height: 13, bgcolor: ink, transform: 'translateX(-1px)' }} />
     </Box>
     {labels && <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: .1 }}><Typography sx={{ fontSize: 8.5, color: muted }}>0</Typography><Typography sx={{ fontSize: 8.5, color: muted }}>MAX</Typography></Box>}
@@ -133,7 +133,7 @@ function Metric({ def, locale, size }: Props) {
       <Box sx={{ textAlign: 'right' }}><Eyebrow locale={locale} dim>{l(locale, '24h delta', 'تغییر ۲۴ساعته')}</Eyebrow><Typography sx={{ mt: .25, fontSize: 12, fontWeight: 760, color: trend >= 0 ? ink : warning }}>{trendText}</Typography></Box>
     </Box>
     <TickScale pct={pct} labels={false} />
-    <Box sx={{ minHeight: 0, display: 'flex', alignItems: 'end' }}><MonoSpark values={vals} height={p.large ? 92 : 62} area dots /></Box>
+    <Box sx={{ minHeight: 0, display: 'flex', alignItems: 'stretch', pt: .35 }}><MonoSpark values={vals} height={p.large ? '100%' : 62} area dots /></Box>
     {p.roomy && <><MonoRule /><Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 1 }}><MetaPair locale={locale} title={l(locale, 'min', 'کمینه')} value={`${Math.round(value * .88 * 10) / 10} ${unit}`} /><MetaPair locale={locale} title={l(locale, 'mean', 'میانگین')} value={`${Math.round(value * .96 * 10) / 10} ${unit}`} /><MetaPair locale={locale} title={l(locale, 'peak', 'بیشینه')} value={`${Math.round(value * 1.08 * 10) / 10} ${unit}`} /></Box></>}
   </Box>;
 }
@@ -148,21 +148,45 @@ function Gauge({ def, locale, size }: Props) {
   const critical = pct >= 88;
   const state = critical ? l(locale, 'HIGH', 'بالا') : warn ? l(locale, 'WATCH', 'مراقبت') : l(locale, 'NORMAL', 'عادی');
   const stateColor = critical ? danger : warn ? warning : ink;
+  const headroom = Math.max(0, max - value);
 
   if (p.compact) return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: '1fr 36px', gap: 1, direction: 'ltr', alignItems: 'center' }}>
     <Box><Typography sx={{ fontSize: 34, lineHeight: .9, letterSpacing: '-.055em', fontWeight: 480, fontVariantNumeric: 'tabular-nums' }}>{value}<Box component="span" sx={{ fontSize: 11, ml: .45, color: graphite, fontWeight: 650, letterSpacing: 0 }}>{unit}</Box></Typography><Typography sx={{ mt: .8, fontSize: 9.5, color: stateColor, fontWeight: 800, letterSpacing: '.08em' }}>{state}</Typography></Box>
     <TickScale pct={pct} labels={false} vertical />
   </Box>;
 
+  if (p.large && !p.wide) return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: '1fr 48px', gridTemplateRows: 'auto 1fr auto', columnGap: 1.5, rowGap: 1.2, direction: 'ltr' }}>
+    <Box sx={{ minWidth: 0 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 1 }}>
+        <Typography sx={{ fontSize: 50, lineHeight: .86, letterSpacing: '-.065em', fontWeight: 460, fontVariantNumeric: 'tabular-nums' }}>{value}<Box component="span" sx={{ fontSize: 12, ml: .55, color: graphite, fontWeight: 650, letterSpacing: 0 }}>{unit}</Box></Typography>
+        <Box sx={{ textAlign: 'right' }}><Eyebrow locale={locale} dim>{l(locale, 'range', 'بازه')}</Eyebrow><Typography sx={{ mt: .2, fontSize: 11.5, color: graphite, fontWeight: 700 }}>0 — {max}</Typography></Box>
+      </Box>
+    </Box>
+    <Box sx={{ gridColumn: 2, gridRow: '1 / span 2', minHeight: 0, py: .4 }}><TickScale pct={pct} labels={false} vertical /></Box>
+    <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 0 }}>
+      <Eyebrow locale={locale} dim>{l(locale, 'operating state', 'وضعیت کاری')}</Eyebrow>
+      <Typography sx={{ mt: .45, fontSize: 22, fontWeight: 780, color: stateColor }}>{state}</Typography>
+      <Typography sx={{ mt: .5, fontSize: 10, color: muted }}>{Math.round(pct)}% {l(locale, 'of configured range', 'از بازه تنظیم‌شده')}</Typography>
+      <Box sx={{ mt: 1.5, display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: .45 }}>
+        {[0, 1, 2, 3, 4].map(i => <Box key={i} sx={{ height: 9, bgcolor: i < Math.ceil(pct / 20) ? (critical && i === 4 ? danger : warn && i >= 3 ? warning : ink) : faint }} />)}
+      </Box>
+    </Box>
+    <Box sx={{ gridColumn: '1 / -1', borderTop: `1px solid ${faint}`, pt: 1, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1 }}>
+      <MetaPair locale={locale} title={l(locale, 'warn at', 'حد هشدار')} value={`${Math.round(max * .72)} ${unit}`} />
+      <MetaPair locale={locale} title={l(locale, 'limit', 'حد نهایی')} value={`${max} ${unit}`} />
+      <MetaPair locale={locale} title={l(locale, 'headroom', 'حاشیه')} value={`${Math.round(headroom * 10) / 10} ${unit}`} />
+    </Box>
+  </Box>;
+
   return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', direction: 'ltr' }}>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 1 }}>
-      <Typography sx={{ fontSize: p.large ? 48 : 38, lineHeight: .88, letterSpacing: '-.06em', fontWeight: 470, fontVariantNumeric: 'tabular-nums' }}>{value}<Box component="span" sx={{ fontSize: 12, ml: .55, color: graphite, fontWeight: 650, letterSpacing: 0 }}>{unit}</Box></Typography>
+      <Typography sx={{ fontSize: 38, lineHeight: .88, letterSpacing: '-.06em', fontWeight: 470, fontVariantNumeric: 'tabular-nums' }}>{value}<Box component="span" sx={{ fontSize: 12, ml: .55, color: graphite, fontWeight: 650, letterSpacing: 0 }}>{unit}</Box></Typography>
       <Box sx={{ textAlign: 'right' }}><Eyebrow locale={locale} dim>{l(locale, 'range', 'بازه')}</Eyebrow><Typography sx={{ mt: .2, fontSize: 11.5, color: graphite, fontWeight: 700 }}>0 — {max}</Typography></Box>
     </Box>
     <Box sx={{ mt: 1.6 }}><TickScale pct={pct} /></Box>
-    <Box sx={{ mt: p.large ? 1.7 : .9, display: 'grid', gridTemplateColumns: p.large ? 'repeat(3,1fr)' : '1fr auto', gap: 1, alignItems: 'end' }}>
-      <Box><Eyebrow locale={locale} dim>{l(locale, 'operating state', 'وضعیت کاری')}</Eyebrow><Typography sx={{ mt: .35, fontSize: p.large ? 17 : 12.5, fontWeight: 780, color: stateColor }}>{state}</Typography></Box>
-      {p.large ? <><MetaPair locale={locale} title={l(locale, 'warn at', 'حد هشدار')} value={`${Math.round(max * .72)} ${unit}`} /><MetaPair locale={locale} title={l(locale, 'limit', 'حد نهایی')} value={`${max} ${unit}`} /></> : <Typography sx={{ fontSize: 10, color: muted }}>{Math.round(pct)}%</Typography>}
+    <Box sx={{ mt: .9, display: 'grid', gridTemplateColumns: '1fr auto', gap: 1, alignItems: 'end' }}>
+      <Box><Eyebrow locale={locale} dim>{l(locale, 'operating state', 'وضعیت کاری')}</Eyebrow><Typography sx={{ mt: .35, fontSize: 12.5, fontWeight: 780, color: stateColor }}>{state}</Typography></Box>
+      <Typography sx={{ fontSize: 10, color: muted }}>{Math.round(pct)}%</Typography>
     </Box>
   </Box>;
 }
@@ -174,8 +198,8 @@ function Battery({ def, locale, size }: Props) {
   const remaining = s(def.mock.remaining, '8h 42m');
   const low = value < 25;
 
-  const shape = <Box sx={{ position: 'relative', width: '100%', maxWidth: p.compact ? 96 : 160, height: p.compact ? 42 : 54, border: `1.5px solid ${ink}`, p: '4px', bgcolor: '#fff' }}>
-    <Box sx={{ position: 'absolute', right: -5, top: '31%', width: 4, height: '38%', bgcolor: ink }} />
+  const shape = <Box sx={{ position: 'relative', width: '100%', maxWidth: p.compact ? 96 : p.large ? 230 : 160, height: p.compact ? 42 : p.large ? 72 : 54, border: `1.5px solid ${ink}`, p: p.large ? '6px' : '4px', bgcolor: '#fff' }}>
+    <Box sx={{ position: 'absolute', right: p.large ? -7 : -5, top: '31%', width: p.large ? 6 : 4, height: '38%', bgcolor: ink }} />
     <Box sx={{ height: '100%', width: `${value}%`, bgcolor: low ? danger : ink }} />
   </Box>;
 
@@ -184,24 +208,44 @@ function Battery({ def, locale, size }: Props) {
     <Box sx={{ mt: 1.25 }}>{shape}</Box>
   </Box>;
 
-  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: p.wide && !p.large ? '1.1fr .9fr' : '1fr', gap: 1.4, alignItems: 'center', direction: 'ltr' }}>
-    <Box sx={{ minWidth: 0 }}><Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}><Typography sx={{ fontSize: p.large ? 46 : 36, lineHeight: .9, fontWeight: 470, letterSpacing: '-.055em' }}>{value}%</Typography><Eyebrow locale={locale} dim>{low ? l(locale, 'charge soon', 'نیاز به شارژ') : l(locale, 'battery', 'باتری')}</Eyebrow></Box><Box sx={{ mt: 1.3 }}>{shape}</Box></Box>
-    <Box sx={{ display: 'grid', gridTemplateColumns: p.large ? 'repeat(2,1fr)' : '1fr', gap: 1, borderLeft: p.wide && !p.large ? `1px solid ${faint}` : 'none', pl: p.wide && !p.large ? 1.4 : 0 }}><MetaPair locale={locale} title={l(locale, 'voltage', 'ولتاژ')} value={voltage} strong /><MetaPair locale={locale} title={l(locale, 'estimated', 'زمان باقی‌مانده')} value={remaining} strong />{p.large && <><MetaPair locale={locale} title={l(locale, 'health', 'سلامت')} value="94%" /><MetaPair locale={locale} title={l(locale, 'cycles', 'چرخه')} value="182" /></>}</Box>
+  if (p.large) return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto 1fr auto', gap: 1.2, direction: 'ltr' }}>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 1 }}><Typography sx={{ fontSize: 48, lineHeight: .88, fontWeight: 460, letterSpacing: '-.06em' }}>{value}%</Typography><Eyebrow locale={locale} dim>{low ? l(locale, 'charge soon', 'نیاز به شارژ') : l(locale, 'battery reserve', 'ذخیره باتری')}</Eyebrow></Box>
+    <Box sx={{ minHeight: 0, display: 'grid', alignContent: 'center', justifyItems: 'start', gap: 1.1 }}>
+      {shape}
+      <Box sx={{ width: '100%', maxWidth: 230, display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ fontSize: 8.5, color: muted }}>0</Typography><Typography sx={{ fontSize: 8.5, color: muted }}>50</Typography><Typography sx={{ fontSize: 8.5, color: muted }}>100%</Typography></Box>
+    </Box>
+    <Box sx={{ borderTop: `1px solid ${faint}`, pt: 1, display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 1 }}><MetaPair locale={locale} title={l(locale, 'voltage', 'ولتاژ')} value={voltage} strong /><MetaPair locale={locale} title={l(locale, 'estimated', 'زمان باقی‌مانده')} value={remaining} strong /><MetaPair locale={locale} title={l(locale, 'health', 'سلامت')} value="94%" /><MetaPair locale={locale} title={l(locale, 'cycles', 'چرخه')} value="182" /></Box>
+  </Box>;
+
+  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: p.wide ? '1.1fr .9fr' : '1fr', gap: 1.4, alignItems: 'center', direction: 'ltr' }}>
+    <Box sx={{ minWidth: 0 }}><Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}><Typography sx={{ fontSize: 36, lineHeight: .9, fontWeight: 470, letterSpacing: '-.055em' }}>{value}%</Typography><Eyebrow locale={locale} dim>{low ? l(locale, 'charge soon', 'نیاز به شارژ') : l(locale, 'battery', 'باتری')}</Eyebrow></Box><Box sx={{ mt: 1.3 }}>{shape}</Box></Box>
+    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 1, borderLeft: p.wide ? `1px solid ${faint}` : 'none', pl: p.wide ? 1.4 : 0 }}><MetaPair locale={locale} title={l(locale, 'voltage', 'ولتاژ')} value={voltage} strong /><MetaPair locale={locale} title={l(locale, 'estimated', 'زمان باقی‌مانده')} value={remaining} strong /></Box>
   </Box>;
 }
 
 function Signal({ def, locale, size }: Props) {
   const p = profile(size);
-  const value = clamp(n(def.mock.value, 74), 0, 100);
-  const dbm = s(def.mock.dbm, '-81 dBm');
-  const operator = s(def.mock.operator, 'LTE');
+  const raw = n(def.mock.value, -72);
+  const value = raw <= 0 ? clamp(((raw + 110) / 60) * 100, 0, 100) : clamp(raw, 0, 100);
+  const dbm = s(def.mock.dbm, raw <= 0 ? `${raw} dBm` : '-81 dBm');
+  const network = s(def.mock.network, 'LTE · RSRP');
+  const operator = s(def.mock.operator, network.split('·')[0].trim() || 'LTE');
   const barsOn = Math.max(1, Math.round(value / 20));
-  const barVisual = <Box sx={{ height: p.compact ? 42 : 58, display: 'flex', alignItems: 'end', gap: p.compact ? .45 : .6, direction: 'ltr' }}>{[1, 2, 3, 4, 5].map(i => <Box key={i} sx={{ width: p.compact ? 6 : 8, height: `${19 + i * 15}%`, bgcolor: i <= barsOn ? ink : faint }} />)}</Box>;
+  const signalHistory = [-96, -91, -88, -84, -86, -80, -77, -75, -78, raw <= 0 ? raw : -72];
+  const barVisual = <Box sx={{ height: p.compact ? 42 : p.large ? 82 : 58, display: 'flex', alignItems: 'end', gap: p.compact ? .45 : p.large ? .8 : .6, direction: 'ltr' }}>{[1, 2, 3, 4, 5].map(i => <Box key={i} sx={{ width: p.compact ? 6 : p.large ? 11 : 8, height: `${19 + i * 15}%`, bgcolor: i <= barsOn ? ink : faint }} />)}</Box>;
 
-  if (p.compact) return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', gap: 1, direction: 'ltr' }}><Box><Typography sx={{ fontSize: 32, fontWeight: 490, lineHeight: .9, letterSpacing: '-.05em' }}>{value}%</Typography><Typography sx={{ mt: .8, fontSize: 9.5, color: graphite, fontWeight: 700 }}>{dbm}</Typography></Box>{barVisual}</Box>;
+  if (p.compact) return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', gap: 1, direction: 'ltr' }}><Box><Typography sx={{ fontSize: 32, fontWeight: 490, lineHeight: .9, letterSpacing: '-.05em' }}>{Math.round(value)}%</Typography><Typography sx={{ mt: .8, fontSize: 9.5, color: graphite, fontWeight: 700 }}>{dbm}</Typography></Box>{barVisual}</Box>;
+
+  if (p.large) return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto auto 1fr auto', gap: 1, direction: 'ltr' }}>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 1 }}><Box><Typography sx={{ fontSize: 46, fontWeight: 470, lineHeight: .86, letterSpacing: '-.06em' }}>{Math.round(value)}%</Typography><Typography sx={{ mt: .6, fontSize: 10, color: graphite, fontWeight: 700 }}>{dbm}</Typography></Box><Box sx={{ display: 'flex', alignItems: 'end', gap: 1.1 }}><Typography sx={{ pb: .25, fontSize: 10, fontWeight: 800, color: graphite }}>{operator}</Typography>{barVisual}</Box></Box>
+    <TickScale pct={value} labels={false} />
+    <Box sx={{ minHeight: 0, display: 'grid', gridTemplateRows: 'auto 1fr', gap: .5 }}><Eyebrow locale={locale} dim>{l(locale, 'signal history', 'تاریخچه سیگنال')}</Eyebrow><Box sx={{ minHeight: 0 }}><MonoSpark values={signalHistory} height="100%" dots /></Box></Box>
+    <Box sx={{ borderTop: `1px solid ${faint}`, pt: 1, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1 }}><MetaPair locale={locale} title="RSSI" value={dbm} /><MetaPair locale={locale} title="SINR" value="18 dB" /><MetaPair locale={locale} title="RSRP" value="-96 dBm" /></Box>
+  </Box>;
+
   return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 1.8, alignItems: 'center', direction: 'ltr' }}>
     {barVisual}
-    <Box sx={{ minWidth: 0 }}><Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 1 }}><Typography sx={{ fontSize: p.large ? 43 : 34, fontWeight: 480, lineHeight: .9, letterSpacing: '-.05em' }}>{value}%</Typography><Typography sx={{ fontSize: 10, fontWeight: 800, color: graphite }}>{operator}</Typography></Box><Box sx={{ mt: 1 }}><TickScale pct={value} labels={false} /></Box><Box sx={{ mt: 1, display: 'grid', gridTemplateColumns: p.large ? 'repeat(3,1fr)' : 'repeat(2,1fr)', gap: 1 }}><MetaPair locale={locale} title="RSSI" value={dbm} /> <MetaPair locale={locale} title="SINR" value="18 dB" />{p.large && <MetaPair locale={locale} title="RSRP" value="-96 dBm" />}</Box></Box>
+    <Box sx={{ minWidth: 0 }}><Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 1 }}><Typography sx={{ fontSize: 34, fontWeight: 480, lineHeight: .9, letterSpacing: '-.05em' }}>{Math.round(value)}%</Typography><Typography sx={{ fontSize: 10, fontWeight: 800, color: graphite }}>{operator}</Typography></Box><Box sx={{ mt: 1 }}><TickScale pct={value} labels={false} /></Box><Box sx={{ mt: 1, display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 1 }}><MetaPair locale={locale} title="RSSI" value={dbm} /> <MetaPair locale={locale} title="SINR" value="18 dB" /></Box></Box>
   </Box>;
 }
 
@@ -213,7 +257,7 @@ function Tank({ def, locale, size }: Props) {
   const isSoil = def.id === 'soil-moisture';
   const tank = <Box sx={{ position: 'relative', width: p.compact ? 62 : p.tall ? 90 : 100, height: p.compact ? 72 : p.tall ? 150 : 106, borderLeft: `2px solid ${ink}`, borderRight: `2px solid ${ink}`, borderBottom: `2px solid ${ink}`, borderTop: `1px solid ${faint}`, overflow: 'hidden', flex: '0 0 auto' }}>
     <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: `${value}%`, bgcolor: ink }} />
-    {[25, 50, 75].map(v => <Box key={v} sx={{ position: 'absolute', top: `${100 - v}%`, left: 0, width: 10, height: 1, bgcolor: '#fff', mixBlendMode: 'difference' }} />)}
+    {[25, 50, 75].map(v => <Box key={v} sx={{ position: 'absolute', top: `${100 - v}%`, left: 0, width: 10, height: '1px', bgcolor: '#fff', mixBlendMode: 'difference' }} />)}
   </Box>;
 
   if (p.compact) return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 1.2, alignItems: 'center', direction: 'ltr' }}>{tank}<Box><Typography sx={{ fontSize: 31, fontWeight: 480, lineHeight: .9, letterSpacing: '-.05em' }}>{value}{unit}</Typography><Typography sx={{ mt: .8, fontSize: 9, color: graphite, fontWeight: 720 }}>{isSoil ? l(locale, 'MOISTURE', 'رطوبت') : l(locale, 'LEVEL', 'سطح')}</Typography></Box></Box>;
@@ -227,11 +271,18 @@ function BooleanStatus({ def, locale, size }: Props) {
   const p = profile(size);
   const [on, setOn] = useState(Boolean(def.mock.value));
   const label = def.id === 'device-status' ? (on ? l(locale, 'ONLINE', 'آنلاین') : l(locale, 'OFFLINE', 'آفلاین')) : (on ? 'ON' : 'OFF');
+  const stateSegments = on ? [ink, ink, ink, ink, ink, ink, ink, ink] : [muted, muted, faint, faint, muted, faint, faint, muted];
+
+  if (p.large) return <Box onClick={() => setOn(v => !v)} role="button" tabIndex={0} sx={{ height: '100%', cursor: 'pointer', userSelect: 'none', display: 'grid', gridTemplateRows: 'auto 1fr auto', gap: 1.2, direction: locale === 'fa' ? 'rtl' : 'ltr' }}>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 1 }}><Box><Eyebrow locale={locale} dim>{l(locale, 'device state', 'وضعیت دستگاه')}</Eyebrow><Typography sx={{ mt: .45, fontSize: 46, lineHeight: .86, fontWeight: 470, letterSpacing: locale === 'fa' ? 0 : '-.055em', color: ink }}>{label}</Typography></Box><Box sx={{ width: 24, height: 24, border: `1px solid ${ink}`, bgcolor: on ? ink : '#fff' }} /></Box>
+    <Box sx={{ minHeight: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}><Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}><Eyebrow locale={locale} dim>{l(locale, 'state history · 15 min', 'تاریخچه وضعیت · ۱۵ دقیقه')}</Eyebrow><Typography sx={{ fontSize: 9, color: muted }}>{l(locale, 'click to toggle', 'برای تغییر کلیک کنید')}</Typography></Box><Box sx={{ mt: 1, display: 'grid', gridTemplateColumns: 'repeat(8,1fr)', gap: .45 }}>{stateSegments.map((c,i)=><Box key={i} sx={{ height: 14, bgcolor: c }} />)}</Box></Box>
+    <Box sx={{ borderTop: `1px solid ${faint}`, pt: 1, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1 }}><MetaPair locale={locale} title={l(locale, 'state since', 'شروع وضعیت')} value="09:31" /><MetaPair locale={locale} title={l(locale, 'uptime', 'آپ‌تایم')} value="14d 8h" /><MetaPair locale={locale} title={l(locale, 'packets', 'بسته‌ها')} value="1,284" /></Box>
+  </Box>;
+
   return <Box onClick={() => setOn(v => !v)} role="button" tabIndex={0} sx={{ height: '100%', cursor: 'pointer', userSelect: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 1 }}><Typography sx={{ fontSize: p.compact ? 29 : 38, lineHeight: .9, fontWeight: 480, letterSpacing: '-.045em', color: ink }}>{label}</Typography><Box sx={{ width: p.compact ? 14 : 20, height: p.compact ? 14 : 20, border: `1px solid ${ink}`, bgcolor: on ? ink : '#fff' }} /></Box>
     <Box sx={{ mt: 1.3 }}><MonoRule strong={on} /></Box>
     <Typography sx={{ mt: .75, fontSize: 9.5, color: muted }}>{l(locale, 'click to toggle mock state', 'برای تغییر وضعیت کلیک کنید')}</Typography>
-    {p.large && <Box sx={{ mt: 1.4, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1 }}><MetaPair locale={locale} title={l(locale, 'state since', 'شروع وضعیت')} value="09:31" /><MetaPair locale={locale} title={l(locale, 'uptime', 'آپ‌تایم')} value="14d 8h" /><MetaPair locale={locale} title={l(locale, 'packets', 'بسته‌ها')} value="1,284" /></Box>}
   </Box>;
 }
 
@@ -243,9 +294,19 @@ function Alarm({ def, locale, size }: Props) {
   const tone = active ? (isCritical ? danger : warning) : good;
   const Icon = def.icon;
   const code = def.id === 'fire-alarm' ? 'FIRE' : def.id === 'smoke-alarm' ? 'SMOKE' : 'LEAK';
-  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: p.compact ? '1fr auto' : p.large ? '1.2fr .8fr' : '1fr auto', gap: 1.2, alignItems: 'center', direction: locale === 'fa' ? 'rtl' : 'ltr' }}>
-    <Box sx={{ minWidth: 0 }}><Eyebrow locale={locale} dim>{code}</Eyebrow><Typography sx={{ mt: .4, fontSize: p.compact ? 28 : 37, lineHeight: .92, letterSpacing: locale === 'fa' ? 0 : '-.045em', fontWeight: 500, color: active ? tone : ink }}>{active ? l(locale, 'ALARM', 'هشدار') : l(locale, 'SAFE', 'ایمن')}</Typography><Box sx={{ mt: 1.05, display: 'flex', alignItems: 'center', gap: .7 }}><Box sx={{ width: 22, height: 2, bgcolor: tone }} /><Typography sx={{ fontSize: 9.5, fontWeight: 750, color: tone }}>{active ? l(locale, 'ACTION REQUIRED', 'نیازمند اقدام') : l(locale, 'MONITORING', 'پایش فعال')}</Typography></Box>{p.large && <Box sx={{ mt: 1.3, display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 1 }}><MetaPair locale={locale} title={l(locale, 'last test', 'آخرین تست')} value="08:00" /><MetaPair locale={locale} title={l(locale, 'zone', 'ناحیه')} value="A-04" /></Box>}</Box>
-    <Box sx={{ width: p.compact ? 52 : p.large ? 86 : 66, height: p.compact ? 62 : p.large ? 100 : 78, display: 'grid', placeItems: 'center', borderLeft: locale === 'fa' ? 'none' : `1px solid ${faint}`, borderRight: locale === 'fa' ? `1px solid ${faint}` : 'none', color: tone }}><Icon sx={{ fontSize: p.compact ? 34 : p.large ? 54 : 42 }} /></Box>
+  const sensorState = s(def.mock.status, active ? 'Warning' : 'Armed');
+
+  if (p.large) return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: '1fr auto', gap: 1.2, direction: locale === 'fa' ? 'rtl' : 'ltr' }}>
+    <Box sx={{ minHeight: 0, display: 'grid', gridTemplateColumns: '1.12fr .88fr', gap: 1.6, alignItems: 'center' }}>
+      <Box sx={{ minWidth: 0 }}><Eyebrow locale={locale} dim>{code}</Eyebrow><Typography sx={{ mt: .5, fontSize: 46, lineHeight: .86, letterSpacing: locale === 'fa' ? 0 : '-.055em', fontWeight: 490, color: active ? tone : ink }}>{active ? l(locale, 'ALARM', 'هشدار') : l(locale, 'SAFE', 'ایمن')}</Typography><Box sx={{ mt: 1.15, display: 'flex', alignItems: 'center', gap: .7 }}><Box sx={{ width: 28, height: '2px', bgcolor: tone }} /><Typography sx={{ fontSize: 9.5, fontWeight: 780, color: tone }}>{active ? l(locale, 'ACTION REQUIRED', 'نیازمند اقدام') : l(locale, 'MONITORING', 'پایش فعال')}</Typography></Box></Box>
+      <Box sx={{ height: '72%', minHeight: 120, display: 'grid', placeItems: 'center', borderLeft: locale === 'fa' ? 'none' : `1px solid ${faint}`, borderRight: locale === 'fa' ? `1px solid ${faint}` : 'none', color: tone }}><Icon sx={{ fontSize: 76 }} /></Box>
+    </Box>
+    <Box sx={{ borderTop: `1px solid ${faint}`, pt: 1, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1 }}><MetaPair locale={locale} title={l(locale, 'last test', 'آخرین تست')} value="08:00" /><MetaPair locale={locale} title={l(locale, 'zone', 'ناحیه')} value="A-04" /><MetaPair locale={locale} title={l(locale, 'sensor state', 'وضعیت سنسور')} value={sensorState} /></Box>
+  </Box>;
+
+  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: p.compact ? '1fr auto' : '1fr auto', gap: 1.2, alignItems: 'center', direction: locale === 'fa' ? 'rtl' : 'ltr' }}>
+    <Box sx={{ minWidth: 0 }}><Eyebrow locale={locale} dim>{code}</Eyebrow><Typography sx={{ mt: .4, fontSize: p.compact ? 28 : 37, lineHeight: .92, letterSpacing: locale === 'fa' ? 0 : '-.045em', fontWeight: 500, color: active ? tone : ink }}>{active ? l(locale, 'ALARM', 'هشدار') : l(locale, 'SAFE', 'ایمن')}</Typography><Box sx={{ mt: 1.05, display: 'flex', alignItems: 'center', gap: .7 }}><Box sx={{ width: 22, height: '2px', bgcolor: tone }} /><Typography sx={{ fontSize: 9.5, fontWeight: 750, color: tone }}>{active ? l(locale, 'ACTION REQUIRED', 'نیازمند اقدام') : l(locale, 'MONITORING', 'پایش فعال')}</Typography></Box></Box>
+    <Box sx={{ width: p.compact ? 52 : 66, height: p.compact ? 62 : 78, display: 'grid', placeItems: 'center', borderLeft: locale === 'fa' ? 'none' : `1px solid ${faint}`, borderRight: locale === 'fa' ? `1px solid ${faint}` : 'none', color: tone }}><Icon sx={{ fontSize: p.compact ? 34 : 42 }} /></Box>
   </Box>;
 }
 
@@ -258,7 +319,7 @@ function LineChart({ def, locale, size }: Props) {
   const vals = (def.mock.values as number[] | undefined) ?? (def.visual === 'area' ? spark2 : spark);
   return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto 1fr auto', gap: .8, direction: 'ltr' }}>
     <ChartHeader def={def} locale={locale} />
-    <Box sx={{ minHeight: 0, display: 'flex', alignItems: 'end' }}><MonoSpark values={vals} height={p.large ? 130 : p.wide ? 82 : 96} area={def.visual === 'area'} dots /></Box>
+    <Box sx={{ minHeight: 0, display: 'flex', alignItems: 'stretch', pt: p.large ? .4 : 0 }}><MonoSpark values={vals} height={p.large ? '100%' : p.wide ? 82 : 96} area={def.visual === 'area'} dots /></Box>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><Eyebrow locale={locale} dim>{def.visual === 'area' ? l(locale, 'cumulative profile', 'پروفایل تجمعی') : l(locale, 'sample interval · 2h', 'فاصله نمونه · ۲ ساعت')}</Eyebrow>{p.large && <Typography sx={{ fontSize: 9, color: graphite }}>MIN {Math.min(...vals)} · MAX {Math.max(...vals)}</Typography>}</Box>
   </Box>;
 }
@@ -297,11 +358,21 @@ function Heatmap({ locale, size }: Props) {
 function Timeline({ locale, size }: Props) {
   const p = profile(size);
   const rows = [
-    { name: 'PUMP-04', segs: [good, good, warning, good, danger] },
-    { name: 'VALVE-02', segs: [ink, good, good, good, good] },
-    { name: 'NODE-18', segs: [muted, muted, good, warning, warning] },
+    { name: 'PUMP-04', segs: [good, good, warning, good, danger], current: l(locale, 'ALARM', 'هشدار') },
+    { name: 'VALVE-02', segs: [ink, good, good, good, good], current: l(locale, 'OPEN', 'باز') },
+    { name: 'NODE-18', segs: [muted, muted, good, warning, warning], current: l(locale, 'WATCH', 'مراقبت') },
   ];
-  return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: '1fr auto', gap: .7, direction: 'ltr' }}><Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: p.large ? 1.1 : .7 }}>{rows.map(row => <Box key={row.name} sx={{ display: 'grid', gridTemplateColumns: p.large ? '70px 1fr' : '52px 1fr', gap: .8, alignItems: 'center' }}><Typography sx={{ fontSize: 8.5, color: graphite, fontWeight: 700 }}>{row.name}</Typography><Box sx={{ display: 'grid', gridTemplateColumns: '1.2fr .8fr 1fr 1.35fr .8fr', gap: 2 }}>{row.segs.map((c, i) => <Box key={i} sx={{ height: p.large ? 12 : 9, bgcolor: c }} />)}</Box></Box>)}</Box><Box sx={{ display: 'flex', justifyContent: 'space-between', ml: p.large ? '78px' : '60px' }}><Typography sx={{ fontSize: 8, color: muted }}>−12H</Typography><Typography sx={{ fontSize: 8, color: muted }}>−6H</Typography><Typography sx={{ fontSize: 8, color: muted }}>{l(locale, 'NOW', 'اکنون')}</Typography></Box></Box>;
+
+  if (p.large) return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto 1fr auto', gap: 1, direction: 'ltr' }}>
+    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1, borderBottom: `1px solid ${faint}`, pb: .8 }}><MetaPair locale={locale} title={l(locale, 'window', 'بازه')} value="12 h" /><MetaPair locale={locale} title={l(locale, 'transitions', 'تغییرها')} value="8" /><MetaPair locale={locale} title={l(locale, 'attention', 'نیازمند توجه')} value="1" /></Box>
+    <Box sx={{ minHeight: 0, position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly', gap: .9 }}>
+      {[25, 50, 75].map(x => <Box key={x} sx={{ position: 'absolute', top: 0, bottom: 0, left: `calc(70px + (100% - 132px) * ${x / 100})`, width: '1px', bgcolor: faint, opacity: .7 }} />)}
+      {rows.map(row => <Box key={row.name} sx={{ position: 'relative', display: 'grid', gridTemplateColumns: '70px 1fr 56px', gap: .9, alignItems: 'center' }}><Typography sx={{ fontSize: 9, color: graphite, fontWeight: 760 }}>{row.name}</Typography><Box sx={{ display: 'grid', gridTemplateColumns: '1.2fr .8fr 1fr 1.35fr .8fr', gap: 2 }}>{row.segs.map((c, i) => <Box key={i} sx={{ height: 16, bgcolor: c }} />)}</Box><Typography sx={{ fontSize: 8.5, color: row.current === l(locale, 'ALARM', 'هشدار') ? danger : graphite, fontWeight: 760, textAlign: 'right' }}>{row.current}</Typography></Box>)}
+    </Box>
+    <Box sx={{ display: 'grid', gridTemplateColumns: '70px 1fr 56px', gap: .9, alignItems: 'center' }}><Box /><Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ fontSize: 8, color: muted }}>−12H</Typography><Typography sx={{ fontSize: 8, color: muted }}>−6H</Typography><Typography sx={{ fontSize: 8, color: muted }}>{l(locale, 'NOW', 'اکنون')}</Typography></Box><Box /></Box>
+  </Box>;
+
+  return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: '1fr auto', gap: .7, direction: 'ltr' }}><Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: .7 }}>{rows.map(row => <Box key={row.name} sx={{ display: 'grid', gridTemplateColumns: '52px 1fr', gap: .8, alignItems: 'center' }}><Typography sx={{ fontSize: 8.5, color: graphite, fontWeight: 700 }}>{row.name}</Typography><Box sx={{ display: 'grid', gridTemplateColumns: '1.2fr .8fr 1fr 1.35fr .8fr', gap: 2 }}>{row.segs.map((c, i) => <Box key={i} sx={{ height: 9, bgcolor: c }} />)}</Box></Box>)}</Box><Box sx={{ display: 'flex', justifyContent: 'space-between', ml: '60px' }}><Typography sx={{ fontSize: 8, color: muted }}>−12H</Typography><Typography sx={{ fontSize: 8, color: muted }}>−6H</Typography><Typography sx={{ fontSize: 8, color: muted }}>{l(locale, 'NOW', 'اکنون')}</Typography></Box></Box>;
 }
 
 function MapVisual({ def, locale, size }: Props) {
@@ -334,24 +405,39 @@ function Coordinates({ def, locale, size }: Props) {
 function Compass({ def, locale, size }: Props) {
   const p = profile(size);
   const value = n(def.mock.value, 327);
-  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: p.compact ? '1fr' : 'auto 1fr', gap: 1.2, alignItems: 'center', justifyItems: p.compact ? 'center' : 'stretch', direction: 'ltr' }}>
-    <Box sx={{ width: p.compact ? 92 : p.large ? 142 : 110, height: p.compact ? 92 : p.large ? 142 : 110, borderRadius: '50%', border: `1px solid ${ink}`, position: 'relative' }}>
-      {['N','E','S','W'].map((d,i)=><Typography key={d} sx={{ position:'absolute', fontSize:8.5, color:i===0?ink:muted, fontWeight:i===0?800:600, ...(i===0?{top:4,left:'50%',transform:'translateX(-50%)'}:i===1?{right:5,top:'50%',transform:'translateY(-50%)'}:i===2?{bottom:4,left:'50%',transform:'translateX(-50%)'}:{left:5,top:'50%',transform:'translateY(-50%)'}) }}>{d}</Typography>)}
-      <Box sx={{ position: 'absolute', left: '50%', top: '50%', width: 2, height: '38%', bgcolor: ink, transformOrigin: '50% 100%', transform: `translate(-50%,-100%) rotate(${value}deg)` }}><Box sx={{ position:'absolute', top:-3, left:-2, width:6, height:6, bgcolor:ink, transform:'rotate(45deg)' }}/></Box>
-      <Box sx={{ position:'absolute',left:'50%',top:'50%',width:5,height:5,bgcolor:'#fff',border:`1px solid ${ink}`,transform:'translate(-50%,-50%)' }}/>
-    </Box>
-    {!p.compact && <Box><Eyebrow locale={locale} dim>{l(locale, 'heading', 'جهت')}</Eyebrow><Typography sx={{ mt:.25,fontSize:p.large?42:32,fontWeight:480,lineHeight:.9,letterSpacing:'-.05em' }}>{value}°</Typography><Typography sx={{ mt:.8,fontSize:10,color:graphite,fontWeight:700 }}>NNW</Typography>{p.large&&<Box sx={{mt:1.1}}><MetaPair locale={locale} title={l(locale,'magnetic variation','انحراف مغناطیسی')} value="+4.1°" /></Box>}</Box>}
+  const dialSize = p.compact ? 92 : p.large ? 170 : 110;
+  const dial = <Box sx={{ width: dialSize, height: dialSize, borderRadius: '50%', border: `1px solid ${ink}`, position: 'relative', flex: '0 0 auto' }}>
+    {['N','E','S','W'].map((d,i)=><Typography key={d} sx={{ position:'absolute', fontSize:p.large?9.5:8.5, color:i===0?ink:muted, fontWeight:i===0?800:600, ...(i===0?{top:5,left:'50%',transform:'translateX(-50%)'}:i===1?{right:6,top:'50%',transform:'translateY(-50%)'}:i===2?{bottom:5,left:'50%',transform:'translateX(-50%)'}:{left:6,top:'50%',transform:'translateY(-50%)'}) }}>{d}</Typography>)}
+    <Box sx={{ position: 'absolute', left: '50%', top: '50%', width: '2px', height: '38%', bgcolor: ink, transformOrigin: '50% 100%', transform: `translate(-50%,-100%) rotate(${value}deg)` }}><Box sx={{ position:'absolute', top:-3, left:-2, width:6, height:6, bgcolor:ink, transform:'rotate(45deg)' }}/></Box>
+    <Box sx={{ position:'absolute',left:'50%',top:'50%',width:5,height:5,bgcolor:'#fff',border:`1px solid ${ink}`,transform:'translate(-50%,-50%)' }}/>
   </Box>;
+
+  if (p.compact) return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', direction: 'ltr' }}>{dial}</Box>;
+
+  if (p.large) return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: 'auto 1fr', gridTemplateRows: '1fr auto', columnGap: 1.8, rowGap: 1.2, alignItems: 'center', direction: 'ltr' }}>
+    {dial}
+    <Box sx={{ minWidth: 0 }}><Eyebrow locale={locale} dim>{l(locale, 'heading', 'جهت')}</Eyebrow><Typography sx={{ mt:.35,fontSize:48,fontWeight:460,lineHeight:.88,letterSpacing:'-.06em' }}>{value}°</Typography><Typography sx={{ mt:.75,fontSize:11,color:graphite,fontWeight:760 }}>NNW</Typography><Box sx={{ mt: 1.3 }}><TickScale pct={(value / 360) * 100} labels={false} /></Box></Box>
+    <Box sx={{ gridColumn: '1 / -1', borderTop: `1px solid ${faint}`, pt: 1, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1 }}><MetaPair locale={locale} title={l(locale,'magnetic variation','انحراف مغناطیسی')} value="+4.1°" /><MetaPair locale={locale} title={l(locale,'reference','مرجع')} value="MAG" /><MetaPair locale={locale} title={l(locale,'updated','به‌روزرسانی')} value="09:44:12" /></Box>
+  </Box>;
+
+  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 1.2, alignItems: 'center', direction: 'ltr' }}>{dial}<Box><Eyebrow locale={locale} dim>{l(locale, 'heading', 'جهت')}</Eyebrow><Typography sx={{ mt:.25,fontSize:32,fontWeight:480,lineHeight:.9,letterSpacing:'-.05em' }}>{value}°</Typography><Typography sx={{ mt:.8,fontSize:10,color:graphite,fontWeight:700 }}>NNW</Typography></Box></Box>;
 }
 
-function ButtonControl({ locale, size }: Props) {
+function ButtonControl({ def, locale, size }: Props) {
   const p = profile(size);
   const [state, setState] = useState<'idle'|'sent'>('idle');
   const press = () => { setState('sent'); window.setTimeout(() => setState('idle'), 900); };
+  const transport = def.id === 'downlink' ? 'DOWNLINK' : 'RPC';
+
+  if (p.large) return <Box sx={{ height: '100%', display: 'grid', gridTemplateRows: 'auto 1fr auto', gap: 1.2, direction: locale === 'fa' ? 'rtl' : 'ltr' }}>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 1 }}><Box><Eyebrow locale={locale} dim>{l(locale, 'command channel', 'کانال فرمان')}</Eyebrow><Typography sx={{ mt: .35, fontSize: 15, fontWeight: 720, color: ink }}>{transport}</Typography></Box><Typography sx={{ fontSize: 9.5, color: state === 'sent' ? good : muted, fontWeight: 760 }}>{state === 'sent' ? l(locale, 'ACKNOWLEDGED', 'تأیید شد') : l(locale, 'READY', 'آماده')}</Typography></Box>
+    <Box sx={{ minHeight: 0, display: 'grid', placeItems: 'center' }}><Box sx={{ width: '100%', maxWidth: 280, textAlign: 'center' }}><Box component="button" onClick={press} sx={{ appearance:'none', border:`1px solid ${state==='sent'?ink:graphite}`, bgcolor:state==='sent'?ink:'#fff', color:state==='sent'?'#fff':ink, width:'100%', height:62, px:2.2, font:'inherit', fontSize:13, fontWeight:780, letterSpacing:locale==='fa'?0:'.07em', cursor:'pointer', borderRadius:0, transition:'.15s ease' }}>{state==='sent'?l(locale,'SENT ✓','ارسال شد ✓'):l(locale,'SEND COMMAND','ارسال فرمان')}</Box><Typography sx={{ mt:.9,fontSize:9.5,color:muted }}>{state==='sent'?l(locale,'mock acknowledgement received','تأیید آزمایشی دریافت شد'):l(locale,'ready · no pending action','آماده · فرمان معوق ندارد')}</Typography></Box></Box>
+    <Box sx={{ borderTop: `1px solid ${faint}`, pt: 1, display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1 }}><MetaPair locale={locale} title={l(locale,'last command','آخرین فرمان')} value="09:41:08" /><MetaPair locale={locale} title={l(locale,'latency','تأخیر')} value="86 ms" /><MetaPair locale={locale} title={l(locale,'transport','انتقال')} value={transport} /></Box>
+  </Box>;
+
   return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: p.compact ? 'stretch' : 'center' }}>
-    <Box component="button" onClick={press} sx={{ appearance:'none', border:`1px solid ${state==='sent'?ink:graphite}`, bgcolor:state==='sent'?ink:'#fff', color:state==='sent'?'#fff':ink, minWidth:p.compact?'100%':150, height:p.large?54:44, px:2.2, font: 'inherit', fontSize:12, fontWeight:760, letterSpacing:locale==='fa'?0:'.06em', cursor:'pointer', borderRadius:0, transition:'.15s ease' }}>{state==='sent'?l(locale,'SENT ✓','ارسال شد ✓'):l(locale,'SEND COMMAND','ارسال فرمان')}</Box>
+    <Box component="button" onClick={press} sx={{ appearance:'none', border:`1px solid ${state==='sent'?ink:graphite}`, bgcolor:state==='sent'?ink:'#fff', color:state==='sent'?'#fff':ink, minWidth:p.compact?'100%':150, height:44, px:2.2, font: 'inherit', fontSize:12, fontWeight:760, letterSpacing:locale==='fa'?0:'.06em', cursor:'pointer', borderRadius:0, transition:'.15s ease' }}>{state==='sent'?l(locale,'SENT ✓','ارسال شد ✓'):l(locale,'SEND COMMAND','ارسال فرمان')}</Box>
     <Typography sx={{ mt:.8,fontSize:9.5,color:muted }}>{state==='sent'?l(locale,'mock acknowledgement received','تأیید آزمایشی دریافت شد'):l(locale,'ready · no pending action','آماده · فرمان معوق ندارد')}</Typography>
-    {p.large&&<Box sx={{mt:1.4,width:'100%',display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:1}}><MetaPair locale={locale} title={l(locale,'last command','آخرین فرمان')} value="09:41:08" /><MetaPair locale={locale} title={l(locale,'latency','تأخیر')} value="86 ms" /></Box>}
   </Box>;
 }
 
@@ -360,36 +446,65 @@ function SwitchControl({ def, locale, size }: Props) {
   const locked=def.id==='door-lock'; const siren=def.id==='siren';
   const onText=locked?l(locale,'LOCKED','قفل'):siren?l(locale,'ACTIVE','فعال'):l(locale,'ON','روشن');
   const offText=locked?l(locale,'UNLOCKED','باز'):siren?l(locale,'STANDBY','آماده'):l(locale,'OFF','خاموش');
+  const segments = on ? [ink, ink, ink, ink, graphite, ink] : [muted, faint, muted, faint, muted, faint];
+  const toggle = <Box component="button" aria-pressed={on} onClick={()=>setOn(v=>!v)} sx={{appearance:'none',width:p.compact?52:p.large?82:68,height:p.compact?30:p.large?42:36,border:'none',borderBottom:`2px solid ${ink}`,bgcolor:'transparent',position:'relative',cursor:'pointer',p:0,borderRadius:0}}><Box sx={{position:'absolute',width:p.compact?18:p.large?26:22,height:p.compact?18:p.large?26:22,bgcolor:on?ink:'#fff',border:`1px solid ${ink}`,left:on?(p.compact?32:p.large?55:45):1,top:p.compact?4:p.large?6:5,transition:'left .18s ease'}}/></Box>;
+
+  if (p.large) return <Box sx={{height:'100%',display:'grid',gridTemplateRows:'auto 1fr auto',gap:1.2,direction:locale==='fa'?'rtl':'ltr'}}>
+    <Box sx={{display:'flex',justifyContent:'space-between',alignItems:'end',gap:1}}><Box><Eyebrow locale={locale} dim>{l(locale,'output state','وضعیت خروجی')}</Eyebrow><Typography sx={{mt:.45,fontSize:44,fontWeight:470,lineHeight:.86,letterSpacing:locale==='fa'?0:'-.055em'}}>{on?onText:offText}</Typography></Box>{toggle}</Box>
+    <Box sx={{minHeight:0,display:'flex',flexDirection:'column',justifyContent:'center'}}><Box sx={{display:'flex',justifyContent:'space-between',alignItems:'baseline'}}><Eyebrow locale={locale} dim>{l(locale,'recent state','وضعیت اخیر')}</Eyebrow><Typography sx={{fontSize:9,color:muted}}>{l(locale,'click switch to change state','برای تغییر روی کلید کلیک کنید')}</Typography></Box><Box sx={{mt:1,display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:.5}}>{segments.map((c,i)=><Box key={i} sx={{height:15,bgcolor:c}}/>)}</Box></Box>
+    <Box sx={{borderTop:`1px solid ${faint}`,pt:1,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1}}><MetaPair locale={locale} title={l(locale,'mode','حالت')} value="LOCAL" /><MetaPair locale={locale} title={l(locale,'changed','تغییر')} value="09:42" /><MetaPair locale={locale} title={l(locale,'source','منبع')} value="UI" /></Box>
+  </Box>;
+
   return <Box sx={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'center'}}>
-    <Box sx={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:1}}><Box><Eyebrow locale={locale} dim>{l(locale,'output state','وضعیت خروجی')}</Eyebrow><Typography sx={{mt:.35,fontSize:p.compact?27:36,fontWeight:480,lineHeight:.9,letterSpacing:'-.04em'}}>{on?onText:offText}</Typography></Box><Box component="button" aria-pressed={on} onClick={()=>setOn(v=>!v)} sx={{appearance:'none',width:p.compact?52:68,height:p.compact?30:36,border:'none',borderBottom:`2px solid ${ink}`,bgcolor:'transparent',position:'relative',cursor:'pointer',p:0,borderRadius:0}}><Box sx={{position:'absolute',width:p.compact?18:22,height:p.compact?18:22,bgcolor:on?ink:'#fff',border:`1px solid ${ink}`,left:on?(p.compact?32:45):1,top:p.compact?4:5,transition:'left .18s ease'}}/></Box></Box>
+    <Box sx={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:1}}><Box><Eyebrow locale={locale} dim>{l(locale,'output state','وضعیت خروجی')}</Eyebrow><Typography sx={{mt:.35,fontSize:p.compact?27:36,fontWeight:480,lineHeight:.9,letterSpacing:'-.04em'}}>{on?onText:offText}</Typography></Box>{toggle}</Box>
     <Box sx={{mt:1.3}}><MonoRule /></Box><Typography sx={{mt:.7,fontSize:9.5,color:muted}}>{l(locale,'click switch to change mock state','برای تغییر وضعیت روی کلید کلیک کنید')}</Typography>
-    {p.large&&<Box sx={{mt:1.2,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1}}><MetaPair locale={locale} title={l(locale,'mode','حالت')} value="LOCAL" /><MetaPair locale={locale} title={l(locale,'changed','تغییر')} value="09:42" /><MetaPair locale={locale} title={l(locale,'source','منبع')} value="UI" /></Box>}
   </Box>;
 }
 
 function SliderControl({ def, locale, size }: Props) {
   const p=profile(size); const [value,setValue]=useState(n(def.mock.value,65)); const unit=s(def.mock.unit,'%');
-  return <Box sx={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'center',direction:'ltr'}}><Box sx={{display:'flex',justifyContent:'space-between',alignItems:'baseline'}}><Typography sx={{fontSize:p.compact?28:36,fontWeight:480,lineHeight:.9,letterSpacing:'-.045em'}}>{value}<Box component="span" sx={{fontSize:11,ml:.4,color:graphite,fontWeight:650}}>{unit}</Box></Typography><Typography sx={{fontSize:9.5,color:muted}}>0 — 100</Typography></Box><Box sx={{position:'relative',mt:1.5,height:24}}><Box sx={{position:'absolute',left:0,right:0,top:11,height:1,bgcolor:faint}}/><Box sx={{position:'absolute',left:0,top:10,height:3,width:`${value}%`,bgcolor:ink}}/><input aria-label="value" type="range" min={0} max={100} value={value} onChange={(e: ChangeEvent<HTMLInputElement>)=>setValue(Number(e.target.value))} style={{position:'absolute',inset:0,width:'100%',height:'24px',opacity:0,cursor:'pointer',margin:0}}/><Box sx={{position:'absolute',left:`${value}%`,top:5,width:13,height:13,bgcolor:'#fff',border:`2px solid ${ink}`,transform:'translateX(-50%)',pointerEvents:'none'}}/></Box><Box sx={{display:'flex',justifyContent:'space-between'}}><Eyebrow locale={locale} dim>{l(locale,'minimum','کمینه')}</Eyebrow><Eyebrow locale={locale} dim>{l(locale,'target','هدف')}</Eyebrow><Eyebrow locale={locale} dim>{l(locale,'maximum','بیشینه')}</Eyebrow></Box>{p.large&&<Box sx={{mt:1.3,display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:1}}><MetaPair locale={locale} title={l(locale,'output','خروجی')} value={`${value}${unit}`} /><MetaPair locale={locale} title={l(locale,'updated','به‌روزرسانی')} value="now" /></Box>}</Box>;
+  const history=[clamp(value-18,0,100),clamp(value-11,0,100),clamp(value-14,0,100),clamp(value-6,0,100),clamp(value-9,0,100),clamp(value-3,0,100),value];
+  const control=<><Box sx={{display:'flex',justifyContent:'space-between',alignItems:'baseline'}}><Typography sx={{fontSize:p.compact?28:p.large?44:36,fontWeight:480,lineHeight:.9,letterSpacing:'-.045em'}}>{value}<Box component="span" sx={{fontSize:11,ml:.4,color:graphite,fontWeight:650}}>{unit}</Box></Typography><Typography sx={{fontSize:9.5,color:muted}}>0 — 100</Typography></Box><Box sx={{position:'relative',mt:1.5,height:24}}><Box sx={{position:'absolute',left:0,right:0,top:11,height:'1px',bgcolor:faint}}/><Box sx={{position:'absolute',left:0,top:10,height:3,width:`${value}%`,bgcolor:ink}}/><input aria-label="value" type="range" min={0} max={100} value={value} onChange={(e: ChangeEvent<HTMLInputElement>)=>setValue(Number(e.target.value))} style={{position:'absolute',inset:0,width:'100%',height:'24px',opacity:0,cursor:'pointer',margin:0}}/><Box sx={{position:'absolute',left:`${value}%`,top:5,width:13,height:13,bgcolor:'#fff',border:`2px solid ${ink}`,transform:'translateX(-50%)',pointerEvents:'none'}}/></Box><Box sx={{display:'flex',justifyContent:'space-between'}}><Eyebrow locale={locale} dim>{l(locale,'minimum','کمینه')}</Eyebrow><Eyebrow locale={locale} dim>{l(locale,'target','هدف')}</Eyebrow><Eyebrow locale={locale} dim>{l(locale,'maximum','بیشینه')}</Eyebrow></Box></>;
+
+  if (p.large) return <Box sx={{height:'100%',display:'grid',gridTemplateRows:'auto 1fr auto',gap:1.2,direction:'ltr'}}><Box>{control}</Box><Box sx={{minHeight:0,display:'grid',gridTemplateRows:'auto 1fr',gap:.5,pt:.4}}><Eyebrow locale={locale} dim>{l(locale,'setpoint history','تاریخچه نقطه تنظیم')}</Eyebrow><Box sx={{minHeight:0}}><MonoSpark values={history} height="100%" dots /></Box></Box><Box sx={{borderTop:`1px solid ${faint}`,pt:1,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1}}><MetaPair locale={locale} title={l(locale,'output','خروجی')} value={`${value}${unit}`} /><MetaPair locale={locale} title={l(locale,'updated','به‌روزرسانی')} value="now" /><MetaPair locale={locale} title={l(locale,'source','منبع')} value="LOCAL" /></Box></Box>;
+
+  return <Box sx={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'center',direction:'ltr'}}>{control}</Box>;
 }
 
 function InputControl({ def, locale, size }: Props) {
   const p=profile(size); const [value,setValue]=useState(String(def.mock.value ?? '22.5')); const unit=s(def.mock.unit);
-  return <Box sx={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'center',direction:'ltr'}}><Eyebrow locale={locale} dim>{l(locale,'target value','مقدار هدف')}</Eyebrow><Box sx={{display:'flex',alignItems:'end',gap:.8,mt:.6,borderBottom:`1px solid ${ink}`,pb:.45}}><input aria-label="target value" value={value} onChange={(e: ChangeEvent<HTMLInputElement>)=>setValue(e.target.value)} style={{font:'inherit',fontSize:p.large?'34px':'27px',fontWeight:480,letterSpacing:'-.04em',color:ink,border:0,outline:0,background:'transparent',width:'100%',minWidth:0,padding:0,fontVariantNumeric:'tabular-nums'}}/><Typography sx={{fontSize:11,color:graphite,fontWeight:650,pb:.2}}>{unit}</Typography></Box><Typography sx={{mt:.75,fontSize:9.5,color:muted}}>{l(locale,'editable mock input','ورودی آزمایشی قابل ویرایش')}</Typography>{p.large&&<Box sx={{mt:1.2,display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:1}}><MetaPair locale={locale} title={l(locale,'allowed range','بازه مجاز')} value="16 — 30"/><MetaPair locale={locale} title={l(locale,'step','گام')} value="0.5"/></Box>}</Box>;
+  const numeric=Number(value); const pct=Number.isFinite(numeric)?clamp(((numeric-16)/14)*100,0,100):0;
+  const input=<><Eyebrow locale={locale} dim>{l(locale,'target value','مقدار هدف')}</Eyebrow><Box sx={{display:'flex',alignItems:'end',gap:.8,mt:.6,borderBottom:`1px solid ${ink}`,pb:.45}}><input aria-label="target value" value={value} onChange={(e: ChangeEvent<HTMLInputElement>)=>setValue(e.target.value)} style={{font:'inherit',fontSize:p.large?'38px':'27px',fontWeight:480,letterSpacing:'-.04em',color:ink,border:0,outline:0,background:'transparent',width:'100%',minWidth:0,padding:0,fontVariantNumeric:'tabular-nums'}}/><Typography sx={{fontSize:11,color:graphite,fontWeight:650,paddingBottom:'.2rem'}}>{unit}</Typography></Box><Typography sx={{mt:.75,fontSize:9.5,color:muted}}>{l(locale,'editable mock input','ورودی آزمایشی قابل ویرایش')}</Typography></>;
+
+  if (p.large) return <Box sx={{height:'100%',display:'grid',gridTemplateRows:'auto 1fr auto',gap:1.2,direction:'ltr'}}><Box>{input}</Box><Box sx={{minHeight:0,display:'flex',flexDirection:'column',justifyContent:'center'}}><Box sx={{display:'flex',justifyContent:'space-between',alignItems:'baseline'}}><Eyebrow locale={locale} dim>{l(locale,'allowed range','بازه مجاز')}</Eyebrow><Typography sx={{fontSize:9,color:muted}}>16 — 30 {unit}</Typography></Box><Box sx={{mt:1}}><TickScale pct={pct} /></Box><Box sx={{mt:1.1,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:.7}}>{['21.5','22.0','22.5'].map((v,i)=><Box key={v} sx={{borderTop:`${i===2?2:1}px solid ${i===2?ink:faint}`,pt:.55}}><Typography sx={{fontSize:9,color:muted}}>T−{(2-i)*5}m</Typography><Typography sx={{mt:.15,fontSize:12,fontWeight:680,color:i===2?ink:graphite}}>{v}{unit}</Typography></Box>)}</Box></Box><Box sx={{borderTop:`1px solid ${faint}`,pt:1,display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:1}}><MetaPair locale={locale} title={l(locale,'allowed range','بازه مجاز')} value="16 — 30"/><MetaPair locale={locale} title={l(locale,'step','گام')} value="0.5"/></Box></Box>;
+
+  return <Box sx={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'center',direction:'ltr'}}>{input}</Box>;
 }
 
 function Thermostat({ def, locale, size }: Props) {
   const p=profile(size); const [target,setTarget]=useState(n(def.mock.value,22));
-  return <Box sx={{height:'100%',display:'grid',gridTemplateColumns:p.compact?'1fr':'auto 1fr',gap:1.3,alignItems:'center',justifyItems:p.compact?'center':'stretch',direction:'ltr'}}><Box sx={{width:p.compact?94:p.large?132:108,height:p.compact?94:p.large?132:108,border:`1px solid ${ink}`,borderRadius:'50%',display:'grid',placeItems:'center',position:'relative'}}><Typography sx={{fontSize:p.compact?26:p.large?34:29,fontWeight:480,letterSpacing:'-.045em'}}>{target}°</Typography><Box sx={{position:'absolute',top:3,left:'50%',width:1,height:8,bgcolor:ink}}/><Box sx={{position:'absolute',bottom:3,left:'50%',width:1,height:8,bgcolor:ink}}/></Box>{!p.compact&&<Box><Eyebrow locale={locale} dim>{l(locale,'setpoint','نقطه تنظیم')}</Eyebrow><Typography sx={{mt:.4,fontSize:11,color:graphite}}>21.6°C {l(locale,'measured','اندازه‌گیری')}</Typography><Box sx={{mt:1.2,display:'flex',gap:.5}}>{[-1,1].map(delta=><Box key={delta} component="button" onClick={()=>setTarget(v=>clamp(v+delta,16,30))} sx={{appearance:'none',width:38,height:30,border:`1px solid ${ink}`,bgcolor:'#fff',color:ink,borderRadius:0,cursor:'pointer',fontSize:18,lineHeight:1}}>{delta<0?'−':'+'}</Box>)}</Box>{p.large&&<Box sx={{mt:1.1}}><MetaPair locale={locale} title={l(locale,'mode','حالت')} value="HEAT · AUTO" /></Box>}</Box>}</Box>;
+  const dialSize=p.compact?94:p.large?166:108;
+  const dial=<Box sx={{width:dialSize,height:dialSize,border:`1px solid ${ink}`,borderRadius:'50%',display:'grid',placeItems:'center',position:'relative',flex:'0 0 auto'}}><Typography sx={{fontSize:p.compact?26:p.large?42:29,fontWeight:470,letterSpacing:'-.05em'}}>{target}°</Typography><Box sx={{position:'absolute',top:4,left:'50%',width:'1px',height:p.large?12:8,bgcolor:ink}}/><Box sx={{position:'absolute',bottom:4,left:'50%',width:'1px',height:p.large?12:8,bgcolor:ink}}/><Box sx={{position:'absolute',left:8,right:8,bottom:p.large?29:20,height:'2px',bgcolor:ink}}/></Box>;
+
+  if (p.compact) return <Box sx={{height:'100%',display:'grid',placeItems:'center',direction:'ltr'}}>{dial}</Box>;
+
+  if (p.large) return <Box sx={{height:'100%',display:'grid',gridTemplateRows:'1fr auto',gap:1.2,direction:'ltr'}}><Box sx={{minHeight:0,display:'grid',gridTemplateColumns:'auto 1fr',gap:1.8,alignItems:'center'}}>{dial}<Box><Eyebrow locale={locale} dim>{l(locale,'setpoint','نقطه تنظیم')}</Eyebrow><Typography sx={{mt:.45,fontSize:14,color:graphite}}>21.6°C {l(locale,'measured','اندازه‌گیری')}</Typography><Typography sx={{mt:.7,fontSize:10,color:target>21.6?warning:good,fontWeight:760}}>{target>21.6?'+':''}{(target-21.6).toFixed(1)}° {l(locale,'offset','اختلاف')}</Typography><Box sx={{mt:1.4,display:'flex',gap:.7}}>{[-1,1].map(delta=><Box key={delta} component="button" onClick={()=>setTarget(v=>clamp(v+delta,16,30))} sx={{appearance:'none',width:46,height:36,border:`1px solid ${ink}`,bgcolor:'#fff',color:ink,borderRadius:0,cursor:'pointer',fontSize:20,lineHeight:1}}>{delta<0?'−':'+'}</Box>)}</Box><Box sx={{mt:1.3}}><TickScale pct={((target-16)/14)*100} labels={false}/></Box></Box></Box><Box sx={{borderTop:`1px solid ${faint}`,pt:1,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1}}><MetaPair locale={locale} title={l(locale,'measured','اندازه‌گیری')} value="21.6 °C" /><MetaPair locale={locale} title={l(locale,'mode','حالت')} value="HEAT · AUTO" /><MetaPair locale={locale} title={l(locale,'range','بازه')} value="16 — 30 °C" /></Box></Box>;
+
+  return <Box sx={{height:'100%',display:'grid',gridTemplateColumns:'auto 1fr',gap:1.3,alignItems:'center',direction:'ltr'}}>{dial}<Box><Eyebrow locale={locale} dim>{l(locale,'setpoint','نقطه تنظیم')}</Eyebrow><Typography sx={{mt:.4,fontSize:11,color:graphite}}>21.6°C {l(locale,'measured','اندازه‌گیری')}</Typography><Box sx={{mt:1.2,display:'flex',gap:.5}}>{[-1,1].map(delta=><Box key={delta} component="button" onClick={()=>setTarget(v=>clamp(v+delta,16,30))} sx={{appearance:'none',width:38,height:30,border:`1px solid ${ink}`,bgcolor:'#fff',color:ink,borderRadius:0,cursor:'pointer',fontSize:18,lineHeight:1}}>{delta<0?'−':'+'}</Box>)}</Box></Box></Box>;
 }
 
 function ColorControl({ locale, size }: Props) {
   const p=profile(size); const hues=['#ef4444','#f59e0b','#22c55e','#06b6d4','#6366f1','#d946ef']; const [color,setColor]=useState(hues[3]); const [brightness,setBrightness]=useState(72);
-  return <Box sx={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'center',direction:'ltr'}}><Box sx={{height:p.large?38:25,border:`1px solid ${ink}`,background:`linear-gradient(90deg,#fff,${color})`,position:'relative'}}><Box sx={{position:'absolute',left:`${brightness}%`,top:-4,bottom:-4,width:2,bgcolor:ink}}/></Box><Box sx={{mt:1.15,display:'flex',justifyContent:'space-between',gap:.7}}>{hues.map(c=><Box key={c} onClick={()=>setColor(c)} sx={{width:p.compact?18:22,height:p.compact?18:22,bgcolor:c,border:`${c===color?2:1}px solid ${c===color?ink:'#fff'}`,outline:`1px solid ${c===color?ink:faint}`,cursor:'pointer'}}/>)}</Box><Box sx={{position:'relative',mt:1.25,height:20}}><Box sx={{position:'absolute',left:0,right:0,top:9,height:1,bgcolor:faint}}/><Box sx={{position:'absolute',left:0,top:8,width:`${brightness}%`,height:3,bgcolor:ink}}/><input type="range" aria-label="brightness" min={0} max={100} value={brightness} onChange={(e: ChangeEvent<HTMLInputElement>)=>setBrightness(Number(e.target.value))} style={{position:'absolute',inset:0,opacity:0,width:'100%',margin:0,cursor:'pointer'}}/><Box sx={{position:'absolute',left:`${brightness}%`,top:5,width:10,height:10,bgcolor:'#fff',border:`1px solid ${ink}`,transform:'translateX(-50%)'}}/></Box><Box sx={{display:'flex',justifyContent:'space-between'}}><Eyebrow locale={locale} dim>{l(locale,'brightness','روشنایی')}</Eyebrow><Typography sx={{fontSize:9.5,color:graphite}}>{brightness}%</Typography></Box>{p.large&&<Typography sx={{mt:1,fontSize:10,color:muted}}>{l(locale,'RGB color is intentionally the only chromatic control in this theme.','رنگ RGB عمداً تنها کنترل رنگی این پوسته است.')}</Typography>}</Box>;
+  return <Box sx={{height:'100%',display:'flex',flexDirection:'column',justifyContent:p.large?'space-between':'center',direction:'ltr'}}>
+    <Box><Box sx={{height:p.large?68:25,border:`1px solid ${ink}`,background:`linear-gradient(90deg,#fff,${color})`,position:'relative'}}><Box sx={{position:'absolute',left:`${brightness}%`,top:-4,bottom:-4,width:2,bgcolor:ink}}/></Box><Box sx={{mt:p.large?1.5:1.15,display:'flex',justifyContent:'space-between',gap:.7}}>{hues.map(c=><Box key={c} onClick={()=>setColor(c)} sx={{width:p.compact?18:p.large?28:22,height:p.compact?18:p.large?28:22,bgcolor:c,border:`${c===color?2:1}px solid ${c===color?ink:'#fff'}`,outline:`1px solid ${c===color?ink:faint}`,cursor:'pointer'}}/>)}</Box><Box sx={{position:'relative',mt:p.large?1.6:1.25,height:20}}><Box sx={{position:'absolute',left:0,right:0,top:9,height:'1px',bgcolor:faint}}/><Box sx={{position:'absolute',left:0,top:8,width:`${brightness}%`,height:3,bgcolor:ink}}/><input type="range" aria-label="brightness" min={0} max={100} value={brightness} onChange={(e: ChangeEvent<HTMLInputElement>)=>setBrightness(Number(e.target.value))} style={{position:'absolute',inset:0,opacity:0,width:'100%',margin:0,cursor:'pointer'}}/><Box sx={{position:'absolute',left:`${brightness}%`,top:5,width:10,height:10,bgcolor:'#fff',border:`1px solid ${ink}`,transform:'translateX(-50%)'}}/></Box><Box sx={{display:'flex',justifyContent:'space-between'}}><Eyebrow locale={locale} dim>{l(locale,'brightness','روشنایی')}</Eyebrow><Typography sx={{fontSize:9.5,color:graphite}}>{brightness}%</Typography></Box></Box>
+    {p.large&&<Box sx={{borderTop:`1px solid ${faint}`,pt:1,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1}}><MetaPair locale={locale} title={l(locale,'color','رنگ')} value={color.toUpperCase()} /><MetaPair locale={locale} title={l(locale,'brightness','روشنایی')} value={`${brightness}%`} /><MetaPair locale={locale} title={l(locale,'mode','حالت')} value="LOCAL" /></Box>}
+  </Box>;
 }
 
 function DirectionControl({ locale, size }: Props) {
   const p=profile(size); const [active,setActive]=useState('•'); const keys=[['↑',2],['←',4],['•',5],['→',6],['↓',8]] as const;
-  return <Box sx={{height:'100%',display:'grid',gridTemplateRows:'1fr auto',gap:.7,placeItems:'center',direction:'ltr'}}><Box sx={{display:'grid',gridTemplateColumns:`repeat(3,${p.large?48:38}px)`,gridTemplateRows:`repeat(3,${p.large?42:34}px)`,gap:3}}>{keys.map(([k,pos])=><Box key={k} component="button" onClick={()=>setActive(k)} sx={{appearance:'none',gridColumn:((pos-1)%3)+1,gridRow:Math.floor((pos-1)/3)+1,border:`1px solid ${active===k?ink:faint}`,bgcolor:active===k?ink:'#fff',color:active===k?'#fff':ink,borderRadius:0,cursor:'pointer',fontSize:k==='•'?12:17,p:0}}>{k}</Box>)}</Box><Typography sx={{fontSize:9.5,color:muted}}>{l(locale,'last command','آخرین فرمان')}: <Box component="span" sx={{color:ink,fontWeight:800}}>{active}</Box></Typography></Box>;
+  const cellW=p.large?58:38; const cellH=p.large?50:34;
+  return <Box sx={{height:'100%',display:'grid',gridTemplateRows:p.large?'1fr auto':'1fr auto',gap:p.large?1.2:.7,placeItems:'center',direction:'ltr'}}><Box sx={{display:'grid',gridTemplateColumns:`repeat(3,${cellW}px)`,gridTemplateRows:`repeat(3,${cellH}px)`,gap:p.large?4:3,alignSelf:'center'}}>{keys.map(([k,pos])=><Box key={k} component="button" onClick={()=>setActive(k)} sx={{appearance:'none',gridColumn:((pos-1)%3)+1,gridRow:Math.floor((pos-1)/3)+1,border:`1px solid ${active===k?ink:faint}`,bgcolor:active===k?ink:'#fff',color:active===k?'#fff':ink,borderRadius:0,cursor:'pointer',fontSize:k==='•'?12:p.large?20:17,p:0}}>{k}</Box>)}</Box>{p.large?<Box sx={{width:'100%',borderTop:`1px solid ${faint}`,pt:1,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1}}><MetaPair locale={locale} title={l(locale,'last command','آخرین فرمان')} value={active} /><MetaPair locale={locale} title={l(locale,'mode','حالت')} value="LOCAL" /><MetaPair locale={locale} title={l(locale,'step','گام')} value="1×" /></Box>:<Typography sx={{fontSize:9.5,color:muted}}>{l(locale,'last command','آخرین فرمان')}: <Box component="span" sx={{color:ink,fontWeight:800}}>{active}</Box></Typography>}</Box>;
 }
 
 function TableVisual({ locale, mode, size }: Props & { mode: TableMode }) {
@@ -407,19 +522,21 @@ function TableVisual({ locale, mode, size }: Props & { mode: TableMode }) {
   const tone=(cell:string)=>cell==='Critical'||cell==='Alert'?danger:cell==='Warning'?warning:cell==='Online'||cell==='Opened'||cell==='Started'||cell==='connected'?good:graphite;
   return <Box sx={{height:'100%',display:'flex',flexDirection:'column',overflow:'hidden',direction:'ltr'}}>
     <Box sx={{display:'grid',gridTemplateColumns:`repeat(${heads.length},minmax(0,1fr))`,borderTop:`1px solid ${ink}`,borderBottom:`1px solid ${ink}`,py:.55}}>{heads.map((h,i)=><Typography key={h} sx={{fontSize:8.5,color:muted,fontWeight:800,letterSpacing:'.07em',textTransform:locale==='fa'?'none':'uppercase',textAlign:i===heads.length-1?'right':'left'}}>{h}</Typography>)}</Box>
-    <Box sx={{flex:1,minHeight:0}}>{rows.map((row,i)=><Box key={i} sx={{display:'grid',gridTemplateColumns:`repeat(${row.length},minmax(0,1fr))`,alignItems:'center',minHeight:p.large?34:29,borderBottom:`1px solid ${faint}`,bgcolor:mode==='alarms'&&i===0?'#fbf1f0':'transparent'}}>{row.map((cell,j)=><Typography key={j} sx={{fontSize:p.large?11.5:10.5,fontWeight:j===0?700:550,color:j===1?tone(cell):j===0?ink:graphite,textAlign:j===row.length-1?'right':'left',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontVariantNumeric:'tabular-nums',pr:j===0?.5:0}}>{cell}</Typography>)}</Box>)}</Box>
-    {p.large&&<Box sx={{pt:.65,display:'flex',justifyContent:'space-between'}}><Eyebrow locale={locale} dim>{l(locale,`${rows.length} visible rows`,`${rows.length} ردیف`)}</Eyebrow><Typography sx={{fontSize:8.5,color:muted}}>UPDATED 09:44:21</Typography></Box>}
+    <Box sx={{flex:1,minHeight:0,display:'grid',gridTemplateRows:p.large?`repeat(${rows.length},minmax(0,1fr))`:'auto'}}>{rows.map((row,i)=><Box key={i} sx={{display:'grid',gridTemplateColumns:`repeat(${row.length},minmax(0,1fr))`,alignItems:'center',minHeight:p.large?0:29,py:p.large?.45:0,borderBottom:`1px solid ${faint}`,bgcolor:mode==='alarms'&&i===0?'#fbf1f0':'transparent'}}>{row.map((cell,j)=><Typography key={j} sx={{fontSize:p.large?12:10.5,fontWeight:j===0?700:550,color:j===1?tone(cell):j===0?ink:graphite,textAlign:j===row.length-1?'right':'left',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontVariantNumeric:'tabular-nums',pr:j===0?.5:0}}>{cell}</Typography>)}</Box>)}</Box>
+    {p.large&&<Box sx={{pt:.8,display:'grid',gridTemplateColumns:'1fr auto 1fr',alignItems:'end',gap:1}}><Box><Eyebrow locale={locale} dim>{l(locale,`${rows.length} visible rows`,`${rows.length} ردیف`)}</Eyebrow><Typography sx={{mt:.25,fontSize:10.5,fontWeight:700,color:ink}}>{mode==='alarms'?l(locale,'1 needs action','۱ مورد نیازمند اقدام'):mode==='logs'?l(locale,'stream healthy','جریان سالم'):l(locale,'live dataset','داده زنده')}</Typography></Box><Box sx={{height:'22px',width:'1px',bgcolor:faint}}/><Box sx={{textAlign:'right'}}><Eyebrow locale={locale} dim>{l(locale,'updated','به‌روزرسانی')}</Eyebrow><Typography sx={{mt:.25,fontSize:10.5,fontWeight:700,color:ink,fontVariantNumeric:'tabular-nums'}}>09:44:21</Typography></Box></Box>}
   </Box>;
 }
 
 function Clock({ locale, size }: Props) {
   const p=profile(size);
-  return <Box sx={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:p.compact?'flex-start':'center',textAlign:p.compact?'left':'center',direction:'ltr'}}><Typography sx={{fontSize:p.large?58:p.compact?37:48,fontWeight:350,lineHeight:.88,letterSpacing:'-.065em',fontVariantNumeric:'tabular-nums'}}>09:44</Typography><Box sx={{mt:1,width:p.compact?42:p.large?90:62,height:2,bgcolor:ink}}/><Typography sx={{mt:.8,fontSize:p.large?12:10,color:graphite}}>{locale==='fa'?'چهارشنبه، ۱۵ مهر ۱۴۰۵':'Wednesday · 07 Oct 2026'}</Typography>{p.large&&<Typography sx={{mt:.55,fontSize:9.5,color:muted}}>UTC +03:30 · SITE TIME</Typography>}</Box>;
+  if(p.large) return <Box sx={{height:'100%',display:'grid',gridTemplateRows:'1fr auto',gap:1.2,direction:'ltr'}}><Box sx={{display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',textAlign:'center'}}><Eyebrow locale={locale} dim>{l(locale,'site time','زمان سایت')}</Eyebrow><Typography sx={{mt:.5,fontSize:76,fontWeight:330,lineHeight:.82,letterSpacing:'-.075em',fontVariantNumeric:'tabular-nums'}}>09:44</Typography><Typography sx={{mt:.65,fontSize:13,color:graphite,fontVariantNumeric:'tabular-nums'}}>21 sec</Typography><Box sx={{mt:1.15,width:108,height:'2px',bgcolor:ink}}/><Typography sx={{mt:.85,fontSize:12,color:graphite}}>{locale==='fa'?'چهارشنبه، ۱۵ مهر ۱۴۰۵':'Wednesday · 07 Oct 2026'}</Typography></Box><Box sx={{borderTop:`1px solid ${faint}`,pt:.9,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1}}><MetaPair locale={locale} title="UTC" value="+03:30"/><MetaPair locale={locale} title={l(locale,'sync','همگام‌سازی')} value="NTP · OK"/><MetaPair locale={locale} title={l(locale,'drift','انحراف')} value="+4 ms"/></Box></Box>;
+  return <Box sx={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:p.compact?'flex-start':'center',textAlign:p.compact?'left':'center',direction:'ltr'}}><Typography sx={{fontSize:p.compact?37:48,fontWeight:350,lineHeight:.88,letterSpacing:'-.065em',fontVariantNumeric:'tabular-nums'}}>09:44</Typography><Box sx={{mt:1,width:p.compact?42:62,height:'2px',bgcolor:ink}}/><Typography sx={{mt:.8,fontSize:10,color:graphite}}>{locale==='fa'?'چهارشنبه، ۱۵ مهر ۱۴۰۵':'Wednesday · 07 Oct 2026'}</Typography></Box>;
 }
 
 function TextVisual({ locale, size }: Props) {
   const p=profile(size);
-  return <Box sx={{height:'100%',display:'flex',flexDirection:'column',justifyContent:p.compact?'center':'flex-start',direction:locale==='fa'?'rtl':'ltr',textAlign:locale==='fa'?'right':'left'}}><Typography sx={{fontSize:p.large?24:p.compact?17:20,fontWeight:620,lineHeight:1.12,letterSpacing:locale==='fa'?0:'-.02em'}}>{locale==='fa'?'وضعیت اتاق سرور':'Server room status'}</Typography><Box sx={{mt:1,width:54,height:2,bgcolor:ink,alignSelf:locale==='fa'?'flex-end':'flex-start'}}/><Typography sx={{mt:1,fontSize:p.large?13:11.5,color:graphite,lineHeight:p.large?1.9:1.65,maxWidth:p.large?'86%':'100%'}}>{locale==='fa'?'همه سنسورها در محدوده عادی هستند. آخرین بسته داده کمتر از یک دقیقه قبل دریافت شده است.':'All sensors are within their normal ranges. Latest telemetry was received less than a minute ago.'}</Typography>{p.large&&<Box sx={{mt:'auto',pt:1.2,width:'100%'}}><MonoRule/><Typography sx={{mt:.65,fontSize:9.5,color:muted}}>{locale==='fa'?'آخرین بازبینی · 09:44':'LAST REVIEW · 09:44'}</Typography></Box>}</Box>;
+  if(p.large) return <Box sx={{height:'100%',display:'grid',gridTemplateRows:'auto 1fr auto',gap:1.2,direction:locale==='fa'?'rtl':'ltr',textAlign:locale==='fa'?'right':'left'}}><Box><Eyebrow locale={locale} dim>{l(locale,'operator note','یادداشت اپراتور')}</Eyebrow><Typography sx={{mt:.5,fontSize:27,fontWeight:610,lineHeight:1.08,letterSpacing:locale==='fa'?0:'-.03em'}}>{locale==='fa'?'وضعیت اتاق سرور':'Server room status'}</Typography><Box sx={{mt:1,width:62,height:'2px',bgcolor:ink,ml:locale==='fa'?'auto':0}}/></Box><Typography sx={{alignSelf:'center',fontSize:14,color:graphite,lineHeight:1.9,maxWidth:'88%'}}>{locale==='fa'?'همه سنسورها در محدوده عادی هستند. آخرین بسته داده کمتر از یک دقیقه قبل دریافت شده است. هیچ هشدار تأییدنشده‌ای در صف وجود ندارد.':'All sensors are within their normal ranges. Latest telemetry was received less than a minute ago. No unacknowledged alerts are waiting in the queue.'}</Typography><Box sx={{borderTop:`1px solid ${faint}`,pt:.9,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:1}}><MetaPair locale={locale} title={l(locale,'reviewed','بازبینی')} value="09:44"/><MetaPair locale={locale} title={l(locale,'source','منبع')} value="ROOM-02"/><MetaPair locale={locale} title={l(locale,'status','وضعیت')} value={l(locale,'NORMAL','عادی')}/></Box></Box>;
+  return <Box sx={{height:'100%',display:'flex',flexDirection:'column',justifyContent:p.compact?'center':'flex-start',direction:locale==='fa'?'rtl':'ltr',textAlign:locale==='fa'?'right':'left'}}><Typography sx={{fontSize:p.compact?17:20,fontWeight:620,lineHeight:1.12,letterSpacing:locale==='fa'?0:'-.02em'}}>{locale==='fa'?'وضعیت اتاق سرور':'Server room status'}</Typography><Box sx={{mt:1,width:54,height:'2px',bgcolor:ink,alignSelf:locale==='fa'?'flex-end':'flex-start'}}/><Typography sx={{mt:1,fontSize:11.5,color:graphite,lineHeight:1.65}}>{locale==='fa'?'همه سنسورها در محدوده عادی هستند. آخرین بسته داده کمتر از یک دقیقه قبل دریافت شده است.':'All sensors are within their normal ranges. Latest telemetry was received less than a minute ago.'}</Typography></Box>;
 }
 
 function ImageVisual({ locale, size }: Props) {
