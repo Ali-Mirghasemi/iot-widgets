@@ -38,20 +38,20 @@ export function GlassFrame(p: GlassFrameProps) {
     return <Box sx={{
             height: '100%', minHeight: 0, overflow: 'hidden', position: 'relative',
             borderRadius: d.compact ? '18px' : '22px', color: '#f8fbff',
-            background: 'linear-gradient(145deg, rgba(255,255,255,.145) 0%, rgba(255,255,255,.075) 42%, rgba(3,12,28,.22) 100%)',
-            border: '1px solid rgba(255,255,255,.22)',
-            boxShadow: '0 18px 44px rgba(0,8,22,.26), inset 0 1px 0 rgba(255,255,255,.18)',
-            backdropFilter: 'blur(22px) saturate(145%)',
+            background: 'linear-gradient(145deg, rgba(8,20,37,.88) 0%, rgba(8,31,43,.82) 54%, rgba(7,43,48,.76) 100%)',
+            border: '1px solid rgba(214,246,255,.16)',
+            boxShadow: '0 18px 44px rgba(0,8,22,.30), inset 0 1px 0 rgba(255,255,255,.10), inset 0 -1px 0 rgba(125,211,252,.045)',
+            backdropFilter: 'blur(10px) saturate(118%)',
             display: 'flex', flexDirection: 'column', isolation: 'isolate',
             transition: 'transform .18s ease, border-color .18s ease, box-shadow .18s ease',
-            '&:hover': { transform: 'translateY(-1px)', borderColor: 'rgba(255,255,255,.34)', boxShadow: '0 22px 52px rgba(0,8,22,.31), inset 0 1px 0 rgba(255,255,255,.24)' },
+            '&:hover': { transform: 'translateY(-1px)', borderColor: 'rgba(214,246,255,.25)', boxShadow: '0 22px 52px rgba(0,8,22,.34), inset 0 1px 0 rgba(255,255,255,.13)' },
         }}>
     <Box sx={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
-            background: `radial-gradient(circle at 94% 4%, ${p.theme.accent}28 0, transparent 27%), radial-gradient(circle at 5% 96%, ${p.theme.accent2}18 0, transparent 30%)` }}/>
+            background: `radial-gradient(circle at 94% 4%, ${p.theme.accent}1c 0, transparent 24%), radial-gradient(circle at 5% 96%, ${p.theme.accent2}12 0, transparent 28%), linear-gradient(112deg, transparent 0 58%, rgba(255,255,255,.035) 71%, transparent 82%)` }}/>
     <Box sx={{ position: 'absolute', left: 14, right: 14, top: 0, height: 1, pointerEvents: 'none', zIndex: 1,
-            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,.74) 28%, rgba(255,255,255,.22) 72%, transparent)' }}/>
+            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,.34) 30%, rgba(125,211,252,.16) 68%, transparent)' }}/>
     <Box sx={{ position: 'absolute', left: 0, top: 20, bottom: 20, width: 1, pointerEvents: 'none', zIndex: 1,
-            background: 'linear-gradient(180deg, transparent, rgba(255,255,255,.24), transparent)' }}/>
+            background: 'linear-gradient(180deg, transparent, rgba(255,255,255,.12), transparent)' }}/>
 
     <Box sx={{ position: 'relative', zIndex: 2, px: d.compact ? 1.15 : 1.35, pt: d.compact ? 1.05 : 1.15, pb: d.compact ? .45 : .55,
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: .8, direction: rtl ? 'rtl' : 'ltr' }}>
