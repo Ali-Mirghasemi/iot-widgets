@@ -1,30 +1,16 @@
-Material 3 widget patch v3
-
-Apply this patch on top of the previous Material v2 patch.
+Material 3 patch v4
 
 Replace:
   src/widgets/themes/MaterialVisuals.tsx
 
-Then clear the Vite cache and run the app:
-
-PowerShell:
+Then clear Vite cache:
   Remove-Item -Recurse -Force .\node_modules\.vite -ErrorAction SilentlyContinue
+
+Run:
   npm run dev
 
-To generate Material screenshots again:
+Generate Material screenshots:
   $env:WIDGET_QA_THEME="material"
   npm run screenshots:full
 
-Changes in this pass:
-- 1x1 metrics now use a compact sparkline instead of wasting the lower half on a tiny progress bar.
-- 2x2 gauges use the empty vertical space for a 24h trend.
-- 2x2 cellular signal adds a signal-stability trend.
-- Tall tanks use the vertical dimension much better; large tanks add a level trend.
-- Device status / alarms use large-size space for useful event and availability history.
-- Compass pointer no longer crosses the numeric heading.
-- Large command, switch, slider, thermostat, manual input, RGB, and direction controls use their extra area for meaningful status/history/context.
-- Large tables stretch rows to use the available card height instead of leaving a large empty region.
-- Large clock adds timezone/sync/drift details.
-- Large SCADA/Mimic adds flow direction, live labels, state text, and bottom process stats.
-
-Internal theme id remains: material
+This patch is intended to be applied on top of Material patch v3.

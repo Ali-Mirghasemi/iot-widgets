@@ -371,9 +371,28 @@ function MaterialDonut({ def, theme, locale, size }: Props) {
   const p = profile(size);
   const value = n(def.mock.value, 72);
   const c = 2 * Math.PI * 42;
-  const ring = <Box sx={{ width: p.compact ? 120 : p.large ? 166 : 138, height: p.compact ? 120 : p.large ? 166 : 138, position: 'relative' }}><svg viewBox="0 0 120 120" width="100%" height="100%"><circle cx="60" cy="60" r="42" fill="none" stroke="#edf0f5" strokeWidth="12"/><circle cx="60" cy="60" r="42" fill="none" stroke={theme.accent} strokeWidth="12" strokeLinecap="round" strokeDasharray={`${c*value/100} ${c}`} transform="rotate(-90 60 60)"/></svg><Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', textAlign: 'center' }}><Box><Typography sx={{ fontSize: 28, fontWeight: 850 }}>{value}%</Typography><Typography sx={{ fontSize: 10, color: theme.muted }}>{label(locale, 'Used', 'مصرف')}</Typography></Box></Box></Box>;
-  if (!p.large) return <Box sx={{ height: '100%', display: 'grid', placeItems: 'center' }}>{ring}</Box>;
-  return <Box sx={{ height: '100%', display: 'grid', gridTemplateColumns: '180px 1fr', alignItems: 'center', gap: 1.5 }}>{ring}<Box><StatBox label={label(locale, 'Used', 'مصرف')} value={`${value}%`} theme={theme} accent /><Box sx={{ mt: .75 }}><StatBox label={label(locale, 'Free', 'آزاد')} value={`${100-value}%`} theme={theme} /></Box></Box></Box>;
+  const ringSize = p.compact ? 120 : p.large ? 162 : 138;
+  const ring = <Box sx={{ width:ringSize, height:ringSize, position:'relative', flex:'0 0 auto' }}>
+    <svg viewBox="0 0 120 120" width="100%" height="100%">
+      <circle cx="60" cy="60" r="42" fill="none" stroke="#edf0f5" strokeWidth="12"/>
+      <circle cx="60" cy="60" r="42" fill="none" stroke={theme.accent} strokeWidth="12" strokeLinecap="round" strokeDasharray={`${c*value/100} ${c}`} transform="rotate(-90 60 60)"/>
+    </svg>
+    <Box sx={{ position:'absolute', inset:0, display:'grid', placeItems:'center', textAlign:'center' }}>
+      <Box><Typography sx={{ fontSize:28,fontWeight:850 }}>{value}%</Typography><Typography sx={{ fontSize:10,color:theme.muted }}>{label(locale,'Used','مصرف')}</Typography></Box>
+    </Box>
+  </Box>;
+  if (!p.large) return <Box sx={{ height:'100%', display:'grid', placeItems:'center' }}>{ring}</Box>;
+  return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'minmax(0,1fr) auto', gap:1.05, direction:'ltr' }}>
+    <Box sx={{ minHeight:0, display:'grid', gridTemplateColumns:'178px 1fr', alignItems:'center', gap:1.5 }}>
+      <Box sx={{display:'grid',placeItems:'center'}}>{ring}</Box>
+      <Box sx={{display:'grid',gap:.8}}><StatBox label={label(locale,'Used','مصرف')} value={`${value}%`} theme={theme} accent/><StatBox label={label(locale,'Free','آزاد')} value={`${100-value}%`} theme={theme}/><StatBox label={label(locale,'Total','کل')} value="100%" theme={theme}/></Box>
+    </Box>
+    <Box sx={{ border:`1px solid ${theme.border}`, borderRadius:1.5, p:.9, bgcolor:'#fbfcff' }}>
+      <Box sx={{display:'flex',justifyContent:'space-between',mb:.7}}><Typography sx={{fontSize:9.8,color:theme.muted}}>{label(locale,'Allocation','تقسیم‌بندی')}</Typography><Typography sx={{fontSize:9.8,color:theme.muted}}>3 groups</Typography></Box>
+      <Box sx={{display:'grid',gridTemplateColumns:'44% 28% 28%',height:10,borderRadius:1,overflow:'hidden',gap:.25}}><Box sx={{bgcolor:theme.accent}}/><Box sx={{bgcolor:theme.accent2}}/><Box sx={{bgcolor:'#cbd5e1'}}/></Box>
+      <Box sx={{mt:.65,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:.7}}><Typography sx={{fontSize:9.5,color:theme.muted}}>Primary 44%</Typography><Typography sx={{fontSize:9.5,color:theme.muted}}>Aux 28%</Typography><Typography sx={{fontSize:9.5,color:theme.muted}}>Other 28%</Typography></Box>
+    </Box>
+  </Box>;
 }
 
 function MaterialHeatmap({ theme, size }: Props) {
@@ -421,33 +440,44 @@ function MaterialCoordinates({ def, theme, locale, size }: Props) {
   const p = profile(size);
   const lat=s(def.mock.lat,'35.7219° N'); const lng=s(def.mock.lng,'51.3347° E'); const accuracy=s(def.mock.accuracy,'4.2 m');
   if (!p.large) return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'repeat(3,1fr)', gap:.6, alignContent:'center', direction:'ltr' }}><StatBox label="LAT" value={lat} theme={theme}/><StatBox label="LNG" value={lng} theme={theme}/><StatBox label={label(locale,'Accuracy','دقت')} value={accuracy} theme={theme} accent/></Box>;
-  return <Box sx={{ height:'100%', display:'grid', gridTemplateColumns:'1fr 154px', gap:1.15, alignItems:'center', direction:'ltr' }}>
-    <Box sx={{ display:'grid', gap:.7 }}><StatBox label="LATITUDE" value={lat} theme={theme}/><StatBox label="LONGITUDE" value={lng} theme={theme}/><StatBox label={label(locale,'Accuracy','دقت')} value={accuracy} theme={theme} accent/></Box>
-    <Box sx={{ height:154, borderRadius:1.5, border:`1px solid ${theme.border}`, bgcolor:'#f7f8fb', position:'relative', overflow:'hidden' }}>
-      <svg viewBox="0 0 154 154" width="100%" height="100%"><rect width="154" height="154" fill="#f7f8fb"/><path d="M-10 44 C38 22 72 56 166 28" fill="none" stroke="#dce4ed" strokeWidth="12"/><path d="M45 -8 C66 36 36 86 63 170" fill="none" stroke="#e2e8f0" strokeWidth="8"/><path d="M-8 120 C48 92 102 118 166 86" fill="none" stroke="#dfe6ee" strokeWidth="7"/><circle cx="91" cy="86" r="22" fill={theme.accent} opacity=".12"/><circle cx="91" cy="86" r="7" fill="#fff" stroke={theme.accent} strokeWidth="4"/></svg>
-      <Box sx={{ position:'absolute', left:8, bottom:8, px:.65, py:.35, bgcolor:'rgba(255,255,255,.9)', border:`1px solid ${theme.border}`, borderRadius:1 }}><Typography sx={{ fontSize:9.5, color:theme.muted }}>± {accuracy}</Typography></Box>
+  return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'minmax(0,1fr) auto', gap:1, direction:'ltr' }}>
+    <Box sx={{ minHeight:0, borderRadius:1.5, border:`1px solid ${theme.border}`, bgcolor:'#f7f8fb', position:'relative', overflow:'hidden' }}>
+      <svg viewBox="0 0 420 220" width="100%" height="100%" preserveAspectRatio="none">
+        <rect width="420" height="220" fill="#f7f8fb"/>
+        <path d="M-20 58 C92 25 178 72 445 36" fill="none" stroke="#dce4ed" strokeWidth="18"/>
+        <path d="M112 -20 C150 54 92 125 146 250" fill="none" stroke="#e2e8f0" strokeWidth="12"/>
+        <path d="M332 -18 C290 54 330 132 278 246" fill="none" stroke="#e5eaf1" strokeWidth="11"/>
+        <path d="M-18 175 C106 130 216 170 446 116" fill="none" stroke="#dfe6ee" strokeWidth="10"/>
+        <circle cx="250" cy="126" r="34" fill={theme.accent} opacity=".10"/>
+        <circle cx="250" cy="126" r="10" fill="#fff" stroke={theme.accent} strokeWidth="5"/>
+        <text x="160" y="45" fill="#94a3b8" fontSize="11">Industrial Ave</text>
+        <text x="298" y="104" fill="#94a3b8" fontSize="11">North Rd</text>
+      </svg>
+      <Box sx={{ position:'absolute', left:10, top:10 }}><ToneBadge text={label(locale,'GPS fixed','GPS متصل')} tone="success" theme={theme}/></Box>
+      <Box sx={{ position:'absolute', right:10, bottom:10, px:.8, py:.45, bgcolor:'rgba(255,255,255,.92)', border:`1px solid ${theme.border}`, borderRadius:1 }}><Typography sx={{fontSize:9.5,color:theme.muted}}>± {accuracy}</Typography></Box>
     </Box>
+    <Box sx={{ display:'grid', gridTemplateColumns:'1.15fr 1.15fr .8fr', gap:.7 }}><StatBox label="LATITUDE" value={lat} theme={theme}/><StatBox label="LONGITUDE" value={lng} theme={theme}/><StatBox label={label(locale,'Accuracy','دقت')} value={accuracy} theme={theme} accent/></Box>
   </Box>;
 }
 
-function MaterialCompass({ def, theme, size }: Props) {
+function MaterialCompass({ def, theme, locale, size }: Props) {
   const p = profile(size);
   const value = n(def.mock.value,327);
-  const dia = p.compact ? 112 : p.large ? 184 : 138;
-  const pointerAngle = value - 90;
-  const rad = pointerAngle * Math.PI / 180;
-  const radius = dia * .36;
-  const cx = dia / 2;
-  const cy = dia / 2;
-  const px = cx + Math.cos(rad) * radius;
-  const py = cy + Math.sin(rad) * radius;
-  return <Box sx={{ height:'100%',display:'grid',placeItems:'center',direction:'ltr' }}><Box sx={{ width:dia,height:dia,borderRadius:'50%',border:`1px solid ${theme.border}`,bgcolor:'#fbfcff',position:'relative',display:'grid',placeItems:'center',boxShadow:'inset 0 0 0 8px #fff' }}>
-    {['N','E','S','W'].map((x,i)=><Typography key={x} sx={{ position:'absolute',fontSize:10.5,color:theme.muted,fontWeight:x==='N'?800:600,top:i===0?7:i===2?undefined:'50%',bottom:i===2?7:undefined,left:i===3?9:i===1?undefined:'50%',right:i===1?9:undefined,transform:i===0||i===2?'translateX(-50%)':i===1||i===3?'translateY(-50%)':undefined }}>{x}</Typography>)}
-    <Box sx={{ position:'absolute',left:px-5,top:py-5,width:10,height:10,transform:`rotate(${value}deg)`,color:theme.accent }}><Box sx={{ width:0,height:0,borderLeft:'5px solid transparent',borderRight:'5px solid transparent',borderBottom:`10px solid ${theme.accent}` }}/></Box>
-    <Box sx={{ width:p.large?86:72,height:p.large?58:50,borderRadius:1.5,bgcolor:'#fff',border:`1px solid ${theme.border}`,display:'grid',placeItems:'center',textAlign:'center',boxShadow:'0 4px 12px rgba(15,23,42,.04)' }}><Box><Typography sx={{fontSize:p.large?31:25,fontWeight:850,lineHeight:1}}>{value}°</Typography><Typography sx={{fontSize:9.5,color:theme.muted,mt:.25}}>heading</Typography></Box></Box>
-  </Box></Box>;
+  const cardinal = value >= 337.5 || value < 22.5 ? 'N' : value < 67.5 ? 'NE' : value < 112.5 ? 'E' : value < 157.5 ? 'SE' : value < 202.5 ? 'S' : value < 247.5 ? 'SW' : value < 292.5 ? 'W' : 'NW';
+  const CompassFace = ({dia}:{dia:number}) => {
+    const pointerAngle=value-90; const rad=pointerAngle*Math.PI/180; const radius=dia*.36; const cx=dia/2; const cy=dia/2; const px=cx+Math.cos(rad)*radius; const py=cy+Math.sin(rad)*radius;
+    return <Box sx={{ width:dia,height:dia,borderRadius:'50%',border:`1px solid ${theme.border}`,bgcolor:'#fbfcff',position:'relative',display:'grid',placeItems:'center',boxShadow:'inset 0 0 0 8px #fff' }}>
+      {['N','E','S','W'].map((x,i)=><Typography key={x} sx={{ position:'absolute',fontSize:11,color:x==='N'?theme.accent:theme.muted,fontWeight:x==='N'?850:650,top:i===0?8:i===2?undefined:'50%',bottom:i===2?8:undefined,left:i===3?10:i===1?undefined:'50%',right:i===1?10:undefined,transform:i===0||i===2?'translateX(-50%)':i===1||i===3?'translateY(-50%)':undefined }}>{x}</Typography>)}
+      <Box sx={{ position:'absolute',left:px-6,top:py-6,width:12,height:12,transform:`rotate(${value}deg)`,color:theme.accent }}><Box sx={{ width:0,height:0,borderLeft:'6px solid transparent',borderRight:'6px solid transparent',borderBottom:`12px solid ${theme.accent}` }}/></Box>
+      <Box sx={{ width:dia>180?92:72,height:dia>180?62:50,borderRadius:1.5,bgcolor:'#fff',border:`1px solid ${theme.border}`,display:'grid',placeItems:'center',textAlign:'center',boxShadow:'0 4px 12px rgba(15,23,42,.04)' }}><Box><Typography sx={{fontSize:dia>180?32:25,fontWeight:850,lineHeight:1}}>{value}°</Typography><Typography sx={{fontSize:9.5,color:theme.muted,mt:.25}}>{cardinal}</Typography></Box></Box>
+    </Box>;
+  };
+  if(!p.large) return <Box sx={{height:'100%',display:'grid',placeItems:'center',direction:'ltr'}}><CompassFace dia={p.compact?116:146}/></Box>;
+  return <Box sx={{height:'100%',display:'grid',gridTemplateRows:'minmax(0,1fr) auto',gap:1,direction:'ltr'}}>
+    <Box sx={{minHeight:0,display:'grid',placeItems:'center'}}><CompassFace dia={220}/></Box>
+    <Box sx={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:.7}}><StatBox label={label(locale,'Heading','جهت')} value={`${value}°`} theme={theme} accent/><StatBox label={label(locale,'Direction','جهت اصلی')} value={cardinal} theme={theme}/><StatBox label={label(locale,'Accuracy','دقت')} value="±2°" theme={theme}/></Box>
+  </Box>;
 }
-
 
 function MaterialButton({ theme, locale, size }: Props) {
   const p=profile(size); const [sent,setSent]=useState(false);
@@ -507,15 +537,14 @@ function MaterialInput({ def, theme, locale, size }: Props) {
 
 function MaterialThermostat({ def, theme, locale, size }: Props) {
   const p=profile(size); const [value,setValue]=useState(n(def.mock.value,22));
-  if(p.compact) return <Box sx={{ height:'100%',display:'grid',placeItems:'center',direction:'ltr' }}><Box sx={{ width:112,height:112,borderRadius:'50%',border:`7px solid ${theme.accent}18`,display:'grid',placeItems:'center' }}><Box sx={{textAlign:'center'}}><Typography sx={{fontSize:31,fontWeight:850}}>{value}°</Typography><Typography sx={{fontSize:9.5,color:theme.muted}}>SET</Typography></Box></Box></Box>;
-  if(!p.large) return <Box sx={{ height:'100%',display:'grid',gridTemplateColumns:'138px 1fr',alignItems:'center',gap:1.6,direction:'ltr' }}><Box sx={{width:128,height:128,borderRadius:'50%',border:`9px solid ${theme.accent}18`,display:'grid',placeItems:'center'}}><Box sx={{textAlign:'center'}}><Typography sx={{fontSize:33,fontWeight:850}}>{value}°</Typography><Typography sx={{fontSize:10,color:theme.muted}}>SETPOINT</Typography></Box></Box><Box><Typography sx={{fontSize:11,color:theme.muted}}>{label(locale,'Target temperature','دمای هدف')}</Typography><Slider min={16} max={30} value={value} onChange={(_,v)=>setValue(v as number)} sx={{color:theme.accent}}/></Box></Box>;
+  if(p.compact) return <Box sx={{ height:'100%',display:'grid',placeItems:'center',direction:'ltr' }}><Box sx={{ width:124,height:124,borderRadius:'50%',border:`8px solid ${theme.accent}18`,boxShadow:`inset 0 0 0 1px ${theme.border}`,display:'grid',placeItems:'center' }}><Box sx={{textAlign:'center'}}><Typography sx={{fontSize:34,fontWeight:850}}>{value}°</Typography><Typography sx={{fontSize:9.5,color:theme.muted}}>SETPOINT</Typography><Typography sx={{fontSize:9.5,color:theme.accent,fontWeight:800,mt:.25}}>AUTO</Typography></Box></Box></Box>;
+  if(!p.large) return <Box sx={{ height:'100%',display:'grid',gridTemplateColumns:'144px 1fr',alignItems:'center',gap:1.6,direction:'ltr' }}><Box sx={{width:134,height:134,borderRadius:'50%',border:`9px solid ${theme.accent}18`,boxShadow:`inset 0 0 0 1px ${theme.border}`,display:'grid',placeItems:'center'}}><Box sx={{textAlign:'center'}}><Typography sx={{fontSize:35,fontWeight:850}}>{value}°</Typography><Typography sx={{fontSize:10,color:theme.muted}}>SETPOINT</Typography></Box></Box><Box><Typography sx={{fontSize:11,color:theme.muted}}>{label(locale,'Target temperature','دمای هدف')}</Typography><Slider min={16} max={30} value={value} onChange={(_,v)=>setValue(v as number)} sx={{color:theme.accent}}/><Box sx={{mt:.7,display:'flex',gap:.6}}><ToneBadge text="AUTO" tone="accent" theme={theme}/><ToneBadge text="24.8°C room" tone="neutral" theme={theme}/></Box></Box></Box>;
   return <Box sx={{ height:'100%',display:'grid',gridTemplateRows:'auto auto minmax(58px,1fr)',gap:1.05,direction:'ltr' }}>
-    <Box sx={{display:'grid',gridTemplateColumns:'160px 1fr',alignItems:'center',gap:1.6}}><Box sx={{width:148,height:148,borderRadius:'50%',border:`9px solid ${theme.accent}18`,display:'grid',placeItems:'center'}}><Box sx={{textAlign:'center'}}><Typography sx={{fontSize:39,fontWeight:850}}>{value}°</Typography><Typography sx={{fontSize:10,color:theme.muted}}>SETPOINT</Typography></Box></Box><Box><Typography sx={{fontSize:11,color:theme.muted}}>{label(locale,'Target temperature','دمای هدف')}</Typography><Slider min={16} max={30} value={value} onChange={(_,v)=>setValue(v as number)} sx={{color:theme.accent}}/><Box sx={{mt:.8,display:'grid',gridTemplateColumns:'1fr 1fr',gap:.75}}><StatBox label={label(locale,'Room','اتاق')} value="24.8°C" theme={theme}/><StatBox label={label(locale,'Mode','حالت')} value="Auto" theme={theme} accent/></Box></Box></Box>
+    <Box sx={{display:'grid',gridTemplateColumns:'168px 1fr',alignItems:'center',gap:1.6}}><Box sx={{width:156,height:156,borderRadius:'50%',border:`10px solid ${theme.accent}18`,boxShadow:`inset 0 0 0 1px ${theme.border}`,display:'grid',placeItems:'center'}}><Box sx={{textAlign:'center'}}><Typography sx={{fontSize:40,fontWeight:850}}>{value}°</Typography><Typography sx={{fontSize:10,color:theme.muted}}>SETPOINT</Typography></Box></Box><Box><Typography sx={{fontSize:11,color:theme.muted}}>{label(locale,'Target temperature','دمای هدف')}</Typography><Slider min={16} max={30} value={value} onChange={(_,v)=>setValue(v as number)} sx={{color:theme.accent}}/><Box sx={{mt:.8,display:'grid',gridTemplateColumns:'1fr 1fr',gap:.75}}><StatBox label={label(locale,'Room','اتاق')} value="24.8°C" theme={theme}/><StatBox label={label(locale,'Mode','حالت')} value="Auto" theme={theme} accent/></Box></Box></Box>
     <Box sx={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:.7}}><StatBox label={label(locale,'Heating','گرمایش')} value="OFF" theme={theme}/><StatBox label={label(locale,'Fan','فن')} value="AUTO" theme={theme}/><StatBox label={label(locale,'Humidity','رطوبت')} value="46%" theme={theme}/></Box>
     <Box sx={{alignSelf:'end',border:`1px solid ${theme.border}`,borderRadius:1.5,p:.9,bgcolor:'#fbfcff'}}><Typography sx={{fontSize:9.8,color:theme.muted,mb:.55}}>{label(locale,'Room temperature trend','روند دمای اتاق')}</Typography><ChartSvg values={[23.8,24,24.1,24.4,24.6,24.8,24.7,24.8]} color={theme.accent} fill minHeight={50}/></Box>
   </Box>;
 }
-
 
 function MaterialColor({ theme, locale, size }: Props) {
   const p=profile(size); const [hue,setHue]=useState(188); const [brightness,setBrightness]=useState(78); const [on,setOn]=useState(true); const presets=[0,36,120,188,265,315]; const preview=on?`hsl(${hue} 78% ${Math.max(28,brightness/1.75)}%)`:'#64748b';
@@ -530,12 +559,11 @@ function MaterialColor({ theme, locale, size }: Props) {
 
 
 function MaterialDirection({ theme, locale, size }: Props) {
-  const p=profile(size); const [active,setActive]=useState('•'); const keys=['↑','←','•','→','↓']; const button=p.compact?38:p.large?68:46;
-  const pad=<Box sx={{display:'grid',gridTemplateColumns:`repeat(3,${button}px)`,gridTemplateRows:`repeat(3,${button}px)`,gap:p.large?.8:.55}}>{keys.map((k,i)=>{const pos=[2,4,5,6,8][i];return <Button key={k} onClick={()=>setActive(k)} sx={{gridColumn:((pos-1)%3)+1,gridRow:Math.floor((pos-1)/3)+1,minWidth:0,width:button,height:button,p:0,borderRadius:1.25,border:`1px solid ${active===k?theme.accent:theme.border}`,color:active===k?'#fff':theme.foreground,bgcolor:active===k?theme.accent:'#fff','&:hover':{bgcolor:active===k?theme.accent:`${theme.accent}08`}}}>{k}</Button>})}</Box>;
+  const p=profile(size); const [active,setActive]=useState('•'); const keys=['↑','←','•','→','↓']; const button=p.compact?44:p.large?70:52;
+  const pad=<Box sx={{display:'grid',gridTemplateColumns:`repeat(3,${button}px)`,gridTemplateRows:`repeat(3,${button}px)`,gap:p.large?.8:.55}}>{keys.map((k,i)=>{const pos=[2,4,5,6,8][i];return <Button key={k} onClick={()=>setActive(k)} sx={{gridColumn:((pos-1)%3)+1,gridRow:Math.floor((pos-1)/3)+1,minWidth:0,width:button,height:button,p:0,borderRadius:1.25,border:`1px solid ${active===k?theme.accent:theme.border}`,color:active===k?'#fff':theme.foreground,bgcolor:active===k?theme.accent:'#fff',fontSize:p.large?20:16,'&:hover':{bgcolor:active===k?theme.accent:`${theme.accent}08`}}}>{k}</Button>})}</Box>;
   if(!p.large) return <Box sx={{height:'100%',display:'grid',placeItems:'center',direction:'ltr'}}><Box>{pad}{!p.compact&&<Typography sx={{mt:.7,textAlign:'center',fontSize:10,color:theme.muted}}>{label(locale,'Last command','آخرین فرمان')}: {active}</Typography>}</Box></Box>;
-  return <Box sx={{height:'100%',display:'grid',gridTemplateColumns:'230px 1fr',gap:1.6,alignItems:'center',direction:'ltr'}}><Box sx={{display:'grid',placeItems:'center'}}>{pad}</Box><Box><ToneBadge text={label(locale,'PTZ / motion ready','کنترل حرکت آماده')} tone="success" theme={theme}/><Box sx={{mt:1,display:'grid',gap:.7}}><StatBox label={label(locale,'Last command','آخرین فرمان')} value={active} theme={theme} accent/><StatBox label={label(locale,'Speed','سرعت')} value="40%" theme={theme}/><StatBox label={label(locale,'Mode','حالت')} value="Momentary" theme={theme}/></Box><Box sx={{mt:1,border:`1px solid ${theme.border}`,borderRadius:1.5,p:.9,bgcolor:'#fbfcff'}}><Typography sx={{fontSize:9.8,color:theme.muted,mb:.55}}>{label(locale,'Command activity','فعالیت فرمان')}</Typography><HistoryStrip values={[0,-1,0,0,-1,0,0,0]} theme={theme} active={theme.accent}/></Box></Box></Box>;
+  return <Box sx={{height:'100%',display:'grid',gridTemplateColumns:'238px 1fr',gap:1.6,alignItems:'center',direction:'ltr'}}><Box sx={{display:'grid',placeItems:'center'}}>{pad}</Box><Box><ToneBadge text={label(locale,'PTZ / motion ready','کنترل حرکت آماده')} tone="success" theme={theme}/><Box sx={{mt:1,display:'grid',gap:.7}}><StatBox label={label(locale,'Last command','آخرین فرمان')} value={active} theme={theme} accent/><StatBox label={label(locale,'Speed','سرعت')} value="40%" theme={theme}/><StatBox label={label(locale,'Mode','حالت')} value="Momentary" theme={theme}/></Box><Box sx={{mt:1,border:`1px solid ${theme.border}`,borderRadius:1.5,p:.9,bgcolor:'#fbfcff'}}><Typography sx={{fontSize:9.8,color:theme.muted,mb:.55}}>{label(locale,'Command activity','فعالیت فرمان')}</Typography><HistoryStrip values={[0,-1,0,0,-1,0,0,0]} theme={theme} active={theme.accent}/></Box></Box></Box>;
 }
-
 
 function rowColor(cell: string, theme: WidgetThemeTokens) {
   if (['Critical','Alert'].includes(cell)) return '#dc2626';
@@ -567,13 +595,14 @@ function MaterialTable({ theme, locale, mode, size }: Props & { mode:'table'|'me
 
 function MaterialClock({ theme, locale, size }: Props) {
   const p=profile(size);
-  if(!p.large) return <Box sx={{height:'100%',display:'grid',placeItems:'center',textAlign:'center'}}><Box><Typography sx={{fontSize:p.compact?38:48,fontWeight:500,letterSpacing:'-.055em',direction:'ltr'}}>09:44</Typography><Typography sx={{mt:.35,fontSize:11,color:theme.muted}}>{locale==='fa'?'چهارشنبه، ۱۵ مهر ۱۴۰۵':'Wednesday, Oct 7'}</Typography></Box></Box>;
+  if(p.compact) return <Box sx={{height:'100%',display:'grid',placeItems:'center',textAlign:'center'}}><Box><Typography sx={{fontSize:40,fontWeight:500,letterSpacing:'-.055em',direction:'ltr'}}>09:44</Typography><Typography sx={{mt:.35,fontSize:10.5,color:theme.muted}}>{locale==='fa'?'چهارشنبه، ۱۵ مهر':'Wednesday, Oct 7'}</Typography></Box></Box>;
+  if(p.wide && !p.large) return <Box sx={{height:'100%',display:'grid',gridTemplateColumns:'1fr 1fr',alignItems:'center',gap:1.5,direction:'ltr'}}><Box><Typography sx={{fontSize:50,fontWeight:480,letterSpacing:'-.06em'}}>09:44</Typography><Typography sx={{fontSize:10.5,color:theme.muted}}>UTC +03:30</Typography></Box><Box sx={{borderLeft:`1px solid ${theme.border}`,pl:1.5}}><Typography sx={{fontSize:15,fontWeight:850}}>{locale==='fa'?'چهارشنبه':'Wednesday'}</Typography><Typography sx={{mt:.3,fontSize:11,color:theme.muted}}>{locale==='fa'?'۱۵ مهر ۱۴۰۵':'October 7, 2026'}</Typography><Box sx={{mt:.8}}><ToneBadge text="NTP synced" tone="success" theme={theme}/></Box></Box></Box>;
+  if(!p.large) return <Box sx={{height:'100%',display:'grid',placeItems:'center',textAlign:'center'}}><Box><Typography sx={{fontSize:48,fontWeight:500,letterSpacing:'-.055em',direction:'ltr'}}>09:44</Typography><Typography sx={{mt:.35,fontSize:11,color:theme.muted}}>{locale==='fa'?'چهارشنبه، ۱۵ مهر ۱۴۰۵':'Wednesday, Oct 7'}</Typography></Box></Box>;
   return <Box sx={{height:'100%',display:'grid',gridTemplateRows:'1fr auto',gap:1.1}}>
-    <Box sx={{display:'grid',placeItems:'center',textAlign:'center'}}><Box><Typography sx={{fontSize:62,fontWeight:450,letterSpacing:'-.06em',direction:'ltr'}}>09:44</Typography><Typography sx={{mt:.35,fontSize:14,fontWeight:750}}>{locale==='fa'?'چهارشنبه، ۱۵ مهر ۱۴۰۵':'Wednesday, October 7'}</Typography><Box sx={{mt:1}}><ToneBadge text="UTC +03:30" tone="neutral" theme={theme}/></Box></Box></Box>
+    <Box sx={{display:'grid',placeItems:'center',textAlign:'center'}}><Box><Typography sx={{fontSize:64,fontWeight:450,letterSpacing:'-.06em',direction:'ltr'}}>09:44</Typography><Typography sx={{mt:.35,fontSize:14,fontWeight:750}}>{locale==='fa'?'چهارشنبه، ۱۵ مهر ۱۴۰۵':'Wednesday, October 7'}</Typography><Box sx={{mt:1}}><ToneBadge text="UTC +03:30" tone="neutral" theme={theme}/></Box></Box></Box>
     <Box sx={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:.7,direction:'ltr'}}><StatBox label={label(locale,'Timezone','منطقه زمانی')} value="Local" theme={theme}/><StatBox label={label(locale,'Sync','همگام‌سازی')} value="NTP OK" theme={theme} accent/><StatBox label={label(locale,'Drift','انحراف')} value="< 12 ms" theme={theme}/></Box>
   </Box>;
 }
-
 
 function MaterialText({ theme, locale, size }: Props) {
   const p=profile(size);
@@ -597,25 +626,29 @@ function MaterialImage({ theme, size }: Props) {
 
 function MaterialIframe({ theme, locale, size }: Props) {
   const p=profile(size);
-  return <Box sx={{ height:'100%',border:`1px solid ${theme.border}`,borderRadius:1.5,overflow:'hidden',bgcolor:'#fbfcff',display:'grid',gridTemplateRows:'28px 1fr' }}><Box sx={{ px:1,display:'flex',alignItems:'center',gap:.45,borderBottom:`1px solid ${theme.border}`,bgcolor:'#f5f7fb' }}>{[0,1,2].map(i=><Box key={i} sx={{ width:6,height:6,borderRadius:'50%',bgcolor:i===0?'#ef4444':i===1?'#f59e0b':'#22c55e' }}/>)}</Box><Box sx={{ display:'grid',placeItems:'center',textAlign:'center',px:2 }}><Box><Typography sx={{ fontSize:p.large?18:14,fontWeight:850 }}>{label(locale,'External content','محتوای خارجی')}</Typography><Typography sx={{ mt:.4,fontSize:10.5,color:theme.muted }}>iframe / embedded app / HTML canvas</Typography></Box></Box></Box>;
+  if(!p.large) return <Box sx={{ height:'100%',border:`1px solid ${theme.border}`,borderRadius:1.5,overflow:'hidden',bgcolor:'#fbfcff',display:'grid',gridTemplateRows:'28px 1fr' }}><Box sx={{ px:1,display:'flex',alignItems:'center',gap:.45,borderBottom:`1px solid ${theme.border}`,bgcolor:'#f5f7fb' }}>{[0,1,2].map(i=><Box key={i} sx={{ width:6,height:6,borderRadius:'50%',bgcolor:i===0?'#ef4444':i===1?'#f59e0b':'#22c55e' }}/>)}</Box><Box sx={{ display:'grid',placeItems:'center',textAlign:'center',px:2 }}><Box><Typography sx={{ fontSize:14,fontWeight:850 }}>{label(locale,'External content','محتوای خارجی')}</Typography><Typography sx={{ mt:.4,fontSize:10.5,color:theme.muted }}>iframe / embedded app / HTML canvas</Typography></Box></Box></Box>;
+  return <Box sx={{ height:'100%',border:`1px solid ${theme.border}`,borderRadius:1.5,overflow:'hidden',bgcolor:'#fff',display:'grid',gridTemplateRows:'30px 1fr' }}>
+    <Box sx={{ px:1,display:'flex',alignItems:'center',gap:.45,borderBottom:`1px solid ${theme.border}`,bgcolor:'#f5f7fb' }}>{[0,1,2].map(i=><Box key={i} sx={{width:6,height:6,borderRadius:'50%',bgcolor:i===0?'#ef4444':i===1?'#f59e0b':'#22c55e'}}/>)}<Typography sx={{ml:1,fontSize:9.5,color:theme.muted}}>embedded-app.local/dashboard</Typography></Box>
+    <Box sx={{minHeight:0,display:'grid',gridTemplateColumns:'74px 1fr'}}><Box sx={{borderRight:`1px solid ${theme.border}`,bgcolor:'#f8fafc',p:.8,display:'grid',alignContent:'start',gap:.55}}>{['Overview','Devices','Rules','Logs'].map((x,i)=><Box key={x} sx={{px:.7,py:.55,borderRadius:.8,bgcolor:i===0?`${theme.accent}10`:'transparent',color:i===0?theme.accent:theme.muted,fontSize:9,fontWeight:i===0?800:650}}>{x}</Box>)}</Box><Box sx={{minWidth:0,p:1,display:'grid',gridTemplateRows:'auto auto minmax(0,1fr)',gap:.8}}><Box sx={{display:'flex',justifyContent:'space-between',alignItems:'center'}}><Typography sx={{fontSize:12,fontWeight:850}}>{label(locale,'Embedded operations view','نمای عملیاتی جاسازی‌شده')}</Typography><ToneBadge text="LIVE" tone="success" theme={theme}/></Box><Box sx={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:.6}}><StatBox label="ONLINE" value="18" theme={theme} accent/><StatBox label="ALARMS" value="2" theme={theme}/><StatBox label="LATENCY" value="84 ms" theme={theme}/></Box><Box sx={{minHeight:0,border:`1px solid ${theme.border}`,borderRadius:1,p:.7,bgcolor:'#fbfcff'}}><ChartSvg values={[32,38,35,48,51,46,58,62,60,72,68,76]} color={theme.accent} fill minHeight={82}/></Box></Box></Box>
+  </Box>;
 }
 
 function MaterialScada({ theme, size }: Props) {
   const p=profile(size);
   return <Box sx={{ height:'100%',minHeight:0,display:'grid',gridTemplateRows:p.large?'minmax(0,1fr) auto':'1fr',gap:1,direction:'ltr' }}>
-    <Box sx={{ minHeight:0,position:'relative' }}><svg viewBox="0 0 620 260" width="100%" height="100%">
+    <Box sx={{ minHeight:0,position:'relative',border:p.large?`1px solid ${theme.border}`:'none',borderRadius:p.large?1.5:0,bgcolor:p.large?'#fbfcff':'transparent',overflow:'hidden' }}><svg viewBox="0 0 560 220" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
       <defs><marker id="flowArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill={theme.accent}/></marker></defs>
-      <rect x="25" y="62" width="130" height="128" rx="9" fill={`${theme.accent}0e`} stroke={theme.border}/><text x="90" y="111" textAnchor="middle" fill={theme.foreground} fontSize="15" fontWeight="700">TANK 01</text><text x="90" y="143" textAnchor="middle" fill={theme.accent} fontSize="26" fontWeight="800">63%</text><text x="90" y="164" textAnchor="middle" fill={theme.muted} fontSize="11">1,260 L</text>
-      <line x1="155" y1="126" x2="248" y2="126" stroke="#1f2937" strokeWidth="7"/><line x1="175" y1="126" x2="228" y2="126" stroke={theme.accent} strokeWidth="2" markerEnd="url(#flowArrow)"/>
-      <circle cx="285" cy="126" r="35" fill="#fff" stroke={theme.accent2} strokeWidth="4"/><text x="285" y="122" textAnchor="middle" fill={theme.foreground} fontSize="13" fontWeight="800">PUMP</text><text x="285" y="140" textAnchor="middle" fill="#16a34a" fontSize="10" fontWeight="800">RUNNING</text>
-      <line x1="320" y1="126" x2="412" y2="126" stroke="#1f2937" strokeWidth="7"/><line x1="340" y1="126" x2="392" y2="126" stroke={theme.accent} strokeWidth="2" markerEnd="url(#flowArrow)"/>
-      <rect x="412" y="78" width="138" height="96" rx="9" fill={`${theme.accent}0c`} stroke={theme.border}/><text x="481" y="116" textAnchor="middle" fill={theme.foreground} fontSize="14" fontWeight="700">VALVE V-02</text><text x="481" y="142" textAnchor="middle" fill={theme.accent} fontSize="14" fontWeight="800">OPEN · 82%</text>
-      <text x="220" y="94" textAnchor="middle" fill={theme.muted} fontSize="10">18.4 L/min</text><text x="360" y="94" textAnchor="middle" fill={theme.muted} fontSize="10">2.6 bar</text>
+      <rect x="18" y="48" width="126" height="128" rx="10" fill={`${theme.accent}0e`} stroke={theme.border}/><text x="81" y="91" textAnchor="middle" fill={theme.foreground} fontSize="15" fontWeight="700">TANK 01</text><text x="81" y="124" textAnchor="middle" fill={theme.accent} fontSize="28" fontWeight="800">63%</text><text x="81" y="147" textAnchor="middle" fill={theme.muted} fontSize="11">1,260 L</text>
+      <line x1="144" y1="112" x2="224" y2="112" stroke="#1f2937" strokeWidth="7"/><line x1="165" y1="112" x2="212" y2="112" stroke={theme.accent} strokeWidth="2" markerEnd="url(#flowArrow)"/>
+      <circle cx="260" cy="112" r="36" fill="#fff" stroke={theme.accent2} strokeWidth="4"/><text x="260" y="108" textAnchor="middle" fill={theme.foreground} fontSize="13" fontWeight="800">PUMP</text><text x="260" y="128" textAnchor="middle" fill="#16a34a" fontSize="10" fontWeight="800">RUNNING</text>
+      <line x1="296" y1="112" x2="380" y2="112" stroke="#1f2937" strokeWidth="7"/><line x1="317" y1="112" x2="368" y2="112" stroke={theme.accent} strokeWidth="2" markerEnd="url(#flowArrow)"/>
+      <rect x="380" y="64" width="154" height="96" rx="10" fill={`${theme.accent}0c`} stroke={theme.border}/><text x="457" y="103" textAnchor="middle" fill={theme.foreground} fontSize="14" fontWeight="700">VALVE V-02</text><text x="457" y="132" textAnchor="middle" fill={theme.accent} fontSize="15" fontWeight="800">OPEN · 82%</text>
+      <text x="184" y="80" textAnchor="middle" fill={theme.muted} fontSize="10">18.4 L/min</text><text x="338" y="80" textAnchor="middle" fill={theme.muted} fontSize="10">2.6 bar</text>
+      {p.large&&<><circle cx="162" cy="112" r="3" fill={theme.accent}/><circle cx="326" cy="112" r="3" fill={theme.accent}/><text x="81" y="193" textAnchor="middle" fill={theme.muted} fontSize="9">LEVEL SENSOR</text><text x="260" y="176" textAnchor="middle" fill={theme.muted} fontSize="9">MOTOR M-01</text><text x="457" y="178" textAnchor="middle" fill={theme.muted} fontSize="9">ACTUATOR</text></>}
     </svg></Box>
     {p.large&&<Box sx={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:.7}}><StatBox label="FLOW" value="18.4 L/min" theme={theme} accent/><StatBox label="PRESSURE" value="2.6 bar" theme={theme}/><StatBox label="PUMP" value="1.82 A" theme={theme}/><StatBox label="VALVE" value="OPEN" theme={theme}/></Box>}
   </Box>;
 }
-
 
 export function MaterialVisualRenderer(props: Props) {
   const v = props.def.visual;
