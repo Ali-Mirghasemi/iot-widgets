@@ -1,79 +1,58 @@
-# Aurora Glass integration
+# Industrial Flat — Integration
 
-This patch intentionally does **not** package coordinator-owned shared files.
+This patch intentionally does **not** modify coordinator-owned shared files. Two small shared integration edits are required.
 
-Two small shared dispatcher changes are required so the isolated Aurora Glass renderer/frame are used.
+## 1. Route `flat` to the dedicated renderer
 
-## 1. `src/widgets/renderers/WidgetVisuals.tsx`
+File: `src/widgets/renderers/WidgetVisuals.tsx`
 
-Add this import next to the existing Material renderer import:
-
-```tsx
-import { GlassVisualRenderer } from '../themes/GlassVisuals';
-```
-
-Then in `WidgetVisualRenderer`, immediately after the Material dispatch, add:
+Add this import next to the Material renderer import:
 
 ```tsx
-if (props.theme.id === 'glass') return <GlassVisualRenderer {...props} />;
+import { FlatVisualRenderer } from '../themes/FlatVisuals';
 ```
 
-Resulting opening should be:
+Then add the `flat` early return in `WidgetVisualRenderer` immediately after the Material early return:
 
 ```tsx
 export function WidgetVisualRenderer(props: Props) {
   if (props.theme.id === 'material') return <MaterialVisualRenderer {...props} />;
-  if (props.theme.id === 'glass') return <GlassVisualRenderer {...props} />;
+  if (props.theme.id === 'flat') return <FlatVisualRenderer {...props} />;
 
   const v = props.def.visual;
-  // existing generic theme dispatcher continues here...
+  // existing fallback/theme rendering continues unchanged...
 }
 ```
 
-Do not remove the existing generic Glass branches in the same merge unless the coordinator is already cleaning up the shared renderer. They simply become unreachable for theme ID `glass` after the early dispatch, which keeps this integration patch minimal and parallel-safe.
+The early return is important: it isolates Industrial Flat from the older scattered `theme.id === 'flat'` branches in the generic renderer without requiring a risky shared-file cleanup during parallel theme work.
 
-## 2. `src/widgets/core/WidgetFrame.tsx`
+## 2. Update only the visible theme label
 
-Add this import:
+File: `src/widgets/core/themeTokens.ts`
 
-```tsx
-import { GlassFrame as AuroraGlassFrame } from '../themes/GlassFrame';
+Keep the stable ID exactly as `flat`, but change the display label:
+
+```diff
+ flat: {
+   id: 'flat',
+-  label: 'Flat',
++  label: 'Industrial Flat',
 ```
 
-Then change only the `glass` switch case in `WidgetFrame`:
+No token rewrite is required for this patch; the existing flat frame/token plumbing remains compatible.
 
-```tsx
-case 'glass': return <AuroraGlassFrame {...props}/>;
-```
+## Screenshot QA
 
-The existing local `GlassFrame` function can remain temporarily to minimize merge conflicts. It can be removed later during the coordinator's shared cleanup.
-
-## Optional display-name change
-
-If the coordinator wants the showcase label to match the working theme name, change only the `glass` label in `src/widgets/core/themeTokens.ts`:
-
-```tsx
-label: 'Aurora Glass',
-```
-
-This label change is optional. The stable theme ID remains exactly `glass`.
-
-## QA commands after integration
-
-PowerShell:
+PowerShell commands requested by the project:
 
 ```powershell
-$env:WIDGET_QA_THEME="glass"
+$env:WIDGET_QA_THEME="flat"
 npm run screenshots:full
 
-$env:WIDGET_QA_THEME="glass"
+$env:WIDGET_QA_THEME="flat"
 npm run screenshots
 ```
 
-Persian follow-up:
+If your local scripts require an explicit Chromium executable, set `PLAYWRIGHT_CHROME_PATH` according to your existing project setup before running them.
 
-```powershell
-$env:WIDGET_QA_THEME="glass"
-$env:WIDGET_QA_LOCALE="fa"
-npm run screenshots
-```
+Inspect every generated `flat` category and the QA overflow diagnostics before merging.
