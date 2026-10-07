@@ -1,79 +1,63 @@
-# Aurora Glass integration
+# Cupertino (`ios`) Integration
 
-This patch intentionally does **not** package coordinator-owned shared files.
+Shared integration is required, but the shared files are intentionally **not** included in this patch because theme work is happening in parallel.
 
-Two small shared dispatcher changes are required so the isolated Aurora Glass renderer/frame are used.
+## 1. Route iOS visuals to the dedicated renderer
 
-## 1. `src/widgets/renderers/WidgetVisuals.tsx`
+File: `src/widgets/renderers/WidgetVisuals.tsx`
 
-Add this import next to the existing Material renderer import:
-
-```tsx
-import { GlassVisualRenderer } from '../themes/GlassVisuals';
-```
-
-Then in `WidgetVisualRenderer`, immediately after the Material dispatch, add:
+Add this import with the other theme renderer imports:
 
 ```tsx
-if (props.theme.id === 'glass') return <GlassVisualRenderer {...props} />;
+import { IOSVisualRenderer } from '../themes/IOSVisuals';
 ```
 
-Resulting opening should be:
+Then, at the start of `WidgetVisualRenderer`, before the Material/default or generic-theme rendering path, add:
+
+```tsx
+if (props.theme.id === 'ios') return <IOSVisualRenderer {...props} />;
+```
+
+For example:
 
 ```tsx
 export function WidgetVisualRenderer(props: Props) {
+  if (props.theme.id === 'ios') return <IOSVisualRenderer {...props} />;
   if (props.theme.id === 'material') return <MaterialVisualRenderer {...props} />;
-  if (props.theme.id === 'glass') return <GlassVisualRenderer {...props} />;
-
-  const v = props.def.visual;
-  // existing generic theme dispatcher continues here...
+  // existing renderer logic continues unchanged...
 }
 ```
 
-Do not remove the existing generic Glass branches in the same merge unless the coordinator is already cleaning up the shared renderer. They simply become unreachable for theme ID `glass` after the early dispatch, which keeps this integration patch minimal and parallel-safe.
+Do not rename the `ios` theme ID or any widget ID. No registry/type/token change is required for this patch.
 
-## 2. `src/widgets/core/WidgetFrame.tsx`
+## 2. Route iOS widgets to the dedicated frame
 
-Add this import:
+File: `src/widgets/core/WidgetFrame.tsx`
 
-```tsx
-import { GlassFrame as AuroraGlassFrame } from '../themes/GlassFrame';
-```
-
-Then change only the `glass` switch case in `WidgetFrame`:
+Add:
 
 ```tsx
-case 'glass': return <AuroraGlassFrame {...props}/>;
+import { IOSFrame as IOSThemeFrame } from '../themes/IOSFrame';
 ```
 
-The existing local `GlassFrame` function can remain temporarily to minimize merge conflicts. It can be removed later during the coordinator's shared cleanup.
-
-## Optional display-name change
-
-If the coordinator wants the showcase label to match the working theme name, change only the `glass` label in `src/widgets/core/themeTokens.ts`:
+Then change only the existing `ios` switch branch to:
 
 ```tsx
-label: 'Aurora Glass',
+case 'ios': return <IOSThemeFrame {...props}/>;
 ```
 
-This label change is optional. The stable theme ID remains exactly `glass`.
+The existing in-file legacy `IOSFrame` can remain temporarily; once all parallel work is merged and verified, the coordinator may remove that dead implementation as a cleanup-only change. Its removal is not required for this patch to work.
 
-## QA commands after integration
+## QA after integration
 
 PowerShell:
 
 ```powershell
-$env:WIDGET_QA_THEME="glass"
+$env:WIDGET_QA_THEME="ios"
 npm run screenshots:full
 
-$env:WIDGET_QA_THEME="glass"
+$env:WIDGET_QA_THEME="ios"
 npm run screenshots
 ```
 
-Persian follow-up:
-
-```powershell
-$env:WIDGET_QA_THEME="glass"
-$env:WIDGET_QA_LOCALE="fa"
-npm run screenshots
-```
+Inspect every generated Cupertino sheet for metrics, controls, charts, location, tables, and display, at every supported size, in both English and Persian where the QA route supports locale switching.
