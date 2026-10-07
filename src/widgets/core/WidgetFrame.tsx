@@ -4,6 +4,7 @@ import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import MoreHoriz from '@mui/icons-material/MoreHoriz';
 import type { Locale, WidgetDefinition, WidgetSize, WidgetThemeTokens } from './types';
 import { IOSFrame as IOSThemeFrame } from '../themes/IOSFrame';
+import { GlassFrame as AuroraGlassFrame } from '../themes/GlassFrame';
 
 interface FrameProps {
   def: WidgetDefinition;
@@ -233,7 +234,7 @@ export function WidgetFrame(props: FrameProps) {
     case 'minimal': return <MinimalFrame {...props}/>;
     case 'gaming': return <GamingFrame {...props}/>;
     case 'ios': return <IOSThemeFrame {...props}/>;
-    case 'glass': return <GlassFrame {...props}/>;
+    case 'glass': return <AuroraGlassFrame {...props}/>;
     default: return <MaterialFrame {...props}/>;
   }
 }

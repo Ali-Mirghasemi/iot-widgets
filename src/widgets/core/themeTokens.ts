@@ -76,7 +76,7 @@ export const widgetThemes: Record<WidgetThemeId, WidgetThemeTokens> = {
   },
   glass: {
     id: 'glass',
-    label: 'Glass',
+    label: 'Aurora Glass',
     background: 'linear-gradient(135deg,#0f172a,#0f766e)',
     surface: 'linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.08))',
     foreground: '#f8fafc',
