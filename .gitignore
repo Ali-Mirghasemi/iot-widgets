@@ -1,7 +1,8 @@
 node_modules/
-full-screenshots/
+.vite/
 widget-screenshots/
-screenshots/
+full-screenshots/
 *.zip
 *.rar
-out/
+.DS_Store
+dist/

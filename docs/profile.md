@@ -1,202 +1,135 @@
 # IoT Widget Studio — Project Profile
 
-## 1. Purpose
+## Purpose
 
-IoT Widget Studio is a reusable React/TypeScript widget library and visual showcase for production IoT dashboards.
+IoT Widget Studio is both:
 
-The project is not intended to be only a demo page. The widget system must be modular enough that the same widgets can later be imported into another dashboard/builder project without copying application-specific code.
+1. a reusable React/TypeScript/MUI widget package for IoT dashboards; and
+2. a visual showcase + screenshot QA application used to design and validate the package.
 
-Primary goals:
+The reusable package is the product. The showcase is tooling around it.
 
-- support a broad set of IoT widget types;
-- support several genuinely different visual design systems/themes;
-- adapt the information shown to the widget's grid size instead of merely stretching the same UI;
-- support English and Persian;
-- support real IoT controls as well as read-only telemetry;
-- remain easy to extract and reuse in another React project;
-- make visual QA reproducible through automated screenshots.
+## Current inventory
 
-## 2. Technology
+- 63 built-in widget definitions
+- 6 stable theme IDs
+- 6 dedicated theme renderer modules
+- 9 logical grid sizes
+- English and Persian
+- read-only telemetry, charts, maps, tables, display widgets and interactive control previews
+- Playwright per-widget and full-page screenshot QA
 
-- React
-- TypeScript
-- MUI / Material UI
-- Vite
-- npm
-- Playwright for screenshot QA
+## Stable themes
 
-Do not introduce another UI framework for one theme. Theme-specific visuals may use MUI primitives, CSS/SVG, and lightweight local helpers.
+| ID | Display name |
+|---|---|
+| `material` | Material 3 |
+| `flat` | Industrial Flat |
+| `minimal` | Minimal Mono |
+| `gaming` | HUD / Cyber |
+| `ios` | Cupertino |
+| `glass` | Aurora Glass |
 
-## 3. Core widget model
+Stable IDs are persistence/API contracts. Do not rename them casually.
 
-A widget instance is conceptually composed of:
+## Public integration component
 
-```text
-Widget Definition
-├── Widget Type
-├── Category
-├── Metadata / data fields
-├── Supported Sizes
-├── Direction (LTR / RTL / auto)
-├── Capabilities
-└── Mock/example data
+External React projects should use:
 
-Widget Instance
-├── widgetType
-├── theme
-├── size
-├── datasource / device
-├── metadata binding
-└── settings
+```tsx
+<IoTWidget ... />
 ```
 
-Theme and widget type are independent. A Temperature widget may use Material 3 while another widget on the same dashboard may use a different theme.
+from the package root.
 
-## 4. Widget categories
+`IoTWidget` supports per-instance:
 
-Current high-level categories:
+- widget type;
+- theme;
+- size;
+- locale;
+- runtime telemetry;
+- device/site metadata;
+- token overrides;
+- info callback;
+- low-level interaction callback.
 
-- Metrics & Sensors
-- Controls
-- Charts & History
-- Location
-- Tables & Events
-- Display & Custom
-
-Representative IoT widgets include temperature, humidity, pressure, voltage, current, power, energy, battery, light, air quality, CO2, PM2.5, gas, soil moisture, tank level, flow, speed, RPM, vibration, noise, distance, weight, wind, rain, cellular signal, device status, alarms, fire/smoke/leak states, buttons, switches, sliders, thermostat, RGB lighting, directional control, charts, maps, tables, camera/image, iframe, SCADA, and similar device-oriented widgets.
-
-## 5. Stable theme IDs and display names
-
-Theme IDs are persistence/API identifiers. **Do not rename IDs** because saved dashboard JSON may depend on them.
-
-| Stable ID | Current / preferred display direction | Notes |
-|---|---|---|
-| `material` | Material 3 | production-friendly M3 interpretation |
-| `flat` | Industrial Flat | stronger industrial/block UI direction is preferred over generic “Flat” |
-| `minimal` | Minimal Mono | typography/data-first minimal design |
-| `gaming` | HUD / Cyber | telemetry/HUD design; avoid generic gamer neon cards |
-| `ios` | Cupertino | Apple-like glanceable smart-device tiles; avoid pretending to be an official Apple UI |
-| `glass` | Aurora Glass | layered translucent/luminous interface |
-
-Display labels may be refined centrally. Stable IDs must remain unchanged.
-
-## 6. Theme principle: composition, not recoloring
-
-A theme is **not** a palette preset.
-
-Each theme should own a recognizably different:
-
-- card/frame geometry;
-- header placement;
-- device metadata treatment;
-- status treatment;
-- icon language;
-- value hierarchy;
-- gauge language;
-- chart styling;
-- control styling;
-- spacing/density;
-- border/shadow/material behavior;
-- small/medium/large widget composition.
-
-If two themes can be made identical by changing only colors/radius/shadow, they are not different enough.
-
-## 7. Adaptive sizing rules
-
-Grid size means **width × height**.
-
-Examples:
+## Important design model
 
 ```text
-1x1  -> glanceable core state/value only
-2x1  -> value + compact secondary context/trend/control feedback
-1x2  -> use vertical space intentionally; do not center a tiny 1x1 widget in a tall card
-2x2  -> richer history, metadata, secondary values, events, or control context
-3x1  -> wide comparison/trend layout
-3x2+ -> richer dashboard/panel composition
+WidgetDefinition
+  stable type/capabilities/fields/supported sizes
+
+WidgetInstanceConfig
+  widgetId/themeId/size/locale/data/metadata
 ```
 
-A larger widget must normally add useful information or a better visualization. It must not simply scale up the same content and create dead space.
+Theme is not global. A dashboard can mix different themes between widgets.
 
-A smaller widget may deliberately hide secondary information to remain readable.
+## Theme principle
 
-## 8. Language and direction
+A theme is a composition system, not a color preset.
 
-- The showcase supports English and Persian.
-- Persian description/help text should be RTL.
-- Numeric telemetry, units, coordinates, timestamps, gauges, charts, command payloads, and technical identifiers may remain LTR when that is clearer.
-- Do not blindly flip chart axes or numeric controls just because the page locale is Persian.
-- Widget layouts must not break when labels become longer in Persian.
+Each theme may own different:
 
-## 9. Visual quality requirements
+- frame geometry;
+- header hierarchy;
+- icon treatment;
+- gauge style;
+- charts;
+- controls;
+- density;
+- state presentation;
+- size adaptation.
 
-Every widget/theme/size should be checked for:
+## Adaptive sizing
 
-- overlap;
-- clipping;
-- elements outside card bounds;
-- accidental scrolling;
-- text truncation that hides critical state;
-- excessive roundness / pill overload;
-- inconsistent spacing;
-- huge empty regions;
-- tiny content inside large cards;
-- controls that do not respond;
-- unclear active/inactive/error states;
-- gauges that are cut in half;
-- charts that collapse to the bottom;
-- poor contrast;
-- theme sameness;
-- decorative elements that reduce readability.
+Grid size is width × height.
 
-Semantic/creative visuals are encouraged when they improve comprehension. Examples: fire alarm with fire/state imagery, beacon/siren with light state, tank with level visualization, battery with charge shape, cellular signal with bars/history, SCADA with process state, etc.
+- `1x1`: essential glanceable value/state
+- `2x1`: compact secondary context/trend
+- `1x2`: intentional vertical composition
+- `2x2`: richer history/context
+- `3x1`: wide comparison/trend
+- `3x2+`: panel-level composition
 
-## 10. Portability requirement
+A larger widget should normally add useful information rather than just scale up.
 
-Widgets must remain easy to import into another project.
+## Language/direction
 
-Prefer:
+Frame/user-facing text follows locale. Body direction is definition-controlled (`ltr`, `rtl`, `auto`) so technical content such as charts/coordinates can remain LTR in Persian.
 
-- theme-specific modules under `src/widgets/themes/`;
-- reusable renderers that receive props rather than reading global application state;
-- registry-driven metadata;
-- local helpers with no dependency on showcase page layout;
-- stable exports from `src/widgets/index.ts`;
-- no hard dependency on the showcase toolbar/search/filter UI.
+## Portability
 
-Avoid:
+Reusable code must not depend on:
 
-- importing `App.tsx` state into widget modules;
-- DOM queries inside normal widget rendering;
-- theme-specific behavior hard-coded in the showcase page;
-- copying the same widget implementation six times when a small reusable primitive is truly shared.
+- `App.tsx`;
+- showcase filters/toolbars;
+- screenshot scripts;
+- application-global state.
 
-## 11. Important source areas
+React, MUI, MUI Icons and Emotion are package peer dependencies.
+
+## Public/private source boundary
+
+Reusable:
 
 ```text
+src/library/
 src/widgets/
-├── core/
-│   ├── WidgetCard.tsx
-│   ├── WidgetFrame.tsx
-│   ├── themeTokens.ts
-│   └── types.ts
-├── data/
-│   └── mockData.ts
-├── renderers/
-│   └── WidgetVisuals.tsx
-├── themes/
-│   └── MaterialVisuals.tsx   # Material is already being separated
-├── registry.ts
-└── index.ts
 ```
 
-Long-term target: each theme should have isolated theme-specific composition/rendering files so parallel work and reuse do not require modifying one huge shared renderer.
+Showcase/QA only:
 
-## 12. Current state
+```text
+src/App.tsx
+src/components/
+src/styles.css
+scripts/
+```
 
-- Material has been renamed visually to **Material 3** while keeping ID `material`.
-- Material has undergone several screenshot-driven layout/quality passes and already has a dedicated `MaterialVisuals.tsx`.
-- Material still needs final review/polish before being considered complete.
-- Flat, Minimal, Gaming/HUD, iOS/Cupertino, and Glass/Aurora should receive the same screenshot-driven treatment in parallel.
-- Visual QA tooling can render every widget in every supported size and capture full-page/theme/category screenshots.
+## Internal compatibility bridge
 
+Theme renderers historically read runtime examples from `WidgetDefinition.mock`. The public `IoTWidget` API hides that implementation detail by cloning the definition and merging `data`/`metadata` at render time.
+
+The registry is never mutated.

@@ -1,141 +1,53 @@
-# IoT Widget Studio — TODO / Theme Work Board
+# Project Work Board
 
-## Status legend
+## Completed architecture
 
-- `[ ]` not started
-- `[~]` in progress
-- `[x]` implementation pass complete
-- `[R]` waiting for screenshot/review
+- [x] registry-driven widget definitions
+- [x] stable six-theme ID contract
+- [x] dedicated renderer module for every built-in theme
+- [x] thin theme renderer dispatcher
+- [x] adaptive supported-size rendering
+- [x] English/Persian support
+- [x] per-widget/all-size screenshot QA
+- [x] full-page screenshot QA
+- [x] public reusable `IoTWidget` wrapper
+- [x] per-instance theme selection
+- [x] per-instance runtime data/metadata merge
+- [x] per-instance theme token overrides
+- [x] package peer dependency model
+- [x] ESM library build with TypeScript declarations
+- [x] Git/tarball/npm distribution documentation
 
-## A. Theme work
+## Theme status
 
-### Material 3 — ID `material`
+All six themes are present as dedicated renderers in the current integrated source.
 
-- [x] separate Material visual renderer from generic renderer
-- [x] reduce clipping/overlap problems
-- [x] improve adaptive `1x1`, `2x1`, `1x2`, `2x2` behavior
-- [x] improve gauges, battery, signal, tank, status widgets
-- [x] improve controls and large-size context
-- [x] improve map/coordinates/compass/SCADA composition
-- [x] improve tables/display widgets
-- [R] review latest screenshot set after Material patch v4
-- [ ] final Material polish pass
-- [ ] freeze Material theme as reference-quality baseline
+Material 3 has undergone extensive EN/FA screenshot-driven QA and is the reference baseline.
 
-### Industrial Flat — ID `flat`
+Other theme implementations should retain their own QA evidence/review status; do not infer final design approval solely from successful compilation.
 
-- [ ] web/design research
-- [ ] make visual language genuinely flat/industrial, not Material with teal colors
-- [ ] establish rectangular/block hierarchy and restrained rounding
-- [ ] redesign metric/gauge/tank/battery/signal visuals
-- [ ] redesign controls
-- [ ] redesign charts/history
-- [ ] redesign location
-- [ ] redesign tables/events
-- [ ] redesign display/custom/SCADA
-- [ ] all-size screenshot QA
-- [ ] Persian/English QA
-- [ ] coordinator review
+## Next production-oriented work
 
-### Minimal Mono — ID `minimal`
+- [ ] define a semantic control command/RPC event model above the current low-level `onInteraction` hook
+- [ ] replace the internal historical `WidgetDefinition.mock` runtime bridge in a future major version
+- [ ] accessibility audit: keyboard, screen reader, contrast, focus, reduced motion
+- [ ] add unit tests for catalog/public helpers
+- [ ] add component tests for `IoTWidget` data/theme switching
+- [ ] add image-diff regression snapshots after all theme designs are frozen
+- [ ] decide package license/repository metadata before public npm publishing
+- [ ] consider a formal external custom-theme plugin API if third parties need seventh/eighth themes without central type edits
 
-- [ ] web/design research
-- [ ] typography/data-first composition
-- [ ] remove unnecessary boxes/chips/decorations
-- [ ] use lines/scales/spacing intentionally
-- [ ] ensure minimal does not mean empty
-- [ ] redesign controls without sacrificing affordance
-- [ ] all-size screenshot QA
-- [ ] Persian/English QA
-- [ ] coordinator review
+## Potential widget expansion
 
-### HUD / Cyber — ID `gaming`
+Only add a new widget when it represents genuinely new IoT behavior rather than another label/unit variant.
 
-- [ ] web/design research focused on telemetry/HUD, not generic gaming RGB
-- [ ] refine geometry, segmented meters, status codes, scan/grid details
-- [ ] avoid unreadable neon overload
-- [ ] redesign gauges/charts/state history to fit HUD language
-- [ ] redesign controls to feel operational
-- [ ] all-size screenshot QA
-- [ ] Persian/English QA
-- [ ] coordinator review
+Candidates:
 
-### Cupertino — ID `ios`
-
-- [ ] web/design research using modern Apple widget/smart-home principles
-- [ ] glanceable small-size tiles
-- [ ] large sizes add context, not scaled-up content
-- [ ] use restrained soft materials and system-like controls
-- [ ] avoid excessive giant corner radii
-- [ ] do not copy Apple proprietary UI pixel-for-pixel
-- [ ] all-size screenshot QA
-- [ ] Persian/English QA
-- [ ] coordinator review
-
-### Aurora Glass — ID `glass`
-
-- [ ] web/design research for modern glass/translucent dashboard UI
-- [ ] make hierarchy survive transparent surfaces
-- [ ] control glow/blur so values stay readable
-- [ ] distinct gauges/charts/controls, not Material under transparency
-- [ ] test light/dark/complex backgrounds
-- [ ] all-size screenshot QA
-- [ ] Persian/English QA
-- [ ] coordinator review
-
-## B. Architecture / portability
-
-- [ ] move every theme toward dedicated renderer modules under `src/widgets/themes/`
-- [ ] consider extracting theme-specific frames to dedicated modules
-- [ ] make shared dispatcher thin and stable
-- [ ] keep theme IDs stable
-- [ ] review public exports from `src/widgets/index.ts`
-- [ ] define a clean external `WidgetRenderer` API for another dashboard project
-- [ ] remove showcase-only assumptions from widget modules
-- [ ] document widget instance JSON shape
-- [ ] document datasource/binding interface for real telemetry
-- [ ] document control callbacks / RPC abstraction
-- [ ] verify no theme requires application-global state
-
-## C. Widget coverage
-
-- [ ] review registry for missing common IoT widgets after theme work stabilizes
-- [ ] consider dedicated thermometer variant
-- [ ] consider ring gauge / radial progress variants
-- [ ] consider occupancy / people count
-- [ ] consider door/window contact state
-- [ ] consider motion/PIR
-- [ ] consider GPS speed/fleet summary
-- [ ] consider solar/inverter/power-flow
-- [ ] consider pump/valve/motor industrial controls
-- [ ] consider PTZ camera control
-- [ ] consider connectivity quality (Wi-Fi/LTE/Ethernet) composite
-- [ ] consider alarm acknowledgement widget
-- [ ] avoid adding widgets that are only duplicates with different labels
-
-## D. Visual QA
-
-- [x] Playwright screenshot generation exists
-- [x] custom Chrome executable path supported for restricted download environments
-- [x] full-page theme/category screenshots available
-- [ ] keep per-widget/all-size screenshot workflow reliable
-- [ ] keep overflow diagnostics reliable
-- [ ] add an easy command for Persian screenshot pass
-- [ ] optionally add viewport presets for laptop/desktop/mobile QA
-- [ ] eventually add image-diff regression snapshots once designs stabilize
-
-## E. Final integration
-
-When all themes have passed their individual review:
-
-- [ ] merge parallel theme patches through coordinator
-- [ ] resolve shared dispatcher/frame/token integration once
-- [ ] run TypeScript build
-- [ ] run all six themes screenshot QA
-- [ ] run English + Persian smoke test
-- [ ] verify right-click size selector
-- [ ] verify info dialog
-- [ ] verify all interactive controls
-- [ ] package reusable widget library portion separately from showcase application
-- [ ] update main README with final theme names and embedding instructions
-
+- occupancy / people count
+- door/window contact
+- motion/PIR
+- solar/inverter/power-flow
+- pump/valve/motor controls
+- PTZ camera control
+- composite Wi-Fi/LTE/Ethernet connectivity
+- alarm acknowledgement

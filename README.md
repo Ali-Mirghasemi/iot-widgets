@@ -1,123 +1,312 @@
-# IoT Widget Studio v3
+# IoT Widget Studio React
 
-React + TypeScript + MUI showcase for a modular IoT widget library.
+Reusable **React + TypeScript + MUI** IoT widget library plus a visual showcase/QA application.
 
-## Why v3 is different
+The library currently contains **63 widget definitions**, **6 visual themes**, adaptive grid sizes, English/Persian support, and screenshot-based visual QA.
 
-The first versions treated a theme mostly as a color/token preset. v3 changes the architecture: each theme has its own **widget composition system**.
+## What this repository contains
 
-The six themes now differ in:
+There are two layers in the same repository:
 
-- card/frame geometry
-- header placement and device metadata treatment
-- icon treatment
-- status indicator design
-- value hierarchy
-- gauge design
-- battery design
-- switch/control design
-- RGB interaction styling
-- small-vs-large widget composition
-- shadows/materials/borders/padding
+1. **Reusable library** — import widgets into another React application.
+2. **Showcase / QA app** — browse every widget/theme/size and generate regression screenshots.
 
-### Theme design directions
+The reusable entry point is:
 
-- **Material** — elevated M3-style cards, tonal icon containers, rounded KPI presentation.
-- **Flat** — blocky geometry, solid side/header bands, rectangular gauges and controls.
-- **Minimal** — typography-first, monochrome, hairlines, almost no decoration.
-- **Gaming / HUD** — dark cyber interface, clipped corners, segmented meters, scan lines, neon telemetry.
-- **iOS** — glanceable rounded tiles, soft materials, compact controls, ring visualizations.
-- **Glass** — translucent surfaces, blurred layers, luminous gradients and floating telemetry.
+```ts
+import { IoTWidget } from 'iot-widget-studio-react';
+```
 
-## Adaptive widget sizes
+The showcase application (`src/App.tsx`) is not required by consuming projects.
 
-Widgets don't just stretch. `1x1`, `2x1`, `2x2`, etc. change the amount and type of information shown.
+## Themes
 
-Example for a temperature/metric widget:
+Stable theme IDs are intentionally separate from display names:
 
-- `1x1`: current value + state/trend
-- `2x1`: current value + scale / short trend visualization
-- `2x2`: current value + min/avg/max or richer trend chart
+| Stable ID | Display name |
+|---|---|
+| `material` | Material 3 |
+| `flat` | Industrial Flat |
+| `minimal` | Minimal Mono |
+| `gaming` | HUD / Cyber |
+| `ios` | Cupertino |
+| `glass` | Aurora Glass |
 
-The same approach is used for battery, gauges, controls and other widgets.
+The stable IDs are suitable for saved dashboard JSON and should not be renamed casually.
 
-## New safety / IoT examples
+## Quick start in another React project
 
-The registry now also includes examples such as:
+Install the library package plus its peer dependencies:
 
-- Fire Alarm
-- Smoke Detector
-- Water Leak
-- Siren / Beacon
-- Fan Speed Control
+```bash
+npm install ./iot-widget-studio-react-0.4.0.tgz
+npm install react react-dom @mui/material @mui/icons-material @emotion/react @emotion/styled
+```
 
-These demonstrate icon-led, state-first IoT widgets rather than forcing every device into a numeric KPI card.
+Then render a widget inside a container with a real width and height:
 
-## Run
+```tsx
+import { IoTWidget } from 'iot-widget-studio-react';
+
+export function BatteryTile() {
+  return (
+    <div style={{ width: 320, height: 228 }}>
+      <IoTWidget
+        widgetId="battery"
+        themeId="material"
+        size="1x1"
+        locale="en"
+        data={{
+          value: 76,
+          voltage: '3.94 V',
+          remaining: '8h 42m',
+        }}
+        metadata={{
+          deviceName: 'Tracker · TR-18',
+          locationLabel: 'Fleet',
+          status: 'Live',
+          lastSeen: '12 sec ago',
+        }}
+      />
+    </div>
+  );
+}
+```
+
+## Per-widget themes
+
+**Yes — theme selection is per widget instance.** You can render one Battery widget as Cupertino and another widget as Material 3 on the same dashboard:
+
+```tsx
+<IoTWidget widgetId="battery" themeId="ios" size="1x1" />
+<IoTWidget widgetId="temperature" themeId="material" size="2x1" />
+<IoTWidget widgetId="map" themeId="glass" size="3x2" />
+```
+
+Changing only the battery theme is just changing that instance's `themeId`:
+
+```tsx
+<IoTWidget
+  widgetId="battery"
+  themeId={batteryTheme}
+  size="1x1"
+/>
+```
+
+The showcase page currently has a global theme selector because it is designed for comparing a complete theme family, but the underlying widget architecture and the new `IoTWidget` public API do **not** require one global theme.
+
+You can also apply per-instance token overrides:
+
+```tsx
+<IoTWidget
+  widgetId="battery"
+  themeId="material"
+  themeOverrides={{ accent: '#7c3aed', radius: 10 }}
+/>
+```
+
+Token overrides are intentionally limited: each theme renderer owns its structural design and some theme-specific fixed colors. Use a different `themeId` when you want a genuinely different composition system.
+
+## Adaptive size behavior
+
+Sizes are `width × height` grid units:
+
+```text
+1x1  1x2  2x1  2x2  1x3  3x1  2x3  3x2  3x3
+```
+
+A resize is not just CSS scaling. Renderers may add/remove charts, secondary values, history, controls, or metadata depending on size.
+
+Always use a size listed in the widget definition's `supportedSizes`.
+
+## Runtime data
+
+`IoTWidget` merges runtime `data` over the registry's demo values:
+
+```tsx
+<IoTWidget
+  widgetId="temperature"
+  themeId="flat"
+  size="2x1"
+  data={{
+    value: 23.7,
+    unit: '°C',
+    trend: -1.2,
+    values: [23.1, 23.4, 23.8, 23.6, 23.7],
+  }}
+/>
+```
+
+This lets the showcase keep useful demo data while production projects inject live telemetry without rewriting the registry.
+
+## Persian / RTL
+
+```tsx
+<IoTWidget
+  widgetId="battery"
+  themeId="material"
+  locale="fa"
+  metadata={{
+    deviceNameFa: 'ردیاب · ۱۸',
+    locationLabelFa: 'ناوگان',
+    statusFa: 'زنده',
+    lastSeenFa: '۱۲ ثانیه قبل',
+  }}
+/>
+```
+
+The widget definitions decide whether a body should be LTR, RTL, or automatic. Numeric telemetry, charts, coordinates and technical identifiers can remain LTR even inside a Persian dashboard.
+
+## Interaction hook
+
+Controls keep their local interactive preview behavior. The reusable wrapper also exposes a low-level interaction hook for integration/analytics:
+
+```tsx
+<IoTWidget
+  widgetId="fan-control"
+  themeId="material"
+  onInteraction={event => {
+    console.log(event);
+    // Bridge this to your RPC/downlink layer if appropriate.
+  }}
+/>
+```
+
+The hook reports click/change events and best-effort control/value information. It is **not yet a semantic RPC protocol**; production command mapping should remain in your application/service layer.
+
+## Public API
+
+The package root exports:
+
+```ts
+IoTWidget
+WidgetCard
+WidgetFrame
+WidgetVisualRenderer
+
+widgetRegistry
+widgetsById
+widgetCategories
+widgetThemes
+widgetThemeList
+visualRenderers
+
+getWidgetDefinition()
+requireWidgetDefinition()
+getWidgetTheme()
+```
+
+and the public TypeScript types for widgets, themes, runtime data, metadata and instance configuration.
+
+## Build the library
+
+```bash
+npm install
+npm run build:lib
+```
+
+This creates an ESM package in `dist/` with JavaScript, source maps and TypeScript declarations.
+
+Create an installable `.tgz`:
+
+```bash
+npm run pack:lib
+```
+
+Then install that tarball in another project:
+
+```bash
+npm install ../iot-widget-studio-react-0.4.0.tgz
+```
+
+## Run the showcase
 
 ```bash
 npm install
 npm run dev
 ```
 
-Build:
+Build the showcase and library:
 
 ```bash
 npm run build
 ```
 
-## Architecture
+## Git installation
 
-```text
-src/widgets/
-  core/
-    WidgetCard.tsx       # state + info dialog
-    WidgetFrame.tsx      # six completely different theme shells
-    themeTokens.ts       # palette/material tokens
-    types.ts
-  renderers/
-    WidgetVisuals.tsx    # adaptive visualizations and interactive controls
-  registry.ts            # widget definitions + metadata
-```
-
-The renderer receives `theme`, `widget type`, and `size`, so you can later embed the same registry into another dashboard builder and select a theme per widget instance.
-
-## Visual QA screenshots
-
-The showcase includes a deterministic QA page and a Playwright capture script. It renders every widget in every supported size and captures all six themes by category.
-
-First-time setup:
+If `dist/` is committed in the Git repository, another project can install a tagged revision directly:
 
 ```bash
-npm install
-npm run screenshots:install
+npm install git+https://github.com/YOUR_ORG/YOUR_REPO.git#v0.4.0
 ```
 
-Generate the complete screenshot set:
+or:
+
+```bash
+npm install github:YOUR_ORG/YOUR_REPO#v0.4.0
+```
+
+See [docs/installation.md](docs/installation.md) before publishing or consuming from Git.
+
+## Documentation
+
+- [Documentation index](docs/README.md)
+- [Installation and distribution](docs/installation.md)
+- [Library usage](docs/usage.md)
+- [Architecture](docs/architecture.md)
+- [Current codebase review](docs/code-review.md)
+- [Runtime data model](docs/data-model.md)
+- [Widget catalog](docs/widget-catalog.md)
+- [Themes](docs/themes.md)
+- [Customization and extension](docs/customization.md)
+- [English / Persian / RTL](docs/rtl-i18n.md)
+- [Visual QA](docs/qa.md)
+- [Publishing](docs/publishing.md)
+- [Release checklist](docs/release-checklist.md)
+- [Known limitations](docs/known-limitations.md)
+- [FAQ](docs/faq.md)
+
+## Screenshot QA
+
+The repository contains deterministic Playwright screenshot tooling.
 
 ```bash
 npm run screenshots
+npm run screenshots:full
 ```
 
-Output is written to `widget-screenshots/`:
-
-- `material/*.png`, `flat/*.png`, `minimal/*.png`, `gaming/*.png`, `ios/*.png`, `glass/*.png` — full category sheets
-- `<theme>/widgets/<category>/<widget-id>.png` — one image per widget containing every supported size
-- `report.json` with card/body overflow diagnostics
-- `SUMMARY.txt` with capture counts and suspect counts
-
-Optional targeted runs:
-
-```bash
-WIDGET_QA_THEME=ios WIDGET_QA_CATEGORY=metrics npm run screenshots
-```
-
-PowerShell equivalent:
+A Windows helper can run EN + FA QA for selected themes:
 
 ```powershell
-$env:WIDGET_QA_THEME="ios"; $env:WIDGET_QA_CATEGORY="metrics"; npm run screenshots
+.\scripts\widget-qa.ps1 material
 ```
 
-### Resizing widgets in the showcase
+See [docs/qa.md](docs/qa.md).
 
-The resize-cycle icon was removed. Right-click a widget and choose one of its supported sizes from the context menu. The info button remains separate.
+## Repository structure
+
+```text
+src/
+├── library/                 # public package wrapper/API
+│   ├── IoTWidget.tsx
+│   ├── catalog.ts
+│   ├── index.ts
+│   └── types.ts
+├── widgets/
+│   ├── core/                # definitions, frame, tokens, showcase card
+│   ├── data/                # demo telemetry
+│   ├── renderers/           # thin built-in theme dispatcher
+│   ├── themes/              # independent theme renderers/frames
+│   ├── registry.ts          # widget catalog
+│   └── index.ts
+├── App.tsx                  # showcase / QA app only
+└── ...
+```
+
+## Important distinction: package vs showcase
+
+Use **`IoTWidget`** in a production/host application.
+
+Use **`WidgetCard`** when you specifically want the showcase-style right-click size menu and built-in info dialog.
+
+Do not import `App.tsx`, `ShowcaseToolbar`, screenshot scripts, or showcase CSS into another dashboard project unless you actually need the demo application.

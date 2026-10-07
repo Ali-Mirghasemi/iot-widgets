@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "stripInternal": true
+  },
+  "include": [
+    "src/library/**/*.ts",
+    "src/library/**/*.tsx",
+    "src/widgets/**/*.ts",
+    "src/widgets/**/*.tsx"
+  ]
+}
