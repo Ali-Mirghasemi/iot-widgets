@@ -31,7 +31,7 @@ export const widgetThemes: Record<WidgetThemeId, WidgetThemeTokens> = {
   },
   minimal: {
     id: 'minimal',
-    label: 'Minimal',
+    label: 'Minimal Mono',
     background: '#f7f7f8',
     surface: '#ffffff',
     foreground: '#111827',
