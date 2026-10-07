@@ -1,90 +1,57 @@
-# HUD / Cyber (`gaming`) theme notes — screenshot review pass 2
+# Industrial Flat — Theme Notes
 
-## Scope
-
-This patch changes only the `gaming` theme implementation. Stable theme ID and widget IDs are unchanged. Material 3 and all other themes are untouched.
-
-Theme-owned implementation:
-
-- `src/widgets/themes/GamingVisuals.tsx`
-
-The file exports both `GamingVisualRenderer` and `GamingFrame`. Shared dispatcher/frame wiring remains intentionally outside the patch and is documented in `INTEGRATION.md` for parallel-safe merging.
+- Stable theme ID: `flat`
+- Working/display name: **Industrial Flat**
+- Scope: theme-local visual renderer only. Material 3 and every other theme are untouched.
 
 ## Design direction
 
-The theme is an operational telemetry/HUD interface rather than a generic dark/neon card set:
+Industrial Flat is intentionally closer to a compact operator/HMI surface than a consumer dashboard. The renderer uses hard rectangular zones, thin borders, neutral process surfaces, dense numeric hierarchy, square segmented indicators, setpoint/deviation scales, orthogonal schematics, and restrained rounding. Saturated color is reserved for state and exception meaning rather than decoration.
 
-- angular instrument-frame geometry;
-- restrained cyan for live telemetry, green for healthy/confirmed state, amber for caution, red for critical state;
-- machine IDs, state codes, segmented rails, scan/grid details and tabular numeric readouts;
-- size-specific composition rather than scale-only resizing;
-- semantic visuals for battery, RF signal, tank level, alarm loops, GPS, heading, state history and SCADA.
+References reviewed include ISA-101 / high-performance HMI guidance, current Ignition Perspective material, and Siemens HMI Template Suite patterns. The useful principles are responsive composition, neutral normal-state surfaces, report-by-exception color, compact trend/context beside live values, explicit setpoint/feedback treatment, and semantic process graphics instead of generic KPI cards.
 
-Reference direction included NASA Open MCT telemetry/mission-control patterns and Grafana state timeline/status-history conventions. The implementation is original and does not copy a proprietary interface pixel-for-pixel.
+## Screenshot-driven QA pass 2
 
-## Pass-2 changes from the uploaded real screenshots
+The supplied `full-screenshots(9).zip` was reviewed category by category: metrics, controls, charts, location, tables, and display.
 
-The uploaded `full-screenshots(10).zip` was inspected across metrics, controls, charts, location, tables and display. It confirmed the base theme was clean, but exposed several large-size cards that still behaved too much like centered `1x1` widgets.
+The first Industrial Flat pass was already structurally clean: no obvious content escaped widget bounds, maps/tables/SCADA scaled well, compact metrics were readable, charts maintained their plotting area, and controls had clear active/inactive states.
 
-This pass specifically improves those cases:
+The second pass focuses on the remaining large-card dead-space issues visible in the real screenshots:
 
-- **Device Status 2x2:** larger semantic state target, readiness rail, uptime/fault/mode context and recent state trace.
-- **Gauge 2x2:** larger instrument face plus a full-height operational side column and history trace.
-- **Donut 2x2:** larger utilization ring, capacity stats, segmented utilization rail and trend history.
-- **Fire / Smoke / Leak 2x2:** larger alarm annunciator, zone/loop/test context, severity rail and event trace instead of large unused space.
-- **Command Button 2x2:** command-channel header, larger execution surface, target/timeout/ack metadata and mock response bus.
-- **Switch / Relay / Door Lock / Siren 2x2:** explicit energized/isolated state, larger toggle surface, coil/feedback data and output history.
-- **Manual Set Value 2x2:** larger editable setpoint register, range rail, validation, previous value/deadband/source context.
-- **Directional Control 2x2:** larger PTZ/motion pad plus pan/tilt/slew telemetry and mode feedback.
-- **Coordinates 2x2:** dedicated WGS84 latitude/longitude readouts plus GPS lock/HDOP reticle and satellite context.
-- **Compass 2x2:** larger compass face with course/drift metadata and heading rail.
-- **Clock 2x2:** large HH:MM:SS display with NTP lock, timezone, offset and drift data.
-- **Text / Markdown 2x2:** larger readable summary plus source/age/priority context.
-- **iFrame / External Content 2x2:** actual sandbox/container composition with connection/origin/latency/TLS state rather than a tiny centered label.
+- **Battery 2x2** now uses a dedicated equipment panel with a large pack diagram, 10-segment charge strip, state flag, and four operational readouts.
+- **Cellular Signal 2x2** now uses the full card with a large signal instrument field, quality strip, serving-cell context, and RSRQ/SINR/cell/RAT metadata.
+- **Fire / Smoke / Water Leak 2x2** now use a two-column alarm instrument layout with icon field, full alarm message, supervision/status strip, and four bottom readouts instead of a tall empty middle region.
+- **Coordinates 2x2** now fills the lower section with GNSS fix quality, satellite segments, and motion/navigation metadata.
+- **Compass 2x2** now uses a larger square instrument plate, bearing/status context, sector indication, and accuracy metadata.
+- **Directional Control 2x2** now uses a larger control pad beside explicit command feedback, jog state, pulse timing, and interlock information.
+- **Clock 2x2** now adds minute progress, UTC/sync instrument fields, stratum, and drift instead of leaving the center mostly empty.
+- **Text / Markdown 2x2** now adds a small operations-status matrix for environment, cooling, and access plus the original sensor/update/alarm summary.
 
-## Responsive behavior
+Layouts that already looked strong in the supplied screenshots were intentionally left alone: metric/gauge trends, tank/soil level compositions, maps/routes, chart families, fleet tables, camera view, iframe mock, and SCADA process schematic.
 
-- `1x1`: glanceable primary state/value.
-- `2x1` / `3x1`: secondary state, trend, rail or compact metadata.
-- `1x2`: intentional vertical composition where the registry supports it.
-- `2x2+`: history, state traces, metadata, process context, richer control feedback or larger semantic geometry.
+## Interactive behavior
 
-Large cards are not intended to be scaled-up small cards; they now expose additional operational information.
+Mock controls remain local and reusable:
 
-## Mock interactions
+- command button shows temporary sent feedback;
+- switches/lock/siren change state;
+- sliders and fan speed update values/history;
+- manual set value can be edited and applied;
+- thermostat changes target;
+- RGB/light color changes swatch and brightness;
+- directional control highlights and reports the last command.
 
-Local mock interaction remains theme-local and reusable:
+## Locale / portability
 
-- command button: Ready → Queued → Acknowledged → Ready;
-- boolean/device state: local toggle;
-- relay/lock/siren: local ON/OFF toggle;
-- slider/fan level: editable target;
-- manual setpoint: editable local field;
-- thermostat: local setpoint slider;
-- RGB control: preview/on-off, hue presets/slider and large-size brightness;
-- directional control: selected command plus motion-vector feedback.
+Persian remains supported for user-facing labels while numeric, chart, coordinate, process, and control instrumentation stays LTR where that improves readability. The renderer receives all required state through its props and local mock state; it does not import showcase/App state.
 
-## English / Persian
+## Validation
 
-Persian titles/help remain RTL while machine identifiers, numeric telemetry, coordinates, units, charts, timestamps and SCADA notation stay LTR where technically clearer. The new large-size layouts keep this same separation.
+- Read `docs/profile.md`, `docs/agents.md`, and `docs/todo.md` completely before this QA edit.
+- Reviewed the user-supplied post-patch full screenshots for all six categories.
+- Ran an isolated strict TypeScript check for the updated `FlatVisuals.tsx`; it passes.
+- No shared file was edited for this patch.
 
-## QA status
+## Remaining QA
 
-Completed in this pass:
-
-- inspected the user-generated **real full-page gaming screenshots** for all six categories;
-- specifically reviewed all visible supported size variants and identified large-card dead-space issues;
-- TypeScript/TSX syntax transpile check on the updated `GamingVisuals.tsx`: **0 parse diagnostics**;
-- no shared source files are included in this patch.
-
-The requested local screenshot commands were attempted again, but this sandbox copy has empty/stripped `node_modules` package directories and no `playwright/index.js`, so both runners stop before rendering:
-
-```powershell
-$env:WIDGET_QA_THEME="gaming"
-npm run screenshots:full
-
-$env:WIDGET_QA_THEME="gaming"
-npm run screenshots
-```
-
-After applying this v2 patch, please rerun those commands in the normal project environment. The uploaded screenshot set was the basis for this second-pass correction, but the newly changed large compositions still need one final real MUI/Playwright screenshot review after merge.
+Run a fresh `flat` screenshot pass after replacing `FlatVisuals.tsx` so the second-pass 2x2 compositions can be checked in the project's actual browser/font environment. This sandbox still cannot repair the incomplete local Playwright/npm installation, so the updated screenshots cannot be regenerated here.
