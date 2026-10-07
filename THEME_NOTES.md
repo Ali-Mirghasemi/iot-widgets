@@ -1,119 +1,105 @@
-# HUD / Cyber (`gaming`) theme notes — QA screenshot pass 4
+# Minimal Mono — Theme Notes
 
-## Scope
+Stable theme ID: `minimal`
 
-This patch changes only the dedicated `gaming` theme implementation. Stable theme ID and widget IDs are unchanged. Material 3 and every other theme remain untouched.
+## Design direction
 
-Theme-owned implementation:
+This pass turns Minimal Mono into a typography/data-first instrumentation language rather than a lightly recolored Material card set.
 
-- `src/widgets/themes/GamingVisuals.tsx`
+Core rules used in the renderer:
 
-Both named exports are present:
+- primary value/state gets the strongest contrast and largest type;
+- context is carried by hairlines, tick marks, small labels, and tabular numerals instead of chips/pills;
+- nested cards are avoided;
+- large widgets disclose more history/metadata instead of scaling up the 1x1 layout;
+- charts use restrained monochrome geometry and consistent baselines;
+- table/event widgets use actual compact table structure instead of rounded row cards;
+- battery, signal, tank, compass, alarms, maps, and SCADA use semantic visual forms;
+- semantic warning/error color is used sparingly; the RGB control keeps real color because color itself is the controlled value.
 
-```tsx
-export function GamingVisualRenderer(...) { ... }
-export function GamingFrame(...) { ... }
-```
+## Research references used
 
-## QA bundle reviewed
+The design pass was informed by current dashboard/data-visualization guidance, especially:
 
-Reviewed the user-generated `gaming-qa.zip` bundle in both locales:
+- Carbon Design System dashboard guidance: strong hierarchy, limit non-essential metrics, use white space intentionally, and keep chart layout consistent.
+  https://www.carbondesignsystem.com/building-blocks/data-visualization/dashboards
+- Carbon data-table guidance: compact aligned rows, clear column structure, and reduced decorative treatment.
+  https://www.carbondesignsystem.com/building-blocks/core/components/data-table/guidelines
+- Carbon axes/labels guidance: keep comparisons honest and make scales/labels provide context rather than decoration.
+  https://www.carbondesignsystem.com/building-blocks/data-visualization/axes-and-labels
+- Grafana dashboard guidance: design around the operator's question and surface actionable telemetry first.
+  https://grafana.com/blog/getting-started-with-grafana-best-practices-to-design-your-first-dashboard/
 
-- English (`en`)
-- Persian / RTL (`fa`)
+These were used as principles only; the implementation is original and does not copy a proprietary dashboard pixel-for-pixel.
 
-The bundle reports:
+## Coverage
 
-- widget screenshots: PASS
-- full screenshots: PASS
+`MinimalVisuals.tsx` provides Minimal-specific rendering for every current visual used by the registry:
+
+- metrics / sensors: metric, gauge, battery, signal, tank, boolean state, fire/smoke/leak alarm indicators;
+- controls: button/downlink, switch/relay/lock/siren, slider/fan, manual input, thermostat, RGB, directional control;
+- charts: line, area, bar, histogram, donut, heatmap, state/status timeline;
+- location: map, route/track, coordinates, compass;
+- tables/events: device table, measurement list, alarms, events, logs;
+- display/custom: clock, text, image/camera, iframe placeholder, SCADA/mimic.
+
+## Responsive composition
+
+- `1x1`: core value/state with a compact semantic indicator or control.
+- `2x1` / wide: split value and trend/context when useful.
+- `1x2`: vertical gauge/tank composition intentionally uses height.
+- `2x2+`: adds metadata, history, ranges, min/mean/max, operational context, or richer visualization.
+- `3x1` chart/timeline variants prioritize horizontal history instead of enlarged labels.
+
+## Mock interaction behavior
+
+The Minimal renderer maintains local mock state for:
+
+- command/downlink acknowledgement;
+- switches, relay, lock, siren;
+- sliders and fan speed;
+- manual set value;
+- thermostat +/- setpoint;
+- RGB color and brightness;
+- directional command;
+- boolean/device state.
+
+The renderer remains reusable: it receives only `def`, `theme`, `locale`, and `size`, and does not import `App.tsx` or showcase state.
+
+## Screenshot-review pass
+
+A second pass was made against the user-generated `full-screenshots` set for Minimal Mono. The review found and corrected several concrete issues:
+
+- MUI numeric sizing ambiguity on hairlines/rulers: intended 1 px dimensions now use explicit `"1px"` / `"2px"` strings so they do not expand into oversized gray bars.
+- signal quality now maps dBm into a useful quality range instead of treating a negative dBm value as a direct percentage; e.g. `-72 dBm` no longer collapses to `0%`.
+- large metric/chart/alarm/timeline/location compositions use more of the available canvas and expose extra operational context rather than simply enlarging the compact layout.
+- large tables now distribute rows through the available height and add a compact dataset/status footer instead of leaving most of a 2x2 panel empty.
+- the large clock now adds seconds, NTP/sync/drift context, and stronger scale hierarchy.
+- the large text/markdown panel now uses a deliberate note layout with review/source/status metadata instead of an empty lower half.
+
+## QA status
+
+The later `minimal-qa.zip` bundle was reviewed in both locales. Its manifest reports:
+
+- English widget QA: PASS
+- English full-page QA: PASS
+- Persian widget QA: PASS
+- Persian full-page QA: PASS
 - console/page errors: 0
-- render errors: 0
+- renderer errors: 0
 
-All six categories were visually inspected:
+The raw overflow detector still reported many suspects even when the screenshots were visually correct. Inspection of the diagnostic rectangles showed that most were browser scroll-metric artifacts caused by sub-1 numeric line heights or inline SVG baselines rather than card/body overflow. There were also a few real/structural cases: the 2x1 directional control's lower arrow touched the body boundary, and decorative details such as the battery terminal, compass arrow tip, and RGB marker intentionally extended beyond their own element boxes.
 
-- metrics
-- controls
-- charts
-- location
-- tables
-- display
+This v3 follow-up addresses those causes directly:
 
-The individual widget sheets were also checked, especially variants flagged by the automated overflow heuristic.
+- numeric/state typography now keeps its glyph metrics inside the line box;
+- reusable sparkline/map/camera/SCADA SVGs are block-level so they do not add the HTML inline-SVG baseline;
+- bordered 100%-height visuals use border-box sizing;
+- battery terminal stays inside the battery visual's declared bounds and the 2x2 battery uses more available width;
+- the compass needle is an in-bounds SVG rather than nested rotated boxes;
+- the RGB position marker remains inside its preview strip;
+- the non-large directional pad is slightly more compact so the 2x1 down arrow/footer cannot clip.
 
-## Pass-4 fixes
+A strict isolated TypeScript check passes for the v3 renderer using temporary React/MUI type stubs. Local screenshot re-generation in this sandbox is still blocked because `playwright` is not installed in the project copy.
 
-### 1. Generic metric `2x1` clipping
-
-The real screenshots exposed a repeated problem in the generic metric renderer:
-
-- the `2x1` history composition was slightly taller than the available frame body;
-- bottom history-axis labels (`00 / 12 / NOW`) were clipped;
-- the QA diagnostic therefore marked the same `2x1` pattern as outside/body-overflow for multiple metric widgets.
-
-Affected widgets included temperature, humidity, voltage, current, power, energy, light, CO₂, PM2.5, flow, vibration, noise, distance, weight, rain, and other widgets sharing the generic metric visual.
-
-The `2x1` composition now has its own compact-wide layout:
-
-- smaller primary readout;
-- tighter status/delta row;
-- explicitly constrained chart region;
-- dedicated 8 px history-axis row;
-- internal overflow containment rather than relying on clipping at the frame boundary.
-
-`1x1` and `2x2` metric compositions are unchanged.
-
-### 2. Directional Control `2x1` clipping
-
-The real `2x1` Directional Control screenshot showed the bottom D-pad button extending into the frame boundary and being clipped.
-
-The `2x1` composition is now structurally different:
-
-- 108 px D-pad on the left;
-- motion speed, last command, and mode on the right;
-- no bottom control extends beyond the body;
-- all mock directional buttons remain interactive.
-
-`1x1` remains the glanceable D-pad and `2x2` remains the richer PTZ/motion-vector view.
-
-## About the QA overflow counts
-
-The automated QA report still identifies many `scrollOverflow` suspects even where the screenshot is visually correct. Most of these come from:
-
-- fractional CSS/MUI line-height rounding by 1–6 px;
-- SVG internals intentionally using visible overflow;
-- intentionally oversized radar/crosshair decoration that is clipped by its own parent;
-- MUI range/input internals.
-
-These are different from real widget/card overflow. The QA report shows `cardScrollOverflow: false` throughout the reviewed gaming captures.
-
-The two visible issues that corresponded to actual outside/clipped content were the generic metric `2x1` layout and Directional Control `2x1`; both are addressed in this pass.
-
-## RTL / Persian
-
-The Persian screenshots remain compatible:
-
-- titles and prose use RTL where appropriate;
-- coordinates, telemetry values, units, axes, gauges, and technical labels remain LTR where this improves readability;
-- the pass-4 layout changes use the same locale-safe behavior.
-
-## Validation
-
-- TypeScript/TSX transpile syntax check for `GamingVisuals.tsx`: **0 diagnostics**.
-- No shared files are included in this patch.
-- No Material 3 or other theme file was modified.
-
-After applying the patch, rerun:
-
-```powershell
-$env:WIDGET_QA_THEME="gaming"
-npm run screenshots:full
-
-$env:WIDGET_QA_THEME="gaming"
-npm run screenshots
-```
-
-For the next screenshot review, the important regression checks are:
-
-- generic metric `2x1`: bottom history labels fully visible;
-- Directional Control `2x1`: complete D-pad visible;
-- English and Persian remain aligned identically.
+Run the theme-scoped screenshot commands after applying this patch in the normal checkout with dependencies installed.
