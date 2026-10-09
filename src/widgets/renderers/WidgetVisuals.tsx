@@ -6,6 +6,7 @@ import { GlassVisualRenderer } from '../themes/GlassVisuals';
 import { IOSVisualRenderer } from '../themes/IOSVisuals';
 import { MaterialVisualRenderer } from '../themes/MaterialVisuals';
 import { MinimalVisualRenderer } from '../themes/MinimalVisuals';
+import { StudioVisualRenderer } from '../themes/StudioVisuals';
 
 export interface WidgetRendererProps {
   def: WidgetDefinition;
@@ -15,6 +16,7 @@ export interface WidgetRendererProps {
 }
 
 const visualRenderers: Record<WidgetThemeId, ComponentType<WidgetRendererProps>> = {
+  studio: StudioVisualRenderer,
   material: MaterialVisualRenderer,
   flat: FlatVisualRenderer,
   minimal: MinimalVisualRenderer,

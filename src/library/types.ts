@@ -77,6 +77,12 @@ export interface IoTWidgetProps {
    * Theme renderers intentionally own some fixed stylistic values, so this does not turn a built-in theme
    * into an arbitrary custom design system.
    */
+  /** Inherit the dashboard's palette or retain the authored palette for this one widget. */
+  colorMode?: 'inherit' | 'original';
+
+  /** Optionally offer a large-view action; the host controls the dialog. */
+  onExpand?: () => void;
+
   themeOverrides?: Partial<Omit<WidgetThemeTokens, 'id'>>;
 
   size?: WidgetSize;

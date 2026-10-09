@@ -1,3 +1,9 @@
+export { DeviceContainer } from './DeviceContainer';
+export type { DeviceContainerProps } from './DeviceContainer';
+export { DashboardGrid, settleDashboard } from './DashboardGrid';
+export type { DashboardGridProps, DashboardItem } from './DashboardGrid';
+export { WidgetThemeProvider, resolveWidgetTokens, useWidgetAppearance, useResolvedWidgetTheme } from './WidgetThemeProvider';
+export type { DashboardPalette, DashboardAppearance } from './WidgetThemeProvider';
 export { IoTWidget } from './IoTWidget';
 export {
   getWidgetDefinition,

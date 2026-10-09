@@ -12,7 +12,8 @@
     "screenshots:full": "node scripts/full-screenshots.mjs",
     "build:app": "tsc -b && vite build",
     "build:lib": "tsc -p tsconfig.lib.json",
-    "pack:lib": "npm run build:lib && npm pack"
+    "pack:lib": "npm run build:lib && npm pack",
+    "test:layout": "node scripts/test-dashboard-layout.mjs"
   },
   "devDependencies": {
     "@emotion/react": "^11.14.0",

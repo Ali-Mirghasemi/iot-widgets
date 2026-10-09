@@ -1,8 +1,9 @@
 import { useMemo, type MouseEvent as ReactMouseEvent, type FormEvent as ReactFormEvent } from 'react';
-import { Box } from '@mui/material';
+import { Box, IconButton, Tooltip } from '@mui/material';
+import OpenInFullRounded from '@mui/icons-material/OpenInFullRounded';
+import { useResolvedWidgetTheme, useWidgetAppearance } from './WidgetThemeProvider';
 import { WidgetFrame } from '../widgets/core/WidgetFrame';
 import { WidgetVisualRenderer } from '../widgets/renderers/WidgetVisuals';
-import { widgetThemes } from '../widgets/core/themeTokens';
 import { requireWidgetDefinition } from './catalog';
 import type { IoTWidgetProps, WidgetMetadata } from './types';
 
@@ -28,9 +29,11 @@ const defaultMetadata: Required<WidgetMetadata> = {
 export function IoTWidget({
   widgetId,
   definition,
-  themeId = 'material',
+  themeId,
   theme: suppliedTheme,
   themeOverrides,
+  colorMode,
+  onExpand,
   size,
   locale = 'en',
   data,
@@ -41,6 +44,8 @@ export function IoTWidget({
   className,
   style,
 }: IoTWidgetProps) {
+  const appearance = useWidgetAppearance();
+  const effectiveThemeId = themeId ?? appearance?.themeId ?? 'material';
   const baseDefinition = definition ?? requireWidgetDefinition(widgetId ?? '');
   const resolvedSize = size ?? baseDefinition.defaultSize;
 
@@ -51,7 +56,8 @@ export function IoTWidget({
     );
   }
 
-  const baseTheme = suppliedTheme ?? widgetThemes[themeId];
+  const inheritedTheme = useResolvedWidgetTheme(effectiveThemeId, colorMode);
+  const baseTheme = suppliedTheme ?? inheritedTheme;
   const resolvedTheme = useMemo(
     () => ({ ...baseTheme, ...themeOverrides, id: baseTheme.id }),
     [baseTheme, themeOverrides],
@@ -135,10 +141,11 @@ export function IoTWidget({
     onClickCapture={emitClick}
     onChangeCapture={emitChange}
     sx={[
-      { width:'100%', height:'100%', minWidth:0, minHeight:0 },
+      { width:'100%', height:'100%', minWidth:0, minHeight:0, position:'relative' },
       ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
     ]}
   >
+    {onExpand && <Tooltip title="Expand widget"><IconButton aria-label="Expand widget" onClick={event => { event.stopPropagation(); onExpand(); }} sx={{ position:'absolute', top:7, right:8, zIndex:12, width:30, height:30, bgcolor:resolvedTheme.surface, color:resolvedTheme.muted, border:`1px solid ${resolvedTheme.border}`, opacity:.92, '&:hover':{bgcolor:resolvedTheme.surface,color:resolvedTheme.accent} }}><OpenInFullRounded sx={{fontSize:15}}/></IconButton></Tooltip>}
     <WidgetFrame
       def={runtimeDefinition}
       theme={resolvedTheme}

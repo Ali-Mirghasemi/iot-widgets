@@ -1,3 +1,7 @@
+## New: editable dashboard demo (prototype)
+
+Run `npm ci && npm run dev` and open `/` for an editable multi-panel dashboard with simulated device data, Studio theme, palette inspector, drag/resize, and large widget view. Open `/?gallery=1` for the original 63-widget gallery and `/?qa=1` for screenshot testing. Read [the redesign notes](docs/DASHBOARD-REDESIGN.md) for API usage, validation status, and limitations.
+
 # IoT Widget Studio React
 
 Reusable **React + TypeScript + MUI** IoT widget library plus a visual showcase/QA application.

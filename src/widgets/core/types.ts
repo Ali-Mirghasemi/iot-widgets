@@ -1,6 +1,6 @@
 import type { SvgIconComponent } from '@mui/icons-material';
 
-export type WidgetThemeId = 'material' | 'flat' | 'minimal' | 'gaming' | 'ios' | 'glass';
+export type WidgetThemeId = 'material' | 'flat' | 'minimal' | 'gaming' | 'ios' | 'glass' | 'studio';
 export type Locale = 'en' | 'fa';
 export type WidgetSize = '1x1' | '1x2' | '2x1' | '2x2' | '1x3' | '3x1' | '2x3' | '3x2' | '3x3';
 export type WidgetCategory = 'metrics' | 'controls' | 'charts' | 'location' | 'tables' | 'display';
@@ -55,4 +55,6 @@ export interface WidgetThemeTokens {
   headerWeight: number;
   backdropFilter?: string;
   fontFamily?: string;
+  paletteMode?: 'light' | 'dark';
+  inheritPalette?: boolean;
 }

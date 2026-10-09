@@ -1,6 +1,13 @@
 import type { WidgetThemeId, WidgetThemeTokens } from './types';
 
 export const widgetThemes: Record<WidgetThemeId, WidgetThemeTokens> = {
+  studio: {
+    id: 'studio', label: 'Studio / Premium', background: '#0b1120',
+    surface: '#161e2e', foreground: '#f1f5ff', muted: '#96a5bc',
+    accent: '#7794ff', accent2: '#4bd6bd', border: '#2a354a',
+    radius: 22, shadow: '0 14px 36px rgba(0,0,0,.16)', headerWeight: 720,
+    paletteMode: 'dark',
+  },
   material: {
     id: 'material',
     label: 'Material 3',

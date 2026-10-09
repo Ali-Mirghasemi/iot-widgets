@@ -1,3 +1,4 @@
+import DemoDashboard from './demo/DemoDashboard';
 import { Component, useMemo, useState, type ErrorInfo, type ReactNode } from 'react';
 import { Box, Container, Paper, Typography } from '@mui/material';
 import WidgetsOutlined from '@mui/icons-material/WidgetsOutlined';
@@ -25,7 +26,8 @@ export default function App() {
     return <WidgetQaPage themeId={themeId} category={category} locale={localeParam} />;
   }
 
-  return <ShowcaseApp/>;
+  if (query.get('gallery') === '1') return <ShowcaseApp/>;
+  return <DemoDashboard/>;
 }
 
 function ShowcaseApp() {
@@ -50,7 +52,7 @@ function ShowcaseApp() {
         <Typography sx={{ mt:1,color:'#aab5c8',maxWidth:720,fontSize:{xs:14,md:16} }}>{t.subtitle}</Typography>
         <Box sx={{ display:'flex',gap:1.2,mt:3,flexWrap:'wrap' }}>
           <Stat icon={<WidgetsOutlined/>} value={widgetRegistry.length} label={locale==='fa'?'نوع ویجت':'widget types'} />
-          <Stat icon={<PaletteOutlined/>} value={6} label={locale==='fa'?'تم مستقل':'widget themes'} />
+          <Stat icon={<PaletteOutlined/>} value={7} label={locale==='fa'?'تم مستقل':'widget themes'} />
           <Stat icon={<GridViewOutlined/>} value={9} label={locale==='fa'?'اندازه شبکه':'grid sizes'} />
         </Box>
       </Container>

@@ -54,9 +54,10 @@ function MaterialFrame(p: WidgetFrameProps) {
     overflow: 'hidden',
     position: 'relative',
     borderRadius: '12px',
-    bgcolor: '#fff',
+    bgcolor: p.theme.surface,
+    color:p.theme.foreground,
     border: `1px solid ${p.theme.border}`,
-    boxShadow: '0 8px 24px rgba(15,23,42,.07)',
+    boxShadow: p.theme.shadow,
     display: 'flex',
     flexDirection: 'column',
     transition: 'transform .18s ease, box-shadow .18s ease, border-color .18s ease',
@@ -162,7 +163,7 @@ function MaterialFrame(p: WidgetFrameProps) {
 }
 function FlatFrame(p: WidgetFrameProps) {
   const d=dims(p.size); const Icon=p.def.icon; const title=p.locale==='fa'?p.def.titleFa:p.def.titleEn;
-  return <Box sx={{height:'100%',overflow:'hidden',position:'relative',bgcolor:'#fff',border:`1px solid ${p.theme.border}`,borderRadius:1.5,display:'grid',gridTemplateRows:d.compact?'42px 1fr':'48px 1fr 27px',boxShadow:'0 6px 16px rgba(15,118,110,.06)'}}>
+  return <Box sx={{height:'100%',overflow:'hidden',position:'relative',bgcolor:p.theme.inheritPalette?p.theme.surface:'#fff',color:p.theme.foreground,border:`1px solid ${p.theme.border}`,borderRadius:1.5,display:'grid',gridTemplateRows:d.compact?'42px 1fr':'48px 1fr 27px',boxShadow:'0 6px 16px rgba(15,118,110,.06)'}}>
     <Box sx={{display:'flex',alignItems:'stretch',borderBottom:`1px solid ${p.theme.border}`,direction:p.locale==='fa'?'rtl':'ltr'}}>
       <Box sx={{width:42,display:'grid',placeItems:'center',bgcolor:p.theme.accent,color:'#fff'}}><Icon sx={{fontSize:20}}/></Box>
       <Box sx={{flex:1,minWidth:0,px:1.05,display:'flex',alignItems:'center',justifyContent:'space-between',gap:.7}}>
@@ -171,13 +172,13 @@ function FlatFrame(p: WidgetFrameProps) {
       </Box>
     </Box>
     <Box sx={{minHeight:0,p:1.35,overflow:'hidden'}}>{p.children}</Box>
-    {!d.compact&&<Box sx={{px:1.2,display:'flex',alignItems:'center',justifyContent:'space-between',bgcolor:'#f7faf9',borderTop:`1px solid ${p.theme.border}`,direction:p.locale==='fa'?'rtl':'ltr'}}><StatusDot theme={p.theme} status={p.status}/><Typography sx={{fontSize:10,color:p.theme.muted}}>{p.lastSeen}</Typography></Box>}
+    {!d.compact&&<Box sx={{px:1.2,display:'flex',alignItems:'center',justifyContent:'space-between',bgcolor:p.theme.inheritPalette?p.theme.background:'#f7faf9',borderTop:`1px solid ${p.theme.border}`,direction:p.locale==='fa'?'rtl':'ltr'}}><StatusDot theme={p.theme} status={p.status}/><Typography sx={{fontSize:10,color:p.theme.muted}}>{p.lastSeen}</Typography></Box>}
   </Box>;
 }
 
 function MinimalFrame(p: WidgetFrameProps) {
   const d=dims(p.size); const Icon=p.def.icon; const title=p.locale==='fa'?p.def.titleFa:p.def.titleEn;
-  return <Box sx={{height:'100%',overflow:'hidden',position:'relative',bgcolor:'#fff',borderRadius:0,borderTop:'2px solid #111827',borderBottom:'1px solid #e5e7eb',display:'flex',flexDirection:'column'}}>
+  return <Box sx={{height:'100%',overflow:'hidden',position:'relative',bgcolor:p.theme.inheritPalette?p.theme.surface:'#fff',color:p.theme.foreground,borderRadius:0,borderTop:`2px solid ${p.theme.inheritPalette?p.theme.accent:'#111827'}`,borderBottom:`1px solid ${p.theme.border}`,display:'flex',flexDirection:'column'}}>
     <Box sx={{px:1.2,pt:1.2,pb:.35,display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:1,direction:p.locale==='fa'?'rtl':'ltr'}}>
       <Box sx={{minWidth:0}}><Typography sx={{fontSize:10.5,color:'#9ca3af',fontWeight:700,letterSpacing:.25,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.deviceName}</Typography><Box sx={{display:'flex',alignItems:'center',gap:.65,mt:.2}}><Icon sx={{fontSize:15,color:'#111827'}}/><Typography sx={{fontSize:14.5,fontWeight:800,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{title}</Typography></Box></Box>
       <Actions {...p}/>
@@ -206,7 +207,7 @@ function GamingFrame(p: WidgetFrameProps) {
 
 function IOSFrame(p: WidgetFrameProps) {
   const d=dims(p.size); const Icon=p.def.icon; const title=p.locale==='fa'?p.def.titleFa:p.def.titleEn;
-  return <Box sx={{height:'100%',overflow:'hidden',position:'relative',borderRadius:'28px',background:`linear-gradient(145deg,rgba(255,255,255,.96),${p.theme.accent}0c)`,border:'1px solid rgba(255,255,255,.9)',boxShadow:'0 18px 42px rgba(15,23,42,.11)',backdropFilter:'blur(20px) saturate(145%)',display:'flex',flexDirection:'column'}}>
+  return <Box sx={{height:'100%',overflow:'hidden',position:'relative',borderRadius:'28px',background:p.theme.inheritPalette?p.theme.surface:`linear-gradient(145deg,rgba(255,255,255,.96),${p.theme.accent}0c)`,color:p.theme.foreground,border:`1px solid ${p.theme.inheritPalette?p.theme.border:'rgba(255,255,255,.9)'}`,boxShadow:'0 18px 42px rgba(15,23,42,.11)',backdropFilter:'blur(20px) saturate(145%)',display:'flex',flexDirection:'column'}}>
     <Box sx={{px:1.5,pt:1.35,pb:.55,display:'flex',alignItems:'center',justifyContent:'space-between',gap:1,direction:p.locale==='fa'?'rtl':'ltr'}}>
       <Box sx={{display:'flex',alignItems:'center',gap:.85,minWidth:0}}><Box sx={{width:38,height:38,borderRadius:'50%',display:'grid',placeItems:'center',background:`linear-gradient(145deg,${p.theme.accent},${p.theme.accent2})`,color:'#fff',boxShadow:`0 8px 18px ${p.theme.accent}2a`}}><Icon sx={{fontSize:19}}/></Box><Box sx={{minWidth:0}}><Typography sx={{fontSize:10.5,color:'#8e8e93',fontWeight:650,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.locationLabel}</Typography><Typography sx={{fontSize:15,fontWeight:780,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{title}</Typography></Box></Box>
       <Actions {...p} ios/>
@@ -230,8 +231,33 @@ function GlassFrame(p: WidgetFrameProps) {
   </Box>;
 }
 
+function StudioFrame(p: WidgetFrameProps) {
+  const d = dims(p.size); const Icon = p.def.icon;
+  const title = p.locale === 'fa' ? p.def.titleFa : p.def.titleEn;
+  const stateColor = /alarm|offline|error|critical/i.test(p.status) ? '#f47171' : /warn|pending/i.test(p.status) ? '#edb55c' : p.theme.accent2;
+  return <Box sx={{height:'100%',minHeight:0,display:'flex',flexDirection:'column',overflow:'hidden',position:'relative',
+    bgcolor:p.theme.surface,color:p.theme.foreground,border:`1px solid ${p.theme.border}`,borderRadius:`${p.theme.radius}px`,
+    boxShadow:p.theme.shadow,transition:'border-color .2s, box-shadow .2s',
+    '&:hover':{borderColor:p.theme.accent+'80',boxShadow:`0 14px 42px ${p.theme.accent}12`},
+  }}>
+    <Box sx={{px:d.compact?1.7:2.2,pt:d.compact?1.5:1.9,pb:.7,display:'flex',justifyContent:'space-between',gap:1,alignItems:'start',direction:p.locale==='fa'?'rtl':'ltr'}}>
+      <Box sx={{display:'flex',alignItems:'center',gap:1.1,minWidth:0}}>
+        <Box sx={{height:34,width:34,borderRadius:2.1,flex:'0 0 auto',display:'grid',placeItems:'center',bgcolor:p.theme.accent+'1b',color:p.theme.accent}}><Icon sx={{fontSize:19}}/></Box>
+        <Box sx={{minWidth:0}}><Typography sx={{fontSize:d.compact?12.5:14.5,fontWeight:740,letterSpacing:'-.02em',color:p.theme.foreground,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{title}</Typography>
+          <Typography sx={{fontSize:10.5,mt:.2,color:p.theme.muted,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{p.deviceName}</Typography></Box>
+      </Box>
+      <Box sx={{display:'flex',gap:.6,alignItems:'center',pr:p.onInfo?0:0}}>
+        <Box sx={{height:7,width:7,flex:'0 0 auto',borderRadius:'50%',bgcolor:stateColor,boxShadow:`0 0 0 3px ${stateColor}20`}}/>
+        <Actions {...p}/>
+      </Box>
+    </Box>
+    <Box sx={{flex:1,minHeight:0,px:d.compact?1.7:2.2,pb:d.compact?1.6:1.8,pt:.9,overflow:'hidden'}}>{p.children}</Box>
+  </Box>;
+}
+
 export function WidgetFrame(props: WidgetFrameProps) {
   switch (props.theme.id) {
+    case 'studio': return <StudioFrame {...props}/>;
     case 'flat': return <FlatFrame {...props}/>;
     case 'minimal': return <MinimalFrame {...props}/>;
     case 'gaming': return <GamingThemeFrame {...props}/>;
