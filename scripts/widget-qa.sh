@@ -3,7 +3,7 @@
 # Bash equivalent of scripts/widget-qa.ps1 and scripts/widget-qa.cmd.
 set -Eeuo pipefail
 
-KNOWN_THEMES=(material flat minimal gaming ios glass)
+KNOWN_THEMES=(material flat minimal gaming ios glass, studio)
 THEME_INPUTS=()
 SELECTED_THEMES=()
 LOCALE="both"
