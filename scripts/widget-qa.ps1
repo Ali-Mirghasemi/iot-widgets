@@ -22,7 +22,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$KnownThemes = @('material', 'flat', 'minimal', 'gaming', 'ios', 'glass', 'studio')
+$KnownThemes = @('material', 'flat', 'minimal', 'gaming', 'ios', 'glass', 'studio', 'horizon')
 
 # The script can live either in <project>\scripts or directly in <project>.
 if (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'package.json')) {

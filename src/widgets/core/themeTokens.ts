@@ -1,6 +1,13 @@
 import type { WidgetThemeId, WidgetThemeTokens } from './types';
 
 export const widgetThemes: Record<WidgetThemeId, WidgetThemeTokens> = {
+  horizon: {
+    id: 'horizon', label: 'Horizon / Editorial', background: '#f3f1ed',
+    surface: '#fffcf8', foreground: '#253341', muted: '#7a838c',
+    accent: '#c96d4e', accent2: '#31948d', border: '#e8e4dd',
+    radius: 18, shadow: '0 10px 28px rgba(52,50,44,.075)', headerWeight: 750,
+    paletteMode: 'light',
+  },
   studio: {
     id: 'studio', label: 'Studio / Premium', background: '#0b1120',
     surface: '#161e2e', foreground: '#f1f5ff', muted: '#96a5bc',

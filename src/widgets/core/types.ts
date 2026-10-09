@@ -1,6 +1,6 @@
 import type { SvgIconComponent } from '@mui/icons-material';
 
-export type WidgetThemeId = 'material' | 'flat' | 'minimal' | 'gaming' | 'ios' | 'glass' | 'studio';
+export type WidgetThemeId = 'material' | 'flat' | 'minimal' | 'gaming' | 'ios' | 'glass' | 'studio' | 'horizon';
 export type Locale = 'en' | 'fa';
 export type WidgetSize = '1x1' | '1x2' | '2x1' | '2x2' | '1x3' | '3x1' | '2x3' | '3x2' | '3x3';
 export type WidgetCategory = 'metrics' | 'controls' | 'charts' | 'location' | 'tables' | 'display';
@@ -34,6 +34,8 @@ export interface WidgetDefinition {
   icon: SvgIconComponent;
   defaultSize: WidgetSize;
   supportedSizes: WidgetSize[];
+  /** Smallest supported logical widget size. Canvas widgets are at least 2x2. */
+  minSize?: WidgetSize;
   direction: WidgetDirection;
   fields: WidgetField[];
   mock: Record<string, unknown>;

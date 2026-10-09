@@ -41,13 +41,22 @@ type Opt = {
   value?:unknown; unit?:string; size?:WidgetSize; sizes?:WidgetSize[]; fields?:WidgetField[]; mock?:Record<string,unknown>;
   dir?:WidgetDirection; caps?:WidgetDefinition['capabilities'];
 };
-const w = (o:Opt):WidgetDefinition => ({
+const canvasVisuals:WidgetVisual[]=['line','area','bar','histogram','heatmap','timeline','donut','map','route','table'];
+const w = (o:Opt):WidgetDefinition => {
+  const canvas=canvasVisuals.includes(o.visual);
+  const all=o.sizes ?? ['1x1','2x1','2x2'];
+  const supportedSizes=canvas
+    ? [...new Set([...all.filter(s=>{const [w,h]=s.split('x').map(Number);return w>=2&&h>=2;}),'2x2','3x2','3x3'])] as WidgetSize[]
+    : [...new Set([...all,...(o.visual==='metric'?['3x2','3x3'] as WidgetSize[]:[])])];
+  const defaultSize=canvas && (!o.size || !supportedSizes.includes(o.size)) ? '2x2' : o.size ?? '1x1';
+  return ({
   id:o.id, type:o.id, category:o.category, visual:o.visual, titleEn:o.title, titleFa:o.fa, descriptionFa:o.desc,
-  icon:o.icon ?? Sensors, defaultSize:o.size ?? '1x1', supportedSizes:o.sizes ?? ['1x1','2x1','2x2'], direction:o.dir ?? 'ltr',
+  icon:o.icon ?? Sensors, defaultSize, supportedSizes, minSize:canvas?'2x2':'1x1', direction:o.dir ?? 'ltr',
   fields:o.fields ?? [nf('value','Value','مقدار',o.unit)],
   mock:{ value:o.value ?? 68, unit:o.unit ?? '', ...demoMeta(o.id), ...o.mock },
   capabilities:o.caps ?? ['realtime','thresholds'],
 });
+};
 
 export const widgetRegistry: WidgetDefinition[] = [
   // Metrics & sensors

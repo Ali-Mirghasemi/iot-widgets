@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Box, Button, Typography } from '@mui/material';
 import SensorsOutlined from '@mui/icons-material/SensorsOutlined';
-import type { Locale, WidgetThemeId, WidgetSize } from '../widgets/core/types';
+import type { Locale, WidgetThemeId } from '../widgets/core/types';
 import { IoTWidget } from './IoTWidget';
 import { getWidgetDefinition } from './catalog';
+import { widgetSizeForGrid } from './adaptive';
 import { DashboardGrid, type DashboardItem } from './DashboardGrid';
 import { useWidgetAppearance, useResolvedWidgetTheme } from './WidgetThemeProvider';
 
@@ -35,11 +36,7 @@ export function DeviceContainer({deviceId,title,widgets,onWidgetsChange,telemetr
     </Box>
     <DashboardGrid items={widgets} onChange={onWidgetsChange} editable={editable} columns={columns} rowHeight={expanded?146:110} gap={12} renderWidget={item=><IoTWidget
       widgetId={item.widgetId} themeId={item.themeId??resolved} colorMode={item.colorMode} locale={locale}
-      size={((() => {
-        const def = getWidgetDefinition(item.widgetId);
-        const preferred = `${Math.min(item.w,3)}x${Math.min(item.h,3)}` as WidgetSize;
-        return def?.supportedSizes.includes(preferred) ? preferred : def?.supportedSizes.includes('2x2') ? '2x2' : def?.defaultSize;
-      })())} data={{...(item.data??{}),...(telemetry[item.id]??telemetry[item.widgetId]??{})}}
+      size={widgetSizeForGrid(getWidgetDefinition(item.widgetId)!,item.w,item.h)} view={item.view??'auto'} data={{...(item.data??{}),...(telemetry[item.id]??telemetry[item.widgetId]??{})}}
       metadata={{...(item.metadata??{}),deviceName:title,status}}
     />}/>
   </Box>;

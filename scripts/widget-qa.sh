@@ -3,7 +3,7 @@
 # Bash equivalent of scripts/widget-qa.ps1 and scripts/widget-qa.cmd.
 set -Eeuo pipefail
 
-KNOWN_THEMES=(material flat minimal gaming ios glass, studio)
+KNOWN_THEMES=(material flat minimal gaming ios glass studio horizon)
 THEME_INPUTS=()
 SELECTED_THEMES=()
 LOCALE="both"
@@ -27,7 +27,7 @@ Usage:
   ./scripts/widget-qa.sh --themes all --locale both
 
 Options:
-  --themes, -Themes LIST       Themes: material,flat,minimal,gaming,ios,glass,all
+  --themes, -Themes LIST       Themes: material,flat,minimal,gaming,ios,glass,studio,horizon,all
                                (comma-separated, or multiple positional names)
   --locale, -Locale LOCALE     en | fa | both (default: both)
   --out-dir, -OutDir DIR       Output folder (default: project-root/out)

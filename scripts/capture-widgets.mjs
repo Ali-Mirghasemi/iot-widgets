@@ -8,7 +8,7 @@ const outDir = path.join(root, 'widget-screenshots');
 const port = Number(process.env.WIDGET_QA_PORT || 4173);
 const host = '127.0.0.1';
 const baseUrl = `http://${host}:${port}`;
-const themes = ['material','flat','minimal','gaming','ios','glass', 'studio'];
+const themes = ['material','flat','minimal','gaming','ios','glass','studio','horizon'];
 const categories = ['metrics','controls','charts','location','tables','display'];
 const locale = process.env.WIDGET_QA_LOCALE === 'fa' ? 'fa' : 'en';
 const onlyTheme = process.env.WIDGET_QA_THEME;

@@ -1,3 +1,5 @@
+**New:** Adaptive widget views (compact reading → range bar → full historical chart when data is supplied), minimum graph/map sizes, and the Horizon theme. See [adaptive widget guide](docs/ADAPTIVE-WIDGETS.md).
+
 ## New: editable dashboard demo (prototype)
 
 Run `npm ci && npm run dev` and open `/` for an editable multi-panel dashboard with simulated device data, Studio theme, palette inspector, drag/resize, and large widget view. Open `/?gallery=1` for the original 63-widget gallery and `/?qa=1` for screenshot testing. Read [the redesign notes](docs/DASHBOARD-REDESIGN.md) for API usage, validation status, and limitations.
@@ -6,7 +8,7 @@ Run `npm ci && npm run dev` and open `/` for an editable multi-panel dashboard w
 
 Reusable **React + TypeScript + MUI** IoT widget library plus a visual showcase/QA application.
 
-The library currently contains **63 widget definitions**, **6 visual themes**, adaptive grid sizes, English/Persian support, and screenshot-based visual QA.
+The library currently contains **63 widget definitions**, **8 visual themes**, adaptive grid sizes, English/Persian support, and screenshot-based visual QA.
 
 ## What this repository contains
 
@@ -35,6 +37,8 @@ Stable theme IDs are intentionally separate from display names:
 | `gaming` | HUD / Cyber |
 | `ios` | Cupertino |
 | `glass` | Aurora Glass |
+| `studio` | Studio / Premium |
+| `horizon` | Horizon / Editorial |
 
 The stable IDs are suitable for saved dashboard JSON and should not be renamed casually.
 
@@ -279,13 +283,13 @@ npm run screenshots
 npm run screenshots:full
 ```
 
-A Windows helper can run EN + FA QA for selected themes:
+Windows and Linux helpers can run EN + FA QA for selected themes:
 
 ```powershell
 .\scripts\widget-qa.ps1 material
 ```
 
-See [docs/qa.md](docs/qa.md).
+On Linux: `./scripts/widget-qa.sh --themes studio,horizon --locale both`. See [docs/qa.md](docs/qa.md) and [Adaptive widgets](docs/ADAPTIVE-WIDGETS.md).
 
 ## Repository structure
 

@@ -5,6 +5,8 @@ export type { DashboardGridProps, DashboardItem } from './DashboardGrid';
 export { WidgetThemeProvider, resolveWidgetTokens, useWidgetAppearance, useResolvedWidgetTheme } from './WidgetThemeProvider';
 export type { DashboardPalette, DashboardAppearance } from './WidgetThemeProvider';
 export { IoTWidget } from './IoTWidget';
+export { getWidgetMinimumSize, getWidgetGridMinimum, isCanvasWidget, widgetSizeForGrid, resolveWidgetView, historyValues } from './adaptive';
+export type { WidgetView, ResolvedWidgetView } from './adaptive';
 export {
   getWidgetDefinition,
   getWidgetTheme,

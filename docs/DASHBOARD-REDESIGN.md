@@ -2,6 +2,8 @@
 
 This branch is an **incremental prototype** of a more cohesive visual system for `iot-widget-studio-react`. All existing widget IDs, the original six visual themes, and the legacy `?qa=1` capture path remain available. The redesigned showcase is the default `/` route; the original catalog is available at `/?gallery=1`.
 
+For subsequent adaptive-views and minimum-size work, see [ADAPTIVE-WIDGETS.md](ADAPTIVE-WIDGETS.md).
+
 ## What changed
 
 - Added a seventh theme, **Studio / Premium**, with less frame chrome, more pronounced numeric hierarchy, larger chart areas, quieter labels, and consistent semantic accent/surface tokens. It has bespoke implementations for metrics, gauges, tanks, battery, signal, charts, switch, state, demo map, alarms, and events. Other widget types currently fall back to the Material renderer.

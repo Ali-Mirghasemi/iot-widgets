@@ -4,6 +4,8 @@ import DragIndicatorRounded from '@mui/icons-material/DragIndicatorRounded';
 import OpenInFullRounded from '@mui/icons-material/OpenInFullRounded';
 import type { WidgetInstanceConfig } from './types';
 import { settleDashboard } from './layout';
+import { getWidgetDefinition } from './catalog';
+import { getWidgetGridMinimum, isCanvasWidget } from './adaptive';
 export { settleDashboard } from './layout';
 
 export type DashboardItem = WidgetInstanceConfig & {
@@ -27,6 +29,7 @@ type Gesture = {kind:'drag'|'resize';id:string;startX:number;startY:number;item:
 
 export function DashboardGrid({items,editable=false,onChange,renderWidget,onExpand,onContextItem,columns=12,rowHeight=98,gap=14}:DashboardGridProps){
   const ref=useRef<HTMLDivElement>(null);
+  const minFor=(item:DashboardItem,n:number)=>getWidgetGridMinimum(getWidgetDefinition(item.widgetId),n);
   const gesture=useRef<Gesture|null>(null);
   const maxRow=items.reduce((r,i)=>Math.max(r,i.y+i.h),0);
   const begin=(event:PointerEvent<HTMLElement>,item:DashboardItem,kind:'drag'|'resize')=>{
@@ -45,10 +48,11 @@ export function DashboardGrid({items,editable=false,onChange,renderWidget,onExpa
     const next=g.items.map(i=>{
       if(i.id!==g.id)return {...i};
       if(g.kind==='drag') return {...i,x:Math.max(0,Math.min(columns-i.w,g.item.x+dx)),y:Math.max(0,g.item.y+dy)};
-      const w=Math.max(1,Math.min(columns-i.x,g.item.w+dx));
-      return {...i,w,h:Math.max(1,g.item.h+dy)};
+      const min=minFor(i,columns);
+      const w=Math.max(min.w,Math.min(columns-i.x,g.item.w+dx));
+      return {...i,w,h:Math.max(min.h,g.item.h+dy)};
     });
-    onChange(settleDashboard(next,g.id,columns));
+    onChange(settleDashboard(next,g.id,columns,minFor));
   };
   const end=(event:PointerEvent<HTMLElement>)=>{
     if(!gesture.current)return;
@@ -56,14 +60,15 @@ export function DashboardGrid({items,editable=false,onChange,renderWidget,onExpa
     if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);
   };
   return <Box ref={ref} data-dashboard-grid="true" sx={{position:'relative',width:'100%',minHeight:editable?Math.max(400,maxRow*(rowHeight+gap)):Math.max(400,maxRow*(rowHeight+gap)),
-    '@media (max-width:850px)':{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gridAutoRows:rowHeight*1.8+'px',gap:2,minHeight:'auto'},
+    '@media (max-width:850px)':{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gridAutoRows:'auto',gap:2,minHeight:'auto'},
     '@media (max-width:520px)':{gridTemplateColumns:'1fr'},
   }}>
     {items.map(item=><Box key={item.id} data-dashboard-item={item.id} onContextMenu={event=>{event.preventDefault();onContextItem?.(item,event);}} sx={{position:'absolute',left:`calc(${item.x/columns*100}% + ${item.x/columns*gap}px)`,top:item.y*(rowHeight+gap),
       width:`calc(${item.w/columns*100}% - ${gap*(1-item.w/columns)}px)`,height:item.h*rowHeight+(item.h-1)*gap,
       minWidth:0,minHeight:0,zIndex:gesture.current?.id===item.id?3:1,
       '&:hover .dashboard-actions':{opacity:1},
-      '@media (max-width:850px)':{position:'relative',left:'auto',top:'auto',width:'auto',height:'auto',gridColumn:'span 1',gridRow:'span 1'},
+      '@media (max-width:850px)':{position:'relative',left:'auto',top:'auto',width:'auto',height:Math.max(194,item.h*(rowHeight+gap)-gap),gridColumn:(getWidgetDefinition(item.widgetId) && isCanvasWidget(getWidgetDefinition(item.widgetId)!))?'1 / -1':'span 1',gridRow:'span 1'},
+      '@media (max-width:520px)':{gridColumn:'1 / -1',height:Math.max(210,item.h*(rowHeight+gap)-gap)},
     }}>
       <Box sx={{height:'100%',width:'100%',pointerEvents:editable?'none':'auto'}}>{renderWidget(item)}</Box>
       {editable && <>

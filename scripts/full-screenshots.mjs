@@ -35,6 +35,7 @@ const themes = [
   'ios',
   'glass',
   'studio',
+  'horizon',
 ];
 
 const categories = [

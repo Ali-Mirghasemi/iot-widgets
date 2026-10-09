@@ -7,6 +7,7 @@ import Check from '@mui/icons-material/Check';
 import type { Locale, WidgetDefinition, WidgetSize, WidgetThemeTokens } from './types';
 import { WidgetVisualRenderer } from '../renderers/WidgetVisuals';
 import { WidgetFrame } from './WidgetFrame';
+import { spark } from '../data/mockData';
 import { categoryLabels, tr } from '../../i18n/translations';
 
 interface Props {
@@ -58,7 +59,7 @@ export function WidgetCard({ def, theme, locale, forcedSize, qaMode=false }: Pro
     >
       <WidgetFrame def={def} theme={theme} locale={locale} size={size} deviceName={deviceName} locationLabel={locationLabel} status={status} lastSeen={lastSeen} onInfo={()=>setOpen(true)}>
         <Box dir={bodyDir} sx={{height:'100%',minHeight:0}} data-widget-body="true">
-          <WidgetVisualRenderer def={def} theme={theme} locale={locale} size={size}/>
+          <WidgetVisualRenderer def={def} theme={theme} locale={locale} size={size} history={def.visual==='metric' && def.capabilities?.includes('history') ? spark : undefined}/>
         </Box>
       </WidgetFrame>
     </Box>

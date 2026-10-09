@@ -1,10 +1,11 @@
-import { useMemo, type MouseEvent as ReactMouseEvent, type FormEvent as ReactFormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type FormEvent as ReactFormEvent } from 'react';
 import { Box, IconButton, Tooltip } from '@mui/material';
 import OpenInFullRounded from '@mui/icons-material/OpenInFullRounded';
 import { useResolvedWidgetTheme, useWidgetAppearance } from './WidgetThemeProvider';
 import { WidgetFrame } from '../widgets/core/WidgetFrame';
 import { WidgetVisualRenderer } from '../widgets/renderers/WidgetVisuals';
 import { requireWidgetDefinition } from './catalog';
+import { getWidgetMinimumSize, historyValues, resolveWidgetView } from './adaptive';
 import type { IoTWidgetProps, WidgetMetadata } from './types';
 
 const readText = (value: unknown, fallback = '') => typeof value === 'string' ? value : fallback;
@@ -35,6 +36,8 @@ export function IoTWidget({
   colorMode,
   onExpand,
   size,
+  view = 'auto',
+  expanded = false,
   locale = 'en',
   data,
   metadata,
@@ -45,14 +48,30 @@ export function IoTWidget({
   style,
 }: IoTWidgetProps) {
   const appearance = useWidgetAppearance();
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [bounds,setBounds] = useState<{width:number;height:number}>();
+  useEffect(()=>{
+    const element=wrapperRef.current;
+    if(!element || typeof ResizeObserver==='undefined')return;
+    const observer=new ResizeObserver(entries=>{
+      const rect=entries[0]?.contentRect;
+      if(!rect)return;
+      setBounds(old=>(old && Math.abs(old.width-rect.width)<1 && Math.abs(old.height-rect.height)<1)
+        ? old : {width:rect.width,height:rect.height});
+    });
+    observer.observe(element);
+    return ()=>observer.disconnect();
+  },[]);
   const effectiveThemeId = themeId ?? appearance?.themeId ?? 'material';
   const baseDefinition = definition ?? requireWidgetDefinition(widgetId ?? '');
   const resolvedSize = size ?? baseDefinition.defaultSize;
 
-  if (!baseDefinition.supportedSizes.includes(resolvedSize)) {
+  const minimum = getWidgetMinimumSize(baseDefinition);
+  const [logicalW,logicalH] = resolvedSize.split('x').map(Number);
+  if (!baseDefinition.supportedSizes.includes(resolvedSize) || logicalW<minimum.w || logicalH<minimum.h) {
     throw new Error(
       `Widget "${baseDefinition.id}" does not support size "${resolvedSize}". ` +
-      `Supported sizes: ${baseDefinition.supportedSizes.join(', ')}`,
+      `Minimum: ${minimum.w}x${minimum.h}; supported sizes: ${baseDefinition.supportedSizes.join(', ')}`,
     );
   }
 
@@ -63,6 +82,8 @@ export function IoTWidget({
     [baseTheme, themeOverrides],
   );
 
+  const resolvedView = resolveWidgetView(resolvedSize,bounds,view,expanded);
+  const history = useMemo(()=>historyValues(data),[data]);
   const runtimeDefinition = useMemo(
     () => ({
       ...baseDefinition,
@@ -132,12 +153,14 @@ export function IoTWidget({
   };
 
   return <Box
+    ref={wrapperRef}
     className={className}
     style={style}
     data-iot-widget="true"
     data-widget-id={runtimeDefinition.id}
     data-widget-theme={resolvedTheme.id}
     data-widget-size={resolvedSize}
+    data-widget-view={resolvedView}
     onClickCapture={emitClick}
     onChangeCapture={emitChange}
     sx={[
@@ -151,6 +174,7 @@ export function IoTWidget({
       theme={resolvedTheme}
       locale={locale}
       size={resolvedSize}
+      view={resolvedView}
       deviceName={deviceName}
       locationLabel={locationLabel}
       status={status}
@@ -169,6 +193,8 @@ export function IoTWidget({
           theme={resolvedTheme}
           locale={locale}
           size={resolvedSize}
+          view={resolvedView}
+          history={history}
         />
       </Box>
     </WidgetFrame>

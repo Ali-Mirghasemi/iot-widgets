@@ -15,12 +15,14 @@ import AddRounded from '@mui/icons-material/AddRounded';
 import LayersRounded from '@mui/icons-material/LayersRounded';
 import CircleRounded from '@mui/icons-material/CircleRounded';
 import WidgetsRounded from '@mui/icons-material/WidgetsRounded';
+import ViewQuiltRounded from '@mui/icons-material/ViewQuiltRounded';
 import { IoTWidget } from '../library/IoTWidget';
 import { DashboardGrid, settleDashboard, type DashboardItem } from '../library/DashboardGrid';
 import { WidgetThemeProvider, type DashboardAppearance } from '../library/WidgetThemeProvider';
 import { widgetThemeList } from '../widgets/core/themeTokens';
 import { getWidgetDefinition } from '../library/catalog';
-import type { WidgetSize, WidgetThemeId } from '../widgets/core/types';
+import type { WidgetThemeId } from '../widgets/core/types';
+import { getWidgetGridMinimum, widgetSizeForGrid } from '../library/adaptive';
 
 const palettePresets = [
   {name:'Violet',primary:'#8197ff',secondary:'#4bd6bd'},
@@ -30,10 +32,20 @@ const palettePresets = [
 ];
 const initialAppearance:DashboardAppearance={themeId:'studio',mode:'dark',colorMode:'inherit',palette:{primary:'#8197ff',secondary:'#4bd6bd'}};
 const instance=(id:string,widgetId:string,x:number,y:number,w:number,h:number,data?:Record<string,unknown>):DashboardItem=>({id,widgetId,x,y,w,h,data});
+const labHistory=[18.2,18.7,19.8,19.1,21.5,22.4,21.8,23.9,24.1,23.7,24.8];
 const demoBoards:Record<string,{label:string,description:string,items:DashboardItem[]}>= {
+ lab:{label:'Adaptive widget lab',description:'Resize a card to see compact, standard and detailed states',items:[
+  {...instance('temp-compact','temperature',0,0,3,2,{value:24.8,unit:'°C',history:labHistory}),view:'compact'},
+  {...instance('temp-standard','temperature',3,0,3,2,{value:24.8,unit:'°C',min:0,max:50,history:labHistory}),view:'standard'},
+  instance('temp-large','temperature',6,0,6,3,{value:24.8,unit:'°C',history:labHistory}),
+  instance('battery','battery',0,2,3,2,{value:78,voltage:'3.91 V'}),
+  instance('pressure','pressure',3,2,3,2,{value:2.6,max:6}),
+  instance('map','map',0,4,6,4),
+  instance('graph','time-series',6,4,6,4,{values:[22,26,24,30,35,31,43,42,49,50,53,58,57,62,59,64]}),
+ ]},
  factory:{label:'Factory overview',description:'Industrial equipment and environmental telemetry',items:[
-  instance('temp','temperature',0,0,3,2,{value:24.8,trend:2.4,deviceName:'Warehouse · TH-04'}),
-  instance('power','power',3,0,3,2,{value:284,trend:-4.2,deviceName:'Power feed · 01'}),
+  instance('temp','temperature',0,0,3,2,{value:24.8,trend:2.4,deviceName:'Warehouse · TH-04',history:[20.1,21.2,20.8,22.4,23.1,22.9,24.0,23.7,24.3,24.8]}),
+  instance('power','power',3,0,3,2,{value:284,trend:-4.2,deviceName:'Power feed · 01',history:[305,298,296,293,307,303,299,291,287,284]}),
   instance('air','air-quality',6,0,3,2,{value:64,max:200,deviceName:'Air node · 12'}),
   instance('battery','battery',9,0,3,2,{value:87,voltage:'4.02 V',remaining:'13h 24m'}),
   instance('trend','time-series',0,2,6,3,{values:[23,27,24,30,35,32,31,39,37,42,47,44,49,50,48,55,60,57],total:'24.8°C'}),
@@ -45,7 +57,7 @@ const demoBoards:Record<string,{label:string,description:string,items:DashboardI
   instance('signal','signal',9,5,3,2,{value:-74,network:'LTE / RSRP'}),
  ]},
  energy:{label:'Energy monitoring',description:'Power quality, production load, and daily consumption',items:[
-  instance('total-energy','energy',0,0,3,2,{value:189.4,unit:'kWh',trend:-3.2}),
+  instance('total-energy','energy',0,0,3,2,{value:189.4,unit:'kWh',trend:-3.2,history:[130,133,141,143,158,163,168,179,182,189.4]}),
   instance('current','current',3,0,3,2,{value:18.2,unit:'A',trend:1.4}),
   instance('voltage','voltage',6,0,3,2,{value:230.4,unit:'V',trend:.4}),
   instance('load','power',9,0,3,2,{value:4.28,unit:'kW',trend:-2.1}),
@@ -68,8 +80,9 @@ const demoBoards:Record<string,{label:string,description:string,items:DashboardI
  ]},
 };
 const loadItems=(key:string):DashboardItem[]=>{
-  try{const str=window.localStorage.getItem('iot-demo-layout-'+key);if(str){const parsed:unknown=JSON.parse(str);if(Array.isArray(parsed)&&parsed.every(x=>x&&typeof x==='object'&&typeof x.widgetId==='string'&&typeof x.w==='number'))return parsed as DashboardItem[];}}catch{/* ignore unavailable storage */}
-  return demoBoards[key].items.map(i=>({...i}));
+  const minFor=(item:DashboardItem,n:number)=>getWidgetGridMinimum(getWidgetDefinition(item.widgetId),n);
+  try{const str=window.localStorage.getItem('iot-demo-layout-'+key);if(str){const parsed:unknown=JSON.parse(str);if(Array.isArray(parsed)&&parsed.every(x=>x&&typeof x==='object'&&typeof x.widgetId==='string'&&typeof x.w==='number'))return settleDashboard(parsed as DashboardItem[],undefined,12,minFor);}}catch{/* ignore unavailable storage */}
+  return settleDashboard(demoBoards[key].items.map(i=>({...i})),undefined,12,minFor);
 };
 const darkTokens={background:'#0c1220',surface:'#161f2f',text:'#f1f5ff',muted:'#9facbf',border:'#29364b'};
 const lightTokens={background:'#f1f5fa',surface:'#ffffff',text:'#152033',muted:'#667389',border:'#e3e9f1'};
@@ -92,11 +105,16 @@ export default function DemoDashboard(){
  useEffect(()=>{try{window.localStorage.setItem('iot-demo-layout-'+board,JSON.stringify(items));}catch{/* storage optional */}},[board,items]);
  const changeBoard=(next:string)=>{setBoard(next);setItems(loadItems(next));setEdit(false);setContext(null);};
  const patch=(id:string,updates:Partial<DashboardItem>)=>setItems(curr=>curr.map(i=>i.id===id?{...i,...updates}:i));
- const addWidget=(id:string)=>{const def=getWidgetDefinition(id);if(!def)return;const maxY=Math.max(0,...items.map(x=>x.y+x.h));setItems(current=>settleDashboard([...current,instance(`${id}-${Date.now()}`,id,0,maxY,3,2)],undefined,12));setShowCatalog(false);setEdit(true);};
+ const addWidget=(id:string)=>{const def=getWidgetDefinition(id);if(!def)return;const maxY=Math.max(0,...items.map(x=>x.y+x.h));setItems(current=>{const min=getWidgetGridMinimum(def,12);return settleDashboard([...current,instance(`${id}-${Date.now()}`,id,0,maxY,Math.max(3,min.w),Math.max(2,min.h))],undefined,12,(i,n)=>getWidgetGridMinimum(getWidgetDefinition(i.widgetId),n));});setShowCatalog(false);setEdit(true);};
  const saveJson=()=>{const json=JSON.stringify({schemaVersion:1,appearance,board,items},null,2);const url=URL.createObjectURL(new Blob([json],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`iot-${board}-dashboard.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
- const pickSize=(id:string,w:number,h:number):WidgetSize=>{const opts=getWidgetDefinition(id)?.supportedSizes??['1x1'];const target=`${Math.min(w,3)}x${Math.min(h,3)}` as WidgetSize;return opts.includes(target)?target:opts.includes('2x2')?'2x2':opts.includes('2x1')?'2x1':opts[0];};
- const renderWidget=(item:DashboardItem,expandedView=false)=><IoTWidget key={item.id} widgetId={item.widgetId} themeId={item.themeId??appearance.themeId} colorMode={item.colorMode} size={expandedView?((getWidgetDefinition(item.widgetId)?.supportedSizes.includes('3x3')?'3x3':getWidgetDefinition(item.widgetId)?.supportedSizes.includes('2x2')?'2x2':pickSize(item.widgetId,item.w,item.h)) as WidgetSize):pickSize(item.widgetId,item.w,item.h)} data={item.data} metadata={item.metadata}/>;
- const sideNav=(<Box sx={{display:'flex',flexDirection:'column',gap:.5}}>{Object.entries(demoBoards).map(([id,b])=>{const Icon=id==='factory'?DashboardRounded:id==='energy'?BoltRounded:LocalShippingRounded;return <Button key={id} onClick={()=>{changeBoard(id);setMobileNav(false);}} fullWidth startIcon={<Icon/>} sx={{justifyContent:'flex-start',py:1.4,px:1.6,borderRadius:2.5,textTransform:'none',fontSize:13,fontWeight:700,color:board===id?'#fff':tokens.muted,bgcolor:board===id?appearance.palette.primary+'35':'transparent','&:hover':{bgcolor:appearance.palette.primary+'25'},'& .MuiButton-startIcon':{color:board===id?appearance.palette.primary:tokens.muted}}}>{b.label}</Button>;})}</Box>);
+ const renderWidget=(item:DashboardItem,expandedView=false)=>{
+   const def=getWidgetDefinition(item.widgetId);
+   if(!def) return null;
+   return <IoTWidget key={item.id} widgetId={item.widgetId} themeId={item.themeId??appearance.themeId}
+     colorMode={item.colorMode} size={widgetSizeForGrid(def,item.w,item.h,expandedView)}
+     view={expandedView?'detailed':item.view??'auto'} expanded={expandedView} data={item.data} metadata={item.metadata}/>;
+ };
+ const sideNav=(<Box sx={{display:'flex',flexDirection:'column',gap:.5}}>{Object.entries(demoBoards).map(([id,b])=>{const Icon=id==='factory'?DashboardRounded:id==='energy'?BoltRounded:id==='lab'?ViewQuiltRounded:LocalShippingRounded;return <Button key={id} onClick={()=>{changeBoard(id);setMobileNav(false);}} fullWidth startIcon={<Icon/>} sx={{justifyContent:'flex-start',py:1.4,px:1.6,borderRadius:2.5,textTransform:'none',fontSize:13,fontWeight:700,color:board===id?'#fff':tokens.muted,bgcolor:board===id?appearance.palette.primary+'35':'transparent','&:hover':{bgcolor:appearance.palette.primary+'25'},'& .MuiButton-startIcon':{color:board===id?appearance.palette.primary:tokens.muted}}}>{b.label}</Button>;})}</Box>);
  const colorField=(name:'primary'|'secondary'|'background'|'surface'|'text'|'muted'|'border')=>{const value=appearance.palette[name]??tokens[name as keyof typeof tokens]??'#ffffff';return <Box sx={{display:'flex',alignItems:'center',gap:1,justifyContent:'space-between'}}><Typography sx={{fontSize:12,fontWeight:650,color:tokens.muted,textTransform:'capitalize'}}>{name}</Typography><Box sx={{display:'flex',alignItems:'center',gap:1}}><Typography sx={{fontSize:11,color:tokens.text,fontFamily:'monospace'}}>{value.toUpperCase()}</Typography><Box component="input" type="color" aria-label={`${name} color`} value={value} onChange={e=>setPal({[name]:e.target.value})} sx={{width:40,height:31,background:'none',p:0,border:0,cursor:'pointer'}}/></Box></Box>};
  const appearancePanel=<Box sx={{p:2.3,display:'flex',flexDirection:'column',gap:2.1}}>
    <Box sx={{display:'flex',alignItems:'center',justifyContent:'space-between'}}><Typography sx={{fontWeight:800,fontSize:14,color:tokens.text}}>Appearance studio</Typography><SettingsOutlined sx={{fontSize:19,color:tokens.muted}}/></Box>
@@ -109,8 +127,8 @@ export default function DemoDashboard(){
    <Button size="small" onClick={()=>setAdvancedPalette(x=>!x)} sx={{textTransform:'none',alignSelf:'start',fontSize:11.5,color:appearance.palette.primary,p:0}}>{advancedPalette?'Hide advanced colors':'Advanced palette colors →'}</Button>
    {advancedPalette&&<Box sx={{display:'flex',flexDirection:'column',gap:1.5}}>{colorField('background')}{colorField('surface')}{colorField('text')}{colorField('muted')}{colorField('border')}</Box>}
    <Divider sx={{borderColor:tokens.border}}/>
-   <Typography sx={{fontSize:11.5,color:tokens.muted,lineHeight:1.7}}>Right-click any widget to override its style. Select <b>Edit dashboard</b> to drag cards by the top-left handle and resize them from the bottom-right corner.</Typography>
-   <Box sx={{p:1.6,bgcolor:appearance.palette.primary+'17',border:`1px solid ${appearance.palette.primary}40`,borderRadius:2.3}}><Typography sx={{fontSize:12,color:tokens.text,fontWeight:700}}>Demo data</Typography><Typography sx={{fontSize:11,color:tokens.muted,mt:.5}}>All values are simulated. Control changes do not send IoT commands. The fleet map is illustrative, not a connected map service.</Typography></Box>
+   <Typography sx={{fontSize:11.5,color:tokens.muted,lineHeight:1.7}}>Right-click any widget to override its theme or display density. Select <b>Edit dashboard</b> to drag cards by the top-left handle and resize them from the bottom-right corner.</Typography>
+   <Box sx={{p:1.6,bgcolor:appearance.palette.primary+'17',border:`1px solid ${appearance.palette.primary}40`,borderRadius:2.3}}><Typography sx={{fontSize:12,color:tokens.text,fontWeight:700}}>Demo data</Typography><Typography sx={{fontSize:11,color:tokens.muted,mt:.5}}>All values are simulated. Control changes do not send IoT commands. The fleet map is illustrative, not a connected map service. Expanded metrics show history only when supplied by the dashboard.</Typography></Box>
  </Box>;
  return <WidgetThemeProvider appearance={appearanceResolved}><ThemeProvider theme={muiTheme}><Box sx={{minHeight:'100vh',display:'flex',background:tokens.background,color:tokens.text,transition:'background .2s,color .2s',fontFamily:'Inter, ui-sans-serif, system-ui, sans-serif'}}>
    <Box component="aside" sx={{width:220,flex:'0 0 220px',borderRight:`1px solid ${tokens.border}`,px:1.5,pt:3,position:'sticky',top:0,height:'100vh',display:{xs:'none',lg:'flex'},flexDirection:'column',background:tokens.surface}}>
@@ -127,7 +145,7 @@ export default function DemoDashboard(){
      {mobileNav&&<Box sx={{p:2,display:{lg:'none'},bgcolor:tokens.surface,borderBottom:`1px solid ${tokens.border}`}}>{sideNav}<Button onClick={()=>setMobileNav(false)}>Close</Button></Box>}
      <Box sx={{display:'flex',flex:1,minWidth:0}}>
        <Box component="main" sx={{flex:1,minWidth:0,p:{xs:2,md:3.2},maxWidth:'100%'}}>
-         <Box sx={{display:'flex',alignItems:'start',justifyContent:'space-between',gap:2,mb:2.8,flexWrap:'wrap'}}><Box><Typography sx={{fontSize:{xs:25,md:29},letterSpacing:'-.045em',fontWeight:820,mb:.5}}>Operations at a glance</Typography><Typography sx={{fontSize:12.5,color:tokens.muted}}>{demoBoards[board].description} · Preview environment</Typography></Box><Box sx={{display:'flex',alignItems:'center',gap:1}}>{edit&&<><Button size="small" startIcon={<AddRounded/>} onClick={()=>setShowCatalog(true)} sx={{textTransform:'none',color:appearance.palette.primary}}>Add widget</Button><Tooltip title="Reset current layout"><IconButton onClick={()=>{setItems(demoBoards[board].items.map(i=>({...i})));try{localStorage.removeItem('iot-demo-layout-'+board)}catch{/* optional */}}} sx={{color:tokens.muted}}><RestartAltRounded/></IconButton></Tooltip></>}<Typography sx={{fontSize:11,color:tokens.muted}}>{items.length} widgets</Typography></Box></Box>
+         <Box sx={{display:'flex',alignItems:'start',justifyContent:'space-between',gap:2,mb:2.8,flexWrap:'wrap'}}><Box><Typography sx={{fontSize:{xs:25,md:29},letterSpacing:'-.045em',fontWeight:820,mb:.5}}>Operations at a glance</Typography><Typography sx={{fontSize:12.5,color:tokens.muted}}>{demoBoards[board].description} · Preview environment</Typography></Box><Box sx={{display:'flex',alignItems:'center',gap:1}}>{edit&&<><Button size="small" startIcon={<AddRounded/>} onClick={()=>setShowCatalog(true)} sx={{textTransform:'none',color:appearance.palette.primary}}>Add widget</Button><Tooltip title="Reset current layout"><IconButton onClick={()=>{setItems(settleDashboard(demoBoards[board].items.map(i=>({...i})),undefined,12,(x,n)=>getWidgetGridMinimum(getWidgetDefinition(x.widgetId),n)));try{localStorage.removeItem('iot-demo-layout-'+board)}catch{/* optional */}}} sx={{color:tokens.muted}}><RestartAltRounded/></IconButton></Tooltip></>}<Typography sx={{fontSize:11,color:tokens.muted}}>{items.length} widgets</Typography></Box></Box>
          {edit&&<Box sx={{mb:2,p:1.5,border:`1px dashed ${appearance.palette.primary}86`,borderRadius:2.5,bgcolor:appearance.palette.primary+'10',color:tokens.muted,fontSize:12}}>Edit mode · Drag the handle at the top-left of a widget to move it; drag the corner at bottom-right to resize. Right-click for visual styles. Changes are stored in your browser.</Box>}
          <DashboardGrid items={items} editable={edit} onChange={setItems} renderWidget={item=>renderWidget(item)} onExpand={setExpanded} onContextItem={(item,event)=>setContext({id:item.id,left:event.clientX,top:event.clientY})}/>
          <Typography sx={{fontSize:10.5,color:tokens.muted,mt:1.5}}>Prototype with fabricated telemetry. Some legacy visuals and map tiles are illustrative.</Typography>
@@ -142,6 +160,8 @@ export default function DemoDashboard(){
      <MenuItem onClick={()=>{if(context)patch(context.id,{themeId:undefined});setContext(null);}}>Follow dashboard theme</MenuItem>
      {widgetThemeList.map(theme=><MenuItem key={theme.id} onClick={()=>{if(context)patch(context.id,{themeId:theme.id});setContext(null);}}>{theme.label}</MenuItem>)}
      <Divider/><MenuItem onClick={()=>{if(context)patch(context.id,{colorMode:'inherit'});setContext(null);}}>Inherit panel colors</MenuItem><MenuItem onClick={()=>{if(context)patch(context.id,{colorMode:'original'});setContext(null);}}>Use original colors</MenuItem>
+     <Divider/><Typography sx={{px:2,py:.7,fontSize:11,color:'text.secondary',fontWeight:800}}>RESPONSIVE CONTENT</Typography>
+     {(['auto','compact','standard','detailed'] as const).map(mode=><MenuItem key={mode} onClick={()=>{if(context)patch(context.id,{view:mode});setContext(null);}} sx={{textTransform:'capitalize'}}>{mode==='auto'?'Auto — fit available space':mode}</MenuItem>)}
      {edit&&<><Divider/><MenuItem onClick={()=>{if(context)setItems(curr=>curr.filter(i=>i.id!==context.id));setContext(null);}} sx={{color:'error.main'}}>Remove widget</MenuItem></>}
    </Menu>
    <Dialog open={Boolean(expanded)} onClose={()=>setExpanded(null)} maxWidth={false} PaperProps={{sx:{width:'min(95vw,1500px)',height:'min(90vh,850px)',borderRadius:3,background:tokens.background,color:tokens.text}}}>

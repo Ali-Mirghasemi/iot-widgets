@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import type { WidgetView } from './adaptive';
 import type { SxProps, Theme } from '@mui/material/styles';
 import type {
   Locale,
@@ -33,6 +34,7 @@ export interface WidgetInstanceConfig {
   themeId?: WidgetThemeId;
   size?: WidgetSize;
   locale?: Locale;
+  view?: WidgetView;
   data?: WidgetData;
   metadata?: WidgetMetadata;
 }
@@ -87,6 +89,10 @@ export interface IoTWidgetProps {
 
   size?: WidgetSize;
   locale?: Locale;
+  /** Auto chooses compact / standard / detailed from available card space. */
+  view?: WidgetView;
+  /** An expanded widget uses the detailed presentation, if historical data is available. */
+  expanded?: boolean;
 
   /** Runtime values merged over the definition's demo/mock values. */
   data?: WidgetData;
