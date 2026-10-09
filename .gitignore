@@ -6,3 +6,4 @@ full-screenshots/
 *.rar
 .DS_Store
 dist/
+out/
