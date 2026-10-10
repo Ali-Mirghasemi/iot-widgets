@@ -1,14 +1,18 @@
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { getQaThemes, screenshotOptions } from './qa-config.mjs';
 
-const root = process.cwd();
-const outDir = path.join(root, 'widget-screenshots');
+// Resolve from this script, not process.cwd(), so runs from any directory.
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const outDir = path.resolve(root, process.env.WIDGET_QA_OUTPUT_DIR || 'widget-screenshots');
+const externalUrl = process.env.WIDGET_QA_URL?.trim();
 const port = Number(process.env.WIDGET_QA_PORT || 4173);
 const host = '127.0.0.1';
-const baseUrl = `http://${host}:${port}`;
+const baseUrl = externalUrl || `http://${host}:${port}`;
 const themes = getQaThemes();
 const imageOptions = screenshotOptions();
 const categories = ['metrics','controls','charts','location','tables','display'];
@@ -23,43 +27,37 @@ const headless = process.env.WIDGET_QA_HEADFUL === '1' ? false : true;
 if (!selectedThemes.length) throw new Error(`Unknown WIDGET_QA_THEME=${onlyTheme}`);
 if (!selectedCategories.length) throw new Error(`Unknown WIDGET_QA_CATEGORY=${onlyCategory}`);
 
+if (outDir === root || outDir === path.parse(outDir).root) throw new Error('Refusing to clear project root or filesystem root as screenshots output');
 await rm(outDir, { recursive:true, force:true });
 await mkdir(outDir, { recursive:true });
 
-// Launch Vite directly with Node. This avoids Windows npm.cmd spawn EINVAL issues.
-const viteBin = path.join(root, 'node_modules', 'vite', 'bin', 'vite.js');
-const server = spawn(
-  process.execPath,
-  [viteBin, '--host', host, '--port', String(port), '--strictPort'],
-  {
-    cwd:root,
-    env:{...process.env, BROWSER:'none'},
-    stdio:['ignore','pipe','pipe'],
-    windowsHide:true,
-  },
-);
-
+// With WIDGET_QA_URL the coordinator owns Vite. Standalone npm screenshots
+// still starts one local server for backwards compatibility.
+let server;
 let serverLog = '';
-server.stdout.on('data', d => { const line=d.toString(); serverLog += line; process.stdout.write(`[vite] ${line}`); });
-server.stderr.on('data', d => { const line=d.toString(); serverLog += line; process.stderr.write(`[vite] ${line}`); });
-
-let serverExit = null;
-server.on('exit', (code, signal) => { serverExit = { code, signal }; });
-
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const waitForServer = async () => {
-  const deadline = Date.now() + 30000;
+  const deadline = Date.now() + 45000;
   while (Date.now() < deadline) {
-    if (serverExit) throw new Error(`Vite exited before becoming ready: ${JSON.stringify(serverExit)}\n${serverLog}`);
+    if (server && server.exitCode !== null) throw new Error(`Vite exited early: ${server.exitCode}\n${serverLog}`);
     try {
-      const response = await fetch(baseUrl, { cache:'no-store' });
+      const response = await fetch(baseUrl, { signal:AbortSignal.timeout(1500) });
       if (response.ok) return;
     } catch {}
     await sleep(300);
   }
-  throw new Error(`Vite server did not become ready.\n${serverLog}`);
+  throw new Error(`Vite at ${baseUrl} did not become ready.\n${serverLog}`);
 };
+
+if (!externalUrl) {
+  const viteBin = path.join(root, 'node_modules', 'vite', 'bin', 'vite.js');
+  if (!existsSync(viteBin)) throw new Error('Vite is missing. Run npm ci.');
+  server = spawn(process.execPath,
+    [viteBin, '--host', host, '--port', String(port), '--strictPort'],
+    { cwd:root, env:{...process.env, BROWSER:'none'}, stdio:['ignore','pipe','pipe'], windowsHide:true });
+  server.stdout.on('data', d => { serverLog += d.toString(); process.stdout.write(`[vite] ${d}`); });
+  server.stderr.on('data', d => { serverLog += d.toString(); process.stderr.write(`[vite] ${d}`); });
+}
 
 const clean = value => String(value).replace(/[^a-z0-9_-]+/gi,'-').replace(/-+/g,'-').toLowerCase();
 
@@ -234,14 +232,14 @@ try {
         const widgetFile = path.join(widgetDir, `${clean(widgetId)}.${imageOptions.extension}`);
         await section.screenshot({ path:widgetFile, animations:'disabled',
           type:imageOptions.type, ...(imageOptions.quality ? { quality:imageOptions.quality } : {}) });
-        widgetFiles.push(path.relative(root, widgetFile));
+        widgetFiles.push(path.relative(outDir, widgetFile).replaceAll('\\','/'));
       }
 
       const suspects = diagnostics.filter(item => item.cardScrollOverflow || item.bodyScrollOverflow || item.suspects.length);
       report.captures.push({
         theme,
         category,
-        file:file ? path.relative(root,file) : null,
+        file:file ? path.relative(outDir,file).replaceAll('\\','/') : null,
         widgetFiles,
         widgetVariants:diagnostics.length,
         suspectCount:suspects.length,
@@ -260,5 +258,5 @@ try {
   console.log(`\nDone. Screenshots and diagnostics: ${outDir}`);
 } finally {
   if (browser) await browser.close();
-  if (!server.killed) server.kill('SIGTERM');
+  if (server && !server.killed) server.kill('SIGTERM');
 }

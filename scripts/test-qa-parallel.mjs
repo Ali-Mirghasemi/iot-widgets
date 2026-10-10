@@ -76,6 +76,17 @@ try {
   } else {
     console.log('Actual worker overlap test skipped: host has insufficient available RAM; admission guard correctly serializes captures.');
   }
+  // Run from outside the checkout using a path containing spaces. This
+  // protects Windows/Linux callers against accidental process.cwd() usage.
+  const spaced=path.join(work,'outside working dir');
+  await mkdir(spaced,{recursive:true});
+  const portableOutput=path.join(work,'portable output');
+  const portable=spawnSync(process.execPath,[path.join(root,'scripts','run-qa.mjs'),
+    '--themes',themes[0],'--locale','fa','--jobs','1','--out-dir',portableOutput,
+    '--base-url','http://127.0.0.1:12345','--capture-script',fake],
+    {cwd:spaced,encoding:'utf8',timeout:18000});
+  assert.equal(portable.status,0,portable.stderr+'\n'+portable.stdout);
+  assert((await readFile(path.join(portableOutput,themes[0]+'-qa.zip'))).length > 0);
   // Auto mode must work even when the host has a restricted CPU quota.
   const autoOutput=path.join(work,'auto-out');
   const auto=spawnSync(process.execPath,['scripts/run-qa.mjs','--themes',themes.join(','),'--locale','both',

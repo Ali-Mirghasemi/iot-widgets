@@ -132,8 +132,12 @@ async function run() {
   if (plan.lowMemory) console.warn('WARNING: Low available RAM; even one Chromium capture may cause memory pressure.');
   if (opts.planOnly) return;
   const rootWorkers = path.join(outDir, 'qa-raw');
-  if (outDir === projectRoot) throw new Error('Please use an output directory, not the project root');
+  if (outDir === projectRoot || outDir === path.parse(outDir).root ||
+    outDir === path.join(projectRoot, '.git') || outDir.startsWith(path.join(projectRoot, '.git') + path.sep)) {
+    throw new Error('Use a dedicated QA output directory, not the repository or .git directory');
+  }
   await mkdir(outDir, { recursive:true });
+  await rm(path.join(outDir,'QA-RUN-ERROR.txt'), { force:true });
   const stage = await mkdtemp(path.join(outDir, '.qa-parallel-'));
   const startedAt = new Date().toISOString();
   const children = new Set();
@@ -323,6 +327,10 @@ async function run() {
       console.error('Failed:',failures.map(([key])=>key).join(', '));
       process.exitCode = 1;
     }
+  } catch (error) {
+    const serverLog = await readFile(path.join(stage,'vite.log'),'utf8').catch(() => '');
+    await writeFile(path.join(outDir,'QA-RUN-ERROR.txt'), `${error.stack || error}\n\nVITE LOG\n${serverLog}`, 'utf8').catch(() => {});
+    throw error;
   } finally {
     if (vite && !vite.killed) vite.kill();
     for (const child of children) if (!child.killed) child.kill();

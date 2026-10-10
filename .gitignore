@@ -7,3 +7,11 @@ full-screenshots/
 .DS_Store
 dist/
 out/
+# Generated TypeScript project output (vite.config.ts stays tracked)
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+# Temporary QA stages and browser traces
+playwright-report/
+test-results/
+.qa-parallel-*/
