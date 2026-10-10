@@ -47,3 +47,6 @@ export type {
 } from '../widgets/core/types';
 export type { WidgetFrameProps } from '../widgets/core/WidgetFrame';
 export type { WidgetRendererProps } from '../widgets/renderers/WidgetVisuals';
+
+/** Build a dashboard containing every registered widget. */
+export { createWidgetCatalogDashboard } from './catalogDashboard';

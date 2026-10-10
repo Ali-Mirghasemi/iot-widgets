@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { Box, Button, Chip, Dialog, DialogContent, DialogTitle, Divider, IconButton, Menu, MenuItem, Select, Tooltip, Typography } from '@mui/material';
+import { Box, Button, Chip, Dialog, DialogContent, DialogTitle, Divider, IconButton, Menu, MenuItem, Select, TextField, Tooltip, Typography } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
 import DashboardRounded from '@mui/icons-material/DashboardRounded';
 import BoltRounded from '@mui/icons-material/BoltRounded';
@@ -23,6 +23,8 @@ import { dashboardPalettePresets, dashboardSurfacePalettes } from '../library/Da
 import { WidgetThemeProvider, type DashboardAppearance } from '../library/WidgetThemeProvider';
 import { widgetThemeList } from '../widgets/core/themeTokens';
 import { getWidgetDefinition } from '../library/catalog';
+import { createWidgetCatalogDashboard } from '../library/catalogDashboard';
+import { widgetCategories, widgetRegistry } from '../widgets/registry';
 import type { Locale, WidgetThemeId } from '../widgets/core/types';
 import { getWidgetGridMinimum, widgetSizeForGrid } from '../library/adaptive';
 
@@ -31,6 +33,7 @@ const initialAppearance:DashboardAppearance={themeId:'studio',mode:'dark',colorM
 const instance=(id:string,widgetId:string,x:number,y:number,w:number,h:number,data?:Record<string,unknown>):DashboardItem=>({id,widgetId,x,y,w,h,data});
 const labHistory=[18.2,18.7,19.8,19.1,21.5,22.4,21.8,23.9,24.1,23.7,24.8];
 const demoBoards:Record<string,{label:string,description:string,items:DashboardItem[]}>= {
+ catalog:{label:'All widgets · Nexus Catalog',description:'The entire widget registry, inside a real editable dashboard',items:createWidgetCatalogDashboard()},
  lab:{label:'Adaptive widget lab',description:'Resize a card to see compact, standard and detailed states',items:[
   {...instance('temp-compact','temperature',0,0,3,2,{value:24.8,unit:'°C',history:labHistory}),view:'compact'},
   {...instance('temp-standard','temperature',3,0,3,2,{value:24.8,unit:'°C',min:0,max:50,history:labHistory}),view:'standard'},
@@ -91,7 +94,7 @@ export default function DemoDashboard(){
  const [locale,setLocale]=useState<Locale>(params.get('locale')==='fa'?'fa':'en');
  const fa=locale==='fa';
  const ui=(english:string,persian:string)=>fa?persian:english;
- const boardFa:Record<string,string>={factory:'نمای کلی کارخانه',energy:'پایش انرژی',fleet:'ردیابی ناوگان',lab:'آزمایشگاه ویجت‌ها'};
+ const boardFa:Record<string,string>={factory:'نمای کلی کارخانه',energy:'پایش انرژی',fleet:'ردیابی ناوگان',lab:'آزمایشگاه ویجت‌ها',catalog:'کاتالوگ همه ویجت‌ها'};
  const [items,setItems]=useState<DashboardItem[]>(()=>loadItems(initialBoard in demoBoards?initialBoard:'factory'));
  const [appearance,setAppearance]=useState<DashboardAppearance>(()=>{
    const requestedTheme=params.get('theme');
@@ -104,13 +107,26 @@ export default function DemoDashboard(){
  const [mobileNav,setMobileNav]=useState(false);
  const [mobileInspector,setMobileInspector]=useState(false);
  const [showCatalog,setShowCatalog]=useState(false);
+ const [catalogCategory,setCatalogCategory]=useState<string>('all');
+ const [catalogSearch,setCatalogSearch]=useState('');
  const [advancedPalette,setAdvancedPalette]=useState(false);
  const dark=appearance.mode==='dark';const tokens=dark?darkTokens:lightTokens;
  const appearanceResolved=useMemo<DashboardAppearance>(()=>({...appearance,palette:{...tokens,...appearance.palette}}),[appearance,tokens]);
  const muiTheme=useMemo(()=>createTheme({palette:{mode:appearance.mode,primary:{main:appearance.palette.primary},secondary:{main:appearance.palette.secondary},background:{default:tokens.background,paper:tokens.surface}},shape:{borderRadius:13},typography:{fontFamily:'Inter, ui-sans-serif, system-ui, sans-serif'}}),[appearance.mode,appearance.palette.primary,appearance.palette.secondary,tokens]);
  const setPal=(updates:Partial<DashboardAppearance['palette']>)=>setAppearance(a=>({...a,palette:{...a.palette,...updates}}));
  useEffect(()=>{try{window.localStorage.setItem('iot-demo-layout-'+board,JSON.stringify(items));}catch{/* storage optional */}},[board,items]);
- const changeBoard=(next:string)=>{setBoard(next);setItems(loadItems(next));setEdit(false);setContext(null);};
+ const changeBoard=(next:string)=>{setBoard(next);setItems(loadItems(next));setEdit(false);setContext(null);setCatalogCategory('all');setCatalogSearch('');};
+ const visibleItems=useMemo(()=>{
+   if(board!=='catalog'||(catalogCategory==='all'&&!catalogSearch.trim()))return items;
+   const term=catalogSearch.trim().toLocaleLowerCase();
+   const filtered=items.filter(item=>{
+     const def=getWidgetDefinition(item.widgetId);
+     return def && (catalogCategory==='all'||def.category===catalogCategory) &&
+       (!term||[def.id,def.titleEn,def.titleFa,def.descriptionFa].join(' ').toLocaleLowerCase().includes(term));
+   });
+   return settleDashboard(filtered,undefined,12,(item,n)=>getWidgetGridMinimum(getWidgetDefinition(item.widgetId),n));
+ },[board,items,catalogCategory,catalogSearch]);
+ const catalogFiltered=board==='catalog'&&(catalogCategory!=='all'||Boolean(catalogSearch.trim()));
  const patch=(id:string,updates:Partial<DashboardItem>)=>setItems(curr=>curr.map(i=>i.id===id?{...i,...updates}:i));
  const addWidget=(id:string)=>{const def=getWidgetDefinition(id);if(!def)return;const maxY=Math.max(0,...items.map(x=>x.y+x.h));setItems(current=>{const min=getWidgetGridMinimum(def,12);return settleDashboard([...current,instance(`${id}-${Date.now()}`,id,0,maxY,Math.max(3,min.w),Math.max(2,min.h))],undefined,12,(i,n)=>getWidgetGridMinimum(getWidgetDefinition(i.widgetId),n));});setShowCatalog(false);setEdit(true);};
  const saveJson=()=>{const json=JSON.stringify({schemaVersion:1,appearance,board,items},null,2);const url=URL.createObjectURL(new Blob([json],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`iot-${board}-dashboard.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
@@ -121,7 +137,7 @@ export default function DemoDashboard(){
      colorMode={item.colorMode} size={widgetSizeForGrid(def,item.w,item.h,expandedView)}
      view={expandedView?'detailed':item.view??'auto'} expanded={expandedView} data={item.data} metadata={item.metadata} locale={locale}/>;
  };
- const sideNav=(<Box sx={{display:'flex',flexDirection:'column',gap:.5}}>{Object.entries(demoBoards).map(([id,b])=>{const Icon=id==='factory'?DashboardRounded:id==='energy'?BoltRounded:id==='lab'?ViewQuiltRounded:LocalShippingRounded;return <Button key={id} onClick={()=>{changeBoard(id);setMobileNav(false);}} fullWidth startIcon={<Icon/>} sx={{justifyContent:'flex-start',py:1.4,px:1.6,borderRadius:2.5,textTransform:'none',fontSize:13,fontWeight:700,color:board===id?'#fff':tokens.muted,bgcolor:board===id?appearance.palette.primary+'35':'transparent','&:hover':{bgcolor:appearance.palette.primary+'25'},'& .MuiButton-startIcon':{color:board===id?appearance.palette.primary:tokens.muted}}}>{fa?boardFa[id]:b.label}</Button>;})}</Box>);
+ const sideNav=(<Box sx={{display:'flex',flexDirection:'column',gap:.5}}>{Object.entries(demoBoards).map(([id,b])=>{const Icon=id==='catalog'?WidgetsRounded:id==='factory'?DashboardRounded:id==='energy'?BoltRounded:id==='lab'?ViewQuiltRounded:LocalShippingRounded;return <Button key={id} onClick={()=>{changeBoard(id);setMobileNav(false);}} fullWidth startIcon={<Icon/>} sx={{justifyContent:'flex-start',py:1.4,px:1.6,borderRadius:2.5,textTransform:'none',fontSize:13,fontWeight:700,color:board===id?'#fff':tokens.muted,bgcolor:board===id?appearance.palette.primary+'35':'transparent','&:hover':{bgcolor:appearance.palette.primary+'25'},'& .MuiButton-startIcon':{color:board===id?appearance.palette.primary:tokens.muted}}}>{fa?boardFa[id]:b.label}</Button>;})}</Box>);
  const colorField=(name:'primary'|'secondary'|'background'|'surface'|'text'|'muted'|'border')=>{const value=appearance.palette[name]??tokens[name as keyof typeof tokens]??'#ffffff';return <Box sx={{display:'flex',alignItems:'center',gap:1,justifyContent:'space-between'}}><Typography sx={{fontSize:12,fontWeight:650,color:tokens.muted,textTransform:'capitalize'}}>{name}</Typography><Box sx={{display:'flex',alignItems:'center',gap:1}}><Typography sx={{fontSize:11,color:tokens.text,fontFamily:'monospace'}}>{value.toUpperCase()}</Typography><Box component="input" type="color" aria-label={`${name} color`} value={value} onChange={e=>setPal({[name]:e.target.value})} sx={{width:40,height:31,background:'none',p:0,border:0,cursor:'pointer'}}/></Box></Box>};
  const appearancePanel=<Box sx={{p:2.3,display:'flex',flexDirection:'column',gap:2.1}}>
    <Box sx={{display:'flex',alignItems:'center',justifyContent:'space-between'}}><Typography sx={{fontWeight:800,fontSize:14,color:tokens.text}}>Appearance studio</Typography><SettingsOutlined sx={{fontSize:19,color:tokens.muted}}/></Box>
@@ -141,21 +157,33 @@ export default function DemoDashboard(){
    <Box component="aside" sx={{width:220,flex:'0 0 220px',borderRight:`1px solid ${tokens.border}`,px:1.5,pt:3,position:'sticky',top:0,height:'100vh',display:{xs:'none',lg:'flex'},flexDirection:'column',background:tokens.surface}}>
      <Box sx={{px:1.4,display:'flex',alignItems:'center',gap:1.1,mb:5}}><Box sx={{width:35,height:35,borderRadius:2.1,display:'grid',placeItems:'center',background:`linear-gradient(135deg,${appearance.palette.primary},${appearance.palette.secondary})`}}><LayersRounded sx={{color:'#0b1120'}}/></Box><Box><Typography sx={{fontWeight:850,fontSize:16,letterSpacing:'-.05em',lineHeight:1}}>NEXUS</Typography><Typography sx={{fontSize:10.5,color:tokens.muted,letterSpacing:.5,mt:.4}}>IoT Widget Studio</Typography></Box></Box>
      <Typography sx={{px:1.4,fontSize:10.2,color:tokens.muted,letterSpacing:1.1,fontWeight:800,mb:1.1}}>DEMO PANELS</Typography>{sideNav}
-     <Box sx={{mt:4,px:1}}><Button fullWidth startIcon={<WidgetsRounded/>} href="?gallery=1" sx={{color:tokens.muted,justifyContent:'flex-start',fontSize:12,textTransform:'none'}}>All 63 widgets →</Button></Box>
+     <Box sx={{mt:4,px:1}}><Button fullWidth startIcon={<WidgetsRounded/>} onClick={()=>changeBoard('catalog')} sx={{color:tokens.muted,justifyContent:'flex-start',fontSize:12,textTransform:'none'}}>{ui('All widgets in Nexus','همه ویجت‌ها در نکسوس')} →</Button></Box>
      <Box sx={{mt:'auto',px:1.4,py:2.5,borderTop:`1px solid ${tokens.border}`}}><Box sx={{display:'flex',alignItems:'center',gap:.7}}><CircleRounded sx={{fontSize:10,color:appearance.palette.secondary}}/><Typography sx={{fontSize:12,color:tokens.text}}>Demo workspace</Typography></Box><Typography sx={{fontSize:10.5,color:tokens.muted,mt:.5}}>Local settings · no backend</Typography></Box>
    </Box>
    <Box sx={{minWidth:0,flex:1,display:'flex',flexDirection:'column'}}>
      <Box component="header" sx={{minHeight:72,borderBottom:`1px solid ${tokens.border}`,display:'flex',alignItems:'center',justifyContent:'space-between',px:{xs:1.2,sm:2,md:3.5},gap:1,minWidth:0,background:tokens.surface}}>
        <Box sx={{display:'flex',alignItems:'center',gap:1,minWidth:0}}><IconButton sx={{display:{lg:'none'},color:tokens.text}} onClick={()=>setMobileNav(!mobileNav)}><DashboardRounded/></IconButton><Box sx={{minWidth:0}}><Typography sx={{fontWeight:850,letterSpacing:'-.025em',fontSize:{xs:13,sm:16},whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{fa?boardFa[board]:demoBoards[board].label}</Typography><Typography sx={{fontSize:11,color:tokens.muted}}>{ui('IoT workspace / Dashboard','فضای کاری اینترنت اشیا / داشبورد')}</Typography></Box></Box>
-       <Box sx={{display:'flex',alignItems:'center',gap:{xs:.2,sm:1}}}><Button size="small" aria-label="Toggle dashboard language" onClick={()=>setLocale(v=>v==='fa'?'en':'fa')} sx={{minWidth:40,color:tokens.text,border:`1px solid ${tokens.border}`,borderRadius:2}}>{fa?'EN':'فا'}</Button><Chip size="small" label={ui('SIMULATED DATA','داده آزمایشی')} sx={{display:{xs:'none',sm:'flex'},height:27,color:appearance.palette.secondary,bgcolor:appearance.palette.secondary+'16',border:`1px solid ${appearance.palette.secondary}42`,fontSize:9.5,fontWeight:800,letterSpacing:.6}}/><Tooltip title="Export layout JSON"><IconButton onClick={saveJson} sx={{color:tokens.muted}}><DownloadRounded/></IconButton></Tooltip><Button variant={edit?'contained':'outlined'} startIcon={edit?<CheckRounded/>:<EditOutlined/>} onClick={()=>{setEdit(x=>!x);setContext(null);}} sx={{bgcolor:edit?appearance.palette.primary:'transparent',borderColor:tokens.border,color:edit?'#10162b':tokens.text,textTransform:'none',fontSize:12,fontWeight:800,borderRadius:2.2,px:1.6,whiteSpace:'nowrap'}}><Box component="span" sx={{display:{xs:'none',sm:'inline'}}}>{edit?ui('Done editing','پایان ویرایش'):ui('Edit dashboard','ویرایش داشبورد')}</Box><Box component="span" sx={{display:{xs:'inline',sm:'none'}}}>{edit?ui('Done','پایان'):ui('Edit','ویرایش')}</Box></Button></Box>
+       <Box sx={{display:'flex',alignItems:'center',gap:{xs:.2,sm:1}}}><Button size="small" aria-label="Toggle dashboard language" onClick={()=>setLocale(v=>v==='fa'?'en':'fa')} sx={{minWidth:40,color:tokens.text,border:`1px solid ${tokens.border}`,borderRadius:2}}>{fa?'EN':'فا'}</Button><Chip size="small" label={ui('SIMULATED DATA','داده آزمایشی')} sx={{display:{xs:'none',sm:'flex'},height:27,color:appearance.palette.secondary,bgcolor:appearance.palette.secondary+'16',border:`1px solid ${appearance.palette.secondary}42`,fontSize:9.5,fontWeight:800,letterSpacing:.6}}/><Tooltip title="Export layout JSON"><IconButton onClick={saveJson} sx={{color:tokens.muted}}><DownloadRounded/></IconButton></Tooltip><Button variant={edit?'contained':'outlined'} startIcon={edit?<CheckRounded/>:<EditOutlined/>} onClick={()=>{if(catalogFiltered){setCatalogCategory('all');setCatalogSearch('');}setEdit(x=>!x);setContext(null);}} sx={{bgcolor:edit?appearance.palette.primary:'transparent',borderColor:tokens.border,color:edit?'#10162b':tokens.text,textTransform:'none',fontSize:12,fontWeight:800,borderRadius:2.2,px:1.6,whiteSpace:'nowrap'}}><Box component="span" sx={{display:{xs:'none',sm:'inline'}}}>{edit?ui('Done editing','پایان ویرایش'):ui('Edit dashboard','ویرایش داشبورد')}</Box><Box component="span" sx={{display:{xs:'inline',sm:'none'}}}>{edit?ui('Done','پایان'):ui('Edit','ویرایش')}</Box></Button></Box>
      </Box>
      {mobileNav&&<Box sx={{p:2,display:{lg:'none'},bgcolor:tokens.surface,borderBottom:`1px solid ${tokens.border}`}}>{sideNav}<Button onClick={()=>setMobileNav(false)}>Close</Button></Box>}
      <Box sx={{display:'flex',flex:1,minWidth:0}}>
        <Box component="main" sx={{flex:1,minWidth:0,p:{xs:1.2,sm:2,md:3.2},maxWidth:'100%',overflowX:'hidden'}}>
-         <Box sx={{display:'flex',alignItems:'start',justifyContent:'space-between',gap:2,mb:2.8,flexWrap:'wrap'}}><Box><Typography sx={{fontSize:{xs:25,md:29},letterSpacing:'-.045em',fontWeight:820,mb:.5}}>{ui('Operations at a glance','نمای کلی عملیات')}</Typography><Typography sx={{fontSize:12.5,color:tokens.muted}}>{fa?'داده‌های نمونه · نمای آزمایشی':demoBoards[board].description+' · Preview environment'}</Typography></Box><Box sx={{display:'flex',alignItems:'center',gap:1}}>{edit&&<><Button size="small" startIcon={<AddRounded/>} onClick={()=>setShowCatalog(true)} sx={{textTransform:'none',color:appearance.palette.primary}}>{ui('Add widget','افزودن ویجت')}</Button><Tooltip title="Reset current layout"><IconButton onClick={()=>{setItems(settleDashboard(demoBoards[board].items.map(i=>({...i})),undefined,12,(x,n)=>getWidgetGridMinimum(getWidgetDefinition(x.widgetId),n)));try{localStorage.removeItem('iot-demo-layout-'+board)}catch{/* optional */}}} sx={{color:tokens.muted}}><RestartAltRounded/></IconButton></Tooltip></>}<Typography sx={{fontSize:11,color:tokens.muted}}>{items.length} {ui('widgets','ویجت')}</Typography></Box></Box>
+         <Box sx={{display:'flex',alignItems:'start',justifyContent:'space-between',gap:2,mb:2.8,flexWrap:'wrap'}}><Box><Typography sx={{fontSize:{xs:25,md:29},letterSpacing:'-.045em',fontWeight:820,mb:.5}}>{board==='catalog'?ui('Widget catalog','کاتالوگ ویجت‌ها'):ui('Operations at a glance','نمای کلی عملیات')}</Typography><Typography sx={{fontSize:12.5,color:tokens.muted}}>{fa?'داده‌های نمونه · نمای آزمایشی':demoBoards[board].description+' · Preview environment'}</Typography></Box><Box sx={{display:'flex',alignItems:'center',gap:1}}>{edit&&<><Button size="small" startIcon={<AddRounded/>} onClick={()=>setShowCatalog(true)} sx={{textTransform:'none',color:appearance.palette.primary}}>{ui('Add widget','افزودن ویجت')}</Button><Tooltip title="Reset current layout"><IconButton onClick={()=>{setItems(settleDashboard(demoBoards[board].items.map(i=>({...i})),undefined,12,(x,n)=>getWidgetGridMinimum(getWidgetDefinition(x.widgetId),n)));try{localStorage.removeItem('iot-demo-layout-'+board)}catch{/* optional */}}} sx={{color:tokens.muted}}><RestartAltRounded/></IconButton></Tooltip></>}<Typography sx={{fontSize:11,color:tokens.muted}}>{visibleItems.length} {ui('widgets','ویجت')}</Typography></Box></Box>
+         {board==='catalog'&&<Box data-nexus-catalog="true" data-total-widgets={widgetRegistry.length} sx={{mb:2,display:'flex',flexDirection:'column',gap:1.3}}>
+           <Typography sx={{fontSize:12,color:tokens.muted}}>{ui('Every registered widget is available here, with the same palette, editing tools and responsive layout as other Nexus panels.','همه ویجت‌های ثبت‌شده اینجا با همان پالت رنگ، ابزار ویرایش و چیدمان واکنش‌گرا در دسترس هستند.')}</Typography>
+           <Box sx={{display:'flex',gap:1,alignItems:'center',flexWrap:'wrap'}}>
+             <TextField size="small" type="search" aria-label={ui('Search widgets','جستجوی ویجت‌ها')} placeholder={ui('Search all widgets…','جستجوی همه ویجت‌ها…')} value={catalogSearch} onChange={event=>{setCatalogSearch(event.target.value);setEdit(false);}} sx={{flex:'1 1 205px',minWidth:170,'& .MuiOutlinedInput-root':{borderRadius:2,bgcolor:tokens.surface,color:tokens.text}}}/>
+             <Select size="small" aria-label={ui('Filter category','فیلتر دسته‌بندی')} value={catalogCategory} onChange={event=>{setCatalogCategory(event.target.value);setEdit(false);}} sx={{minWidth:145,bgcolor:tokens.surface,color:tokens.text,borderRadius:2}}>
+               <MenuItem value="all">{ui('All categories','همه دسته‌بندی‌ها')}</MenuItem>
+               {widgetCategories.map(category=><MenuItem key={category} value={category}>{category}</MenuItem>)}
+             </Select>
+             <Typography data-visible-widgets={visibleItems.length} sx={{fontSize:12,color:tokens.muted}}>{visibleItems.length} / {widgetRegistry.length} {ui('widgets','ویجت')}</Typography>
+           </Box>
+           {catalogFiltered&&<Typography sx={{fontSize:11,color:tokens.muted}}>{ui('Editing is available when all widgets are displayed. Click Edit to clear the filters.','ویرایش زمانی فعال است که همه ویجت‌ها نمایش داده شوند. با انتخاب ویرایش، فیلترها پاک می‌شوند.')}</Typography>}
+         </Box>}
          {edit&&<Box sx={{mb:2,p:1.5,border:`1px dashed ${appearance.palette.primary}86`,borderRadius:2.5,bgcolor:appearance.palette.primary+'10',color:tokens.muted,fontSize:12}}>{ui('Edit mode · Drag to reorder or use handles. On phones, drag the handle or use the arrows. Resize from the corner.','حالت ویرایش · برای جابه‌جایی دستگیره را بکشید یا از فلش‌ها استفاده کنید. برای تغییر اندازه از گوشه کارت استفاده کنید.')}</Box>}
-         <DashboardPanel appearance={appearanceResolved} locale={locale} items={items} editable={edit} onChange={setItems} renderWidget={item=>renderWidget(item)} onExpand={setExpanded} onContextItem={(item,event)=>setContext({id:item.id,left:event.clientX,top:event.clientY})}/>
-         <Typography sx={{fontSize:10.5,color:tokens.muted,mt:1.5}}>Prototype with fabricated telemetry. Some legacy visuals and map tiles are illustrative.</Typography>
+         <DashboardPanel appearance={appearanceResolved} locale={locale} items={visibleItems} editable={edit&&!catalogFiltered} onChange={setItems} renderWidget={item=>renderWidget(item)} onExpand={setExpanded} onContextItem={(item,event)=>setContext({id:item.id,left:event.clientX,top:event.clientY})}/>
+         <Typography sx={{fontSize:10.5,color:tokens.muted,mt:1.5}}>{ui('Prototype with fabricated telemetry. Some legacy visuals and map tiles are illustrative.','نمونه آزمایشی با داده ساختگی؛ بعضی نمایش‌ها و نقشه‌ها نمایشی هستند.')}</Typography>
        </Box>
        <Box component="aside" sx={{width:260,flex:'0 0 260px',borderLeft:`1px solid ${tokens.border}`,background:tokens.surface,display:{xs:'none',xl:'block'}}}>{appearancePanel}</Box>
      </Box>
