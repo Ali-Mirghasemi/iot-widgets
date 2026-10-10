@@ -52,10 +52,14 @@ export function resolveWidgetView(
   const [w,h] = readSize(size);
   let available:ResolvedWidgetView;
   if (bounds && bounds.width > 0 && bounds.height > 0) {
-    available = bounds.width < 205 || bounds.height < 156 ? 'compact' :
-      bounds.width >= 315 && bounds.height >= 235 ? 'detailed' : 'standard';
+    const { width, height } = bounds;
+    const veryTight = width < 228 || height < 170;
+    const roomy = width >= 360 && height >= 260;
+    const supportsDetailByShape = width >= 300 && height >= 220 && (width >= 380 || height >= 300);
+    available = veryTight ? 'compact' : (roomy || supportsDetailByShape) ? 'detailed' : 'standard';
   } else {
-    available = (w*h <= 1 || w === 1) ? 'compact' : (w*h >= 6 ? 'detailed' : 'standard');
+    const area = w * h;
+    available = (area <= 1 || w === 1) ? 'compact' : (area >= 6 || (area >= 4 && h >= 2)) ? 'detailed' : 'standard';
   }
   if(requested==='auto') return available;
   const rank:Record<ResolvedWidgetView,number>={compact:0,standard:1,detailed:2};

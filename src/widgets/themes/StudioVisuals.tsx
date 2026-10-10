@@ -24,9 +24,9 @@ function Sparkline({ values, color, fill=true, muted }: {values:number[];color:s
 }
 
 function Value({ value, unit, color }: {value:string|number;unit:string;color:string}) {
-  return <Box sx={{display:'flex',alignItems:'baseline',gap:.55,minWidth:0,flexWrap:'wrap'}}>
-    <Typography sx={{fontSize:'clamp(26px,10cqw,47px)',fontWeight:780,letterSpacing:'-.058em',lineHeight:1,color,whiteSpace:'nowrap',fontVariantNumeric:'tabular-nums'}}>{value}</Typography>
-    <Typography sx={{fontSize:12,fontWeight:650,color,opacity:.58}}>{unit}</Typography>
+  return <Box sx={{display:'flex',alignItems:'baseline',gap:.55,minWidth:0,flexWrap:'wrap',overflow:'visible'}}>
+    <Typography sx={{fontSize:'clamp(24px,9.2cqw,45px)',fontWeight:780,letterSpacing:'-.058em',lineHeight:.94,color,whiteSpace:'nowrap',fontVariantNumeric:'tabular-nums',pb:'2px'}}>{value}</Typography>
+    <Typography sx={{fontSize:12,fontWeight:650,color,opacity:.58,pb:'3px'}}>{unit}</Typography>
   </Box>;
 }
 
@@ -52,17 +52,62 @@ function StudioMetric({def,theme,size,view,history}:WidgetRendererProps){
  </Box>;
 }
 
-function StudioGauge({def,theme,size,view}:WidgetRendererProps){
+function StudioGauge({def,theme,size,view,history}:WidgetRendererProps){
  const value=number(def.mock.value,64),max=number(def.mock.max,100),pct=bounded(value/Math.max(1,max)*100);
- const compact=(view??resolveWidgetView(size))==='compact';
- if(compact) return <Box sx={{height:'100%',display:'flex',alignItems:'center',gap:1,minWidth:0}}><Value value={value} unit={string(def.mock.unit)} color={theme.foreground}/></Box>;
- return <Box sx={{height:'100%',minHeight:0,display:'flex',gap:1.5,alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
-   <Box sx={{height:'min(100%,140px)',width:'min(54%,140px)',maxHeight:'100%',aspectRatio:'1',flexShrink:1,position:'relative',display:'grid',placeItems:'center'}}>
-     <Box sx={{position:'absolute',inset:0,borderRadius:'50%',background:`conic-gradient(${theme.accent} ${pct}%, ${theme.border} ${pct}%)`,transform:'rotate(-90deg)'}}/>
-     <Box sx={{position:'absolute',inset:'13%',borderRadius:'50%',bgcolor:theme.surface}}/>
-     <Box sx={{position:'relative',textAlign:'center'}}><Typography sx={{fontSize:'clamp(20px,9cqw,33px)',fontWeight:800,lineHeight:1,color:theme.foreground}}>{value}</Typography><Typography sx={{fontSize:11,mt:.55,color:theme.muted}}>{string(def.mock.unit)}</Typography></Box>
+ const currentView=view??resolveWidgetView(size);
+ const {wide,large}=dim(size);
+ const detailed=currentView==='detailed';
+ const compact=currentView==='compact';
+ const unit=string(def.mock.unit);
+ const tone=pct>=90?'#f59e83':pct>=72?theme.accent2:theme.accent;
+ const status=pct>=90?'High':pct>=72?'Elevated':'Normal';
+ const gaugeSize=compact?92:detailed?(large?208:176):(wide?150:132);
+ const spark=history?.length?history:[32,40,36,45,56,53,61,66,64,69];
+ const gaugeFace=<Box sx={{width:gaugeSize,height:gaugeSize,maxWidth:'100%',maxHeight:'100%',aspectRatio:'1',position:'relative',display:'grid',placeItems:'center',flex:'0 0 auto'}}>
+   <Box sx={{position:'absolute',inset:0,borderRadius:'50%',background:`conic-gradient(${tone} ${pct}%, ${theme.border} ${pct}% 100%)`,transform:'rotate(-90deg)',boxShadow:`inset 0 0 0 1px ${theme.border}`}}/>
+   <Box sx={{position:'absolute',inset:compact?'14%':'12%',borderRadius:'50%',bgcolor:theme.surface,boxShadow:`inset 0 0 0 1px ${theme.border}`}}/>
+   <Box sx={{position:'absolute',left:'50%',top:compact?8:10,transform:'translateX(-50%)',fontSize:10,color:theme.muted}}>MAX</Box>
+   <Box sx={{position:'absolute',left:'50%',bottom:compact?8:10,transform:'translateX(-50%)',fontSize:10,color:theme.muted}}>0</Box>
+   <Box sx={{position:'relative',textAlign:'center',px:1,minWidth:0}}>
+     <Typography sx={{fontSize:compact?'clamp(22px,10cqw,30px)':'clamp(26px,9cqw,40px)',fontWeight:800,lineHeight:.94,letterSpacing:'-.05em',color:theme.foreground,pb:'2px',fontVariantNumeric:'tabular-nums'}}>{value}</Typography>
+     <Typography sx={{fontSize:11,mt:.35,color:theme.muted}}>{unit}</Typography>
+     <Typography sx={{fontSize:10.5,mt:.6,color:tone,fontWeight:700,letterSpacing:'.02em'}}>{status}</Typography>
    </Box>
-   <Typography sx={{fontSize:11,color:theme.muted,fontWeight:650,minWidth:0,flex:'0 1 90px'}}>{pct<70?'Normal':pct<90?'Elevated':'High'}</Typography>
+ </Box>;
+ if(compact) return <Box sx={{height:'100%',display:'grid',placeItems:'center',overflow:'hidden'}}>{gaugeFace}</Box>;
+ if(!detailed) return <Box sx={{height:'100%',minHeight:0,display:'grid',gridTemplateColumns:wide?'minmax(122px,152px) minmax(0,1fr)':'1fr',gridTemplateRows:wide?undefined:'auto auto',alignItems:'center',gap:1.2,direction:'ltr',overflow:'hidden'}}>
+   <Box sx={{display:'grid',placeItems:'center'}}>{gaugeFace}</Box>
+   <Box sx={{minWidth:0,display:'flex',flexDirection:'column',justifyContent:'center',gap:.9}}>
+     <Box sx={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:1}}><Typography sx={{fontSize:11,color:theme.muted}}>Load band</Typography><Typography sx={{fontSize:11.5,fontWeight:760,color:tone}}>{Math.round(pct)}%</Typography></Box>
+     <Box sx={{height:10,bgcolor:theme.border,borderRadius:999,overflow:'hidden'}}><Box sx={{height:'100%',width:`${pct}%`,borderRadius:999,background:`linear-gradient(90deg,${theme.accent},${tone})`}}/></Box>
+     <Box sx={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:.8}}>
+       <Box><Typography sx={{fontSize:9.5,color:theme.muted}}>Range</Typography><Typography sx={{fontSize:12,fontWeight:700,color:theme.foreground}}>0 — {max} {unit}</Typography></Box>
+       <Box><Typography sx={{fontSize:9.5,color:theme.muted}}>Headroom</Typography><Typography sx={{fontSize:12,fontWeight:700,color:theme.foreground}}>{Math.max(0,Number((max-value).toFixed(1)))} {unit}</Typography></Box>
+     </Box>
+   </Box>
+ </Box>;
+ return <Box sx={{height:'100%',minHeight:0,display:'grid',gridTemplateRows:'auto auto minmax(0,1fr)',gap:1.15,direction:'ltr',overflow:'hidden'}}>
+   <Box sx={{display:'grid',gridTemplateColumns:(wide||large)?'minmax(160px,.95fr) minmax(0,1.05fr)':'1fr',alignItems:'center',gap:1.4,minHeight:0}}>
+     <Box sx={{display:'grid',placeItems:'center',minHeight:0}}>{gaugeFace}</Box>
+     <Box sx={{minWidth:0,display:'grid',gap:1,alignContent:'center'}}>
+       <Box sx={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:1}}><Typography sx={{fontSize:13,fontWeight:750,color:tone}}>{status} band</Typography><Typography sx={{fontSize:28,fontWeight:820,letterSpacing:'-.04em',color:theme.foreground}}>{Math.round(pct)}%</Typography></Box>
+       <Box sx={{height:12,bgcolor:theme.border,borderRadius:999,overflow:'hidden'}}><Box sx={{height:'100%',width:`${pct}%`,borderRadius:999,background:`linear-gradient(90deg,${theme.accent},${tone})`}}/></Box>
+       <Box sx={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:.7}}>
+         <Box><Typography sx={{fontSize:9.5,color:theme.muted}}>Min</Typography><Typography sx={{fontSize:13,fontWeight:750,color:theme.foreground}}>0 {unit}</Typography></Box>
+         <Box><Typography sx={{fontSize:9.5,color:theme.muted}}>Current</Typography><Typography sx={{fontSize:13,fontWeight:750,color:theme.foreground}}>{value} {unit}</Typography></Box>
+         <Box><Typography sx={{fontSize:9.5,color:theme.muted}}>Limit</Typography><Typography sx={{fontSize:13,fontWeight:750,color:theme.foreground}}>{max} {unit}</Typography></Box>
+       </Box>
+     </Box>
+   </Box>
+   <Box sx={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:.8}}>
+     <Box sx={{border:`1px solid ${theme.border}`,borderRadius:2,px:1,py:.9}}><Typography sx={{fontSize:9.5,color:theme.muted}}>Warning</Typography><Typography sx={{fontSize:12.5,fontWeight:760,color:theme.foreground}}>{Math.round(max*.72)} {unit}</Typography></Box>
+     <Box sx={{border:`1px solid ${theme.border}`,borderRadius:2,px:1,py:.9}}><Typography sx={{fontSize:9.5,color:theme.muted}}>Critical</Typography><Typography sx={{fontSize:12.5,fontWeight:760,color:theme.foreground}}>{Math.round(max*.9)} {unit}</Typography></Box>
+     <Box sx={{border:`1px solid ${theme.border}`,borderRadius:2,px:1,py:.9}}><Typography sx={{fontSize:9.5,color:theme.muted}}>Headroom</Typography><Typography sx={{fontSize:12.5,fontWeight:760,color:theme.foreground}}>{Math.max(0,Number((max-value).toFixed(1)))} {unit}</Typography></Box>
+   </Box>
+   <Box sx={{minHeight:0,border:`1px solid ${theme.border}`,borderRadius:2,p:.8,overflow:'hidden'}}>
+     <Box sx={{display:'flex',justifyContent:'space-between',mb:.45}}><Typography sx={{fontSize:10,color:theme.muted}}>Load history</Typography><Typography sx={{fontSize:10,color:theme.muted}}>{spark.length} samples</Typography></Box>
+     <Box sx={{height:'100%',minHeight:70}}><Sparkline values={spark} color={tone} muted={theme.muted}/></Box>
+   </Box>
  </Box>;
 }
 

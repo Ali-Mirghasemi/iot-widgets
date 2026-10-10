@@ -167,15 +167,17 @@ function RadialGauge({ value, max, unit, theme, size, tone }: { value: number; m
   const pct = clamp(value / Math.max(1, max), 0, 1);
   const r = 44;
   const c = 2 * Math.PI * r;
-  return <Box sx={{ width: size, height: size, position: 'relative', flex: '0 0 auto' }}>
+  const stroke = size >= 170 ? 12 : size >= 130 ? 10 : 9;
+  return <Box sx={{ width: size, height: size, maxWidth: '100%', maxHeight: '100%', position: 'relative', flex: '0 0 auto' }}>
     <svg viewBox="0 0 120 120" width="100%" height="100%" style={{display:'block'}}>
-      <circle cx="60" cy="60" r={r} fill="none" stroke="#edf0f5" strokeWidth="10" />
-      <circle cx="60" cy="60" r={r} fill="none" stroke={tone} strokeWidth="10" strokeLinecap="round" strokeDasharray={`${c * pct} ${c}`} transform="rotate(-90 60 60)" />
+      <circle cx="60" cy="60" r={r} fill="none" stroke="#edf0f5" strokeWidth={stroke} />
+      <circle cx="60" cy="60" r={r} fill="none" stroke={tone} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${c * pct} ${c}`} transform="rotate(-90 60 60)" />
+      {[0,.25,.5,.75,1].map((t,i)=>{ const a=(-90+t*360)*Math.PI/180; const x1=60+35*Math.cos(a), y1=60+35*Math.sin(a), x2=60+39*Math.cos(a), y2=60+39*Math.sin(a); return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#c9d2df" strokeWidth="1"/>; })}
     </svg>
     <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', textAlign: 'center' }}>
       <Box>
-        <Typography sx={{ fontSize: size <= 112 ? 24 : 30, lineHeight: 1, fontWeight: 850 }}>{value}</Typography>
-        <Typography sx={{ mt: .3, fontSize: 10.5, color: theme.muted }}>{unit}</Typography>
+        <Typography sx={{ fontSize: size <= 112 ? 23 : size <= 148 ? 28 : 33, lineHeight: .96, fontWeight: 850, pb:'2px' }}>{value}</Typography>
+        <Typography sx={{ mt: .25, fontSize: 10.5, color: theme.muted }}>{unit}</Typography>
       </Box>
     </Box>
   </Box>;
@@ -193,18 +195,18 @@ function MaterialGauge({ def, theme, locale, size }: Props) {
 
   if (p.compact) {
     return <Box sx={{ height:'100%', display:'grid', placeItems:'center', direction:'ltr' }}>
-      <RadialGauge value={value} max={max} unit={unit} theme={theme} size={118} tone={tone}/>
+      <RadialGauge value={value} max={max} unit={unit} theme={theme} size={104} tone={tone}/>
     </Box>;
   }
 
   if (p.wide && !p.large) {
-    return <Box sx={{ height:'100%', display:'grid', gridTemplateColumns:'126px minmax(0,1fr)', gap:1.3, alignItems:'center', direction:'ltr' }}>
-      <RadialGauge value={value} max={max} unit={unit} theme={theme} size={116} tone={tone}/>
+    return <Box sx={{ height:'100%', minHeight:0, display:'grid', gridTemplateColumns:'minmax(128px,150px) minmax(0,1fr)', gap:1.35, alignItems:'center', direction:'ltr', overflow:'hidden' }}>
+      <Box sx={{ display:'grid', placeItems:'center' }}><RadialGauge value={value} max={max} unit={unit} theme={theme} size={132} tone={tone}/></Box>
       <Box sx={{ minWidth:0 }}>
         <ToneBadge text={stateText} tone={state} theme={theme}/>
         <Box sx={{ mt:.85, display:'flex', justifyContent:'space-between', alignItems:'baseline' }}>
           <Typography sx={{ fontSize:10.5, color:theme.muted }}>{label(locale,'Operating range','محدوده عملکرد')}</Typography>
-          <Typography sx={{ fontSize:11, fontWeight:800 }}>{Math.round(pct*100)}%</Typography>
+          <Typography sx={{ fontSize:12, fontWeight:800 }}>{Math.round(pct*100)}%</Typography>
         </Box>
         <Box sx={{ mt:.45 }}><Progress value={value} max={max} theme={theme} tone={tone}/></Box>
         <Box sx={{ mt:.55, display:'flex', justifyContent:'space-between', color:theme.muted }}><Typography sx={{fontSize:9.5}}>0</Typography><Typography sx={{fontSize:9.5}}>{max}{unit}</Typography></Box>
@@ -213,14 +215,14 @@ function MaterialGauge({ def, theme, locale, size }: Props) {
   }
 
   const history = spark.map(v => Math.max(0, Math.min(max, (v / 100) * max)));
-  return <Box sx={{ height:'100%', display:'grid', gridTemplateRows:'auto minmax(92px,1fr) auto', gap:1, direction:'ltr' }}>
-    <Box sx={{ display:'grid', gridTemplateColumns:'164px minmax(0,1fr)', alignItems:'center', gap:1.4 }}>
-      <Box sx={{ display:'grid', placeItems:'center' }}><RadialGauge value={value} max={max} unit={unit} theme={theme} size={158} tone={tone}/></Box>
+  return <Box sx={{ height:'100%', minHeight:0, display:'grid', gridTemplateRows:'auto minmax(92px,1fr) auto', gap:1, direction:'ltr', overflow:'hidden' }}>
+    <Box sx={{ display:'grid', gridTemplateColumns:'minmax(160px,190px) minmax(0,1fr)', alignItems:'center', gap:1.45, minHeight:0 }}>
+      <Box sx={{ display:'grid', placeItems:'center' }}><RadialGauge value={value} max={max} unit={unit} theme={theme} size={p.large?182:164} tone={tone}/></Box>
       <Box sx={{ minWidth:0 }}>
         <ToneBadge text={stateText} tone={state} theme={theme}/>
         <Box sx={{ mt:.9, display:'flex', justifyContent:'space-between', alignItems:'baseline' }}>
           <Typography sx={{ fontSize:11, color:theme.muted }}>{label(locale,'Threshold usage','درصد از آستانه')}</Typography>
-          <Typography sx={{ fontSize:25, fontWeight:850 }}>{Math.round(pct*100)}%</Typography>
+          <Typography sx={{ fontSize:26, fontWeight:850 }}>{Math.round(pct*100)}%</Typography>
         </Box>
         <Progress value={value} max={max} theme={theme} tone={tone}/>
         <Box sx={{ mt:.9, display:'grid', gridTemplateColumns:'1fr 1fr', gap:.7 }}>
@@ -229,7 +231,7 @@ function MaterialGauge({ def, theme, locale, size }: Props) {
         </Box>
       </Box>
     </Box>
-    <Box sx={{ minHeight:0, border:`1px solid ${theme.border}`, borderRadius:1.5, p:.85, bgcolor:'#fbfcff' }}>
+    <Box sx={{ minHeight:0, border:`1px solid ${theme.border}`, borderRadius:1.5, p:.85, bgcolor:'#fbfcff', overflow:'hidden' }}>
       <Box sx={{ display:'flex', justifyContent:'space-between', mb:.3 }}><Typography sx={{ fontSize:9.8, color:theme.muted }}>{label(locale,'24h operating trend','روند ۲۴ ساعت')}</Typography><Typography sx={{ fontSize:9.8, color:theme.muted }}>24h</Typography></Box>
       <ChartSvg values={history} color={tone} fill minHeight={80}/>
     </Box>
@@ -240,6 +242,7 @@ function MaterialGauge({ def, theme, locale, size }: Props) {
     </Box>
   </Box>;
 }
+
 
 function BatteryShape({ value, theme, width = 128, height = 58 }: { value: number; theme: WidgetThemeTokens; width?: number; height?: number }) {
   const level = value < 20 ? '#dc2626' : value < 45 ? '#d97706' : theme.accent;

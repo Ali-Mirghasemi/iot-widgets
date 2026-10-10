@@ -298,9 +298,9 @@ function Gauge({ def, locale, size }: Props) {
   // The visible arc runs from left (-180°) through the top (-90°) to right (0°).
   // Keep the needle on that same geometry so low/mid/high values read correctly.
   const angle = -180 + pct * 180;
-  return <Box sx={{ height: '100%', display: p.wide && !p.large ? 'grid' : 'flex', gridTemplateColumns: p.wide && !p.large ? 'minmax(120px,.75fr) minmax(160px,1.25fr)' : undefined, flexDirection: p.wide && !p.large ? undefined : 'column', alignItems: 'center', justifyContent: 'center', gap: p.wide ? 1.3 : .8, direction: 'ltr' }}>
+  return <Box sx={{ height: '100%', display: p.wide && !p.large ? 'grid' : 'flex', gridTemplateColumns: p.wide && !p.large ? 'minmax(120px,.75fr) minmax(160px,1.25fr)' : undefined, flexDirection: p.wide && !p.large ? undefined : 'column', alignItems: 'center', justifyContent: 'center', gap: p.wide ? 1.3 : .8, direction: 'ltr', overflow:'hidden' }}>
     <Box sx={{ minWidth: 0, alignSelf: p.wide && !p.large ? 'center' : 'stretch' }}><ValueText value={value} unit={unit} large={p.large} /><Typography sx={{ mt: .7, fontSize: 11.5, fontWeight: 700, color: tone }}>{status}</Typography>{p.roomy && <Typography sx={{ mt: .45, fontSize: 10.5, color: C.tertiary }}>{localeText(locale, 'Operating range', 'بازه کاری')} 0–{max} {unit}</Typography>}</Box>
-    <Box sx={{ width: '100%', maxWidth: p.large ? 280 : 230, minWidth: 0 }}><svg viewBox="0 0 220 132" width="100%" aria-hidden style={{ display: 'block' }}>
+    <Box sx={{ width: '100%', maxWidth: p.large ? 320 : 250, minWidth: 0, overflow:'hidden' }}><svg viewBox="0 0 220 132" width="100%" aria-hidden style={{ display: 'block' }}>
       <path d="M30 110 A80 80 0 0 1 190 110" fill="none" stroke="rgba(118,118,128,.13)" strokeWidth="18" strokeLinecap="round" />
       <path d="M30 110 A80 80 0 0 1 190 110" fill="none" stroke={tone} strokeWidth="18" strokeLinecap="round" pathLength="100" strokeDasharray={`${pct * 100} 100`} />
       {[0, .25, .5, .75, 1].map((t, i) => {
