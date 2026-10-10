@@ -34,8 +34,21 @@ export function ProcessVisualRenderer({def,theme,locale,view='standard',history}
     <Box sx={{minWidth:0}}><Typography sx={{color:active?theme.accent2:theme.muted,fontWeight:850,fontFamily:'inherit',fontSize:compact?18:26}}>{local(fa,active?'ACTIVE':'STANDBY',active?'فعال':'غیرفعال')}</Typography>{!compact&&<Typography sx={{color:theme.muted,fontFamily:'inherit',fontSize:10}}>DO · 01</Typography>}</Box>
     <Switch checked={active} onChange={(_,v)=>setActive(v)} inputProps={{'aria-label':local(fa,'Relay switch','کلید رله')}} sx={{'& .MuiSwitch-switchBase.Mui-checked':{color:theme.accent2},'& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track':{bgcolor:theme.accent2}}}/>
   </Box>;
-  if(def.visual==='button') return <Box sx={{height:'100%',display:'grid',placeItems:'center',p:compact?0:1}}><Button fullWidth variant="outlined" aria-label={local(fa,'Issue command','ارسال فرمان')} sx={{...controlStyle,border:`2px solid ${theme.accent}`,color:theme.accent,
-    background:`${theme.accent}12`,'&:active':{background:`${theme.accent}45`}}}>{local(fa,'EXECUTE / PULSE','فرمان لحظه‌ای')}</Button></Box>;
+  if(def.visual==='button') return <Box sx={{height:'100%',minHeight:0,display:'grid',gridTemplateRows:detailed?'minmax(0,1fr) auto auto':'minmax(0,1fr)',alignItems:'center',gap:detailed?1.2:0,p:compact?0:1,overflow:'hidden'}}>
+    {detailed&&<Box sx={{minHeight:0,width:'100%',display:'grid',alignContent:'center',gap:1.2,border:`1px solid ${theme.border}`,p:1.5}}>
+      <Box sx={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:1}}>
+        <Typography sx={{fontFamily:'inherit',fontSize:11,fontWeight:850,color:theme.accent}}>{local(fa,'DIGITAL OUTPUT / PULSE','خروجی دیجیتال / پالس')}</Typography>
+        <Typography sx={{fontFamily:'inherit',fontSize:10,color:theme.muted}}>DO-01</Typography>
+      </Box>
+      <Box sx={{display:'grid',gridTemplateColumns:'repeat(12,minmax(0,1fr))',gap:.5,height:23}}>
+        {Array.from({length:12},(_,i)=><Box key={i} sx={{border:`1px solid ${i<3?theme.accent:theme.border}`,bgcolor:i<3?`${theme.accent}35`:'transparent'}}/>)}
+      </Box>
+      <Typography sx={{fontFamily:'inherit',fontSize:10,color:theme.muted}}>{local(fa,'Momentary command · Demo interface','فرمان لحظه‌ای · محیط نمایشی')}</Typography>
+    </Box>}
+    <Button fullWidth variant="outlined" aria-label={local(fa,'Issue command','ارسال فرمان')} sx={{...controlStyle,border:`2px solid ${theme.accent}`,color:theme.accent,
+      background:`${theme.accent}12`,'&:active':{background:`${theme.accent}45`}}}>{local(fa,'EXECUTE / PULSE','فرمان لحظه‌ای')}</Button>
+    {detailed&&<Typography sx={{fontFamily:'inherit',fontSize:10,color:theme.muted,textAlign:fa?'right':'left'}}>{local(fa,'Connect a device command handler for live output.','برای خروجی واقعی، فرمان دستگاه را متصل کنید.')}</Typography>}
+  </Box>;
   if(['slider','thermostat','input','color'].includes(def.visual)) return <Box sx={{height:'100%',minHeight:0,display:'flex',flexDirection:'column',justifyContent:'center',gap:1}}>
     <Box sx={{display:'flex',alignItems:'baseline',justifyContent:'space-between',gap:1}}><Typography data-iot-reading="true" sx={{fontWeight:850,fontSize:compact?20:30,fontFamily:'inherit',color:theme.foreground}}>{Math.round(setting)}{unit}</Typography>{!compact&&<Typography sx={{color:theme.muted,fontSize:10}}>{local(fa,'SETPOINT','نقطه تنظیم')}</Typography>}</Box>
     <Slider aria-label={local(fa,'Setpoint','نقطه تنظیم')} value={clamp(setting,lower,upper)} min={lower} max={upper} onChange={(_,v)=>setSetting(v as number)} sx={{color:theme.accent,py:1}}/>
@@ -81,8 +94,8 @@ export function ProcessVisualRenderer({def,theme,locale,view='standard',history}
     <Box sx={{height:'85%',minHeight:35,position:'relative',border:`2px solid ${theme.accent}`,borderRadius:1,overflow:'hidden',background:`${theme.accent}0d`}}><Box sx={{position:'absolute',inset:'auto 0 0',height:`${clamp(num,0,100)*100/100}%`,bgcolor:`${theme.accent}7f`,borderTop:`3px solid ${theme.accent}`}}/></Box>
     <Box sx={{minWidth:0}}>{readout}{!compact&&<Typography sx={{fontFamily:'inherit',color:theme.muted,fontSize:10}}>{local(fa,'VESSEL / LEVEL','مخزن / سطح')}</Typography>}</Box>
   </Box>;
-  if(['map','route','coordinates','compass','scada','image','iframe'].includes(def.visual))return <Box sx={{height:'100%',display:'grid',placeItems:'center',border:`1px dashed ${theme.accent}55`,p:1,textAlign:'center',gap:.5,alignContent:'center'}}>
-    <Typography sx={{fontFamily:'inherit',color:theme.accent,fontWeight:850,fontSize:compact?12:16}}>{def.visual==='scada'?local(fa,'PROCESS DIAGRAM','نقشه فرآیند'):local(fa,'GEO / DEVICE DATA','اطلاعات مکان / دستگاه')}</Typography>
+  if(['map','route','coordinates','compass','image','iframe'].includes(def.visual))return <Box sx={{height:'100%',display:'grid',placeItems:'center',border:`1px dashed ${theme.accent}55`,p:1,textAlign:'center',gap:.5,alignContent:'center'}}>
+    <Typography sx={{fontFamily:'inherit',color:theme.accent,fontWeight:850,fontSize:compact?12:16}}>{local(fa,'GEO / DEVICE DATA','اطلاعات مکان / دستگاه')}</Typography>
     {!compact&&<Typography sx={{fontFamily:'inherit',fontSize:10,color:theme.muted}}>{local(fa,'Connect a renderer / data source','منبع داده / نمایشگر را متصل کنید')}</Typography>}
   </Box>;
   if(['table','measurement-list','alarms','events','logs'].includes(def.visual)) return <Box sx={{height:'100%',display:'grid',alignContent:'center',gap:.7,minHeight:0}}>
