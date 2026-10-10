@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import { Box, Switch, Typography } from '@mui/material';
+import { Box, Button, Switch, Typography } from '@mui/material';
 import { MaterialVisualRenderer } from './MaterialVisuals';
 import type { WidgetRendererProps } from '../renderers/WidgetVisuals';
 import { spark2, bars } from '../data/mockData';
@@ -141,6 +141,35 @@ function StudioTank({def,theme,size,view}:WidgetRendererProps){
  return <Box sx={{height:'100%',minHeight:0,display:'flex',alignItems:'center',justifyContent:'space-around',gap:1.4,overflow:'hidden'}}><Box sx={{flex:'0 1 74px',minWidth:27,maxWidth:74,height:'83%',borderRadius:2.5,border:`2px solid ${theme.border}`,overflow:'hidden',position:'relative',bgcolor:`${theme.accent}0a`}}><Box sx={{position:'absolute',bottom:0,left:0,right:0,height:`${value}%`,background:`linear-gradient(0deg,${theme.accent},${theme.accent2}b0)`,borderRadius:'12px 12px 0 0'}}/></Box><Box sx={{minWidth:0}}><Value value={value} unit="%" color={theme.foreground}/><Typography sx={{fontSize:11,color:theme.muted,mt:.5}}>Fill level</Typography><Typography sx={{fontSize:11,color:theme.accent2,mt:.5}}>{string(def.mock.liters,'Normal')}</Typography></Box></Box>;
 }
 
+/** Actions should look clickable, not like pale fallback panels on a dark Studio surface.
+ * Clicks bubble to IoTWidget.onInteraction; this renderer never sends a device command. */
+function StudioAction({def,theme,size,view,locale}:WidgetRendererProps){
+ const density=view??resolveWidgetView(size);
+ const compact=density==='compact';
+ const detailed=density==='detailed';
+ const label=locale==='fa'?'ارسال فرمان':def.id==='downlink'?'Send downlink':'Send command';
+ const Icon=def.icon;
+ return <Box sx={{height:'100%',width:'100%',minWidth:0,minHeight:0,display:'flex',flexDirection:'column',justifyContent:'center',gap:compact?0:1.25,overflow:'hidden'}}>
+   {detailed&&<Box sx={{display:'flex',alignItems:'center',gap:1.2,minWidth:0}}>
+     <Box sx={{width:40,height:40,bgcolor:theme.accent+'1c',color:theme.accent,borderRadius:2,display:'grid',placeItems:'center',flexShrink:0}}><Icon sx={{fontSize:22}}/></Box>
+     <Box sx={{minWidth:0}}><Typography sx={{color:theme.foreground,fontSize:15,fontWeight:800}}>{locale==='fa'?'فرمان دستگاه':'Device action'}</Typography>
+       <Typography sx={{color:theme.muted,fontSize:11}}>{locale==='fa'?'برای اجرا انتخاب کنید':'Press to request an action'}</Typography></Box>
+   </Box>}
+   <Button type="button" variant="contained" startIcon={!compact?<Icon/>:undefined} aria-label={label}
+     sx={{width:'100%',minWidth:0,minHeight:compact?44:detailed?58:50,px:compact?1:2,
+       borderRadius:2.2,textTransform:'none',fontWeight:800,fontSize:compact?12.5:14,
+       color:theme.paletteMode==='dark'?'#111827':'#fff',background:theme.accent,
+       boxShadow:`0 6px 18px ${theme.accent}24`,
+       '&:hover':{background:theme.accent2},'&:active':{transform:'scale(.985)',boxShadow:'none'},
+       '& .MuiButton-startIcon':{mr:locale==='fa'?0:1,ml:locale==='fa'?1:0}}}>
+     {label}
+   </Button>
+   {detailed&&<Typography sx={{color:theme.muted,fontSize:11.5,textAlign:'center',lineHeight:1.4}}>
+     {locale==='fa'?'نمای آزمایشی؛ برای ارسال واقعی، فرمان را به داشبورد متصل کنید':'Preview only · connect a dashboard command handler to execute'}
+   </Typography>}
+ </Box>;
+}
+
 function StudioSwitch({def,theme,size,view}:WidgetRendererProps){
  const [on,setOn]=useState(Boolean(def.mock.value));const compact=(view??resolveWidgetView(size))==='compact';
  return <Box sx={{height:'100%',minHeight:0,display:'flex',alignItems:'center',justifyContent:'space-between',gap:1,overflow:'hidden'}}><Box sx={{minWidth:0}}><Typography sx={{fontSize:compact?22:28,fontWeight:780,color:theme.foreground}}>{on?'On':'Off'}</Typography>{!compact&&<Typography sx={{fontSize:11,color:theme.muted}}>Demo control · no device command</Typography>}</Box><Switch checked={on} onChange={(_,v)=>setOn(v)} inputProps={{'aria-label':'Toggle demo switch'}} sx={{flexShrink:0,'& .MuiSwitch-switchBase.Mui-checked':{color:theme.accent},'& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track':{bgcolor:theme.accent}}}/></Box>;
@@ -188,6 +217,7 @@ export function StudioVisualRenderer(props:WidgetRendererProps){
   case 'line': case 'area': case 'bar': case 'histogram': return <StudioChart {...props}/>;
   case 'tank': return <StudioTank {...props}/>;
   case 'switch': return <StudioSwitch {...props}/>;
+  case 'button': return <StudioAction {...props}/>;
   case 'signal': return <StudioSignal {...props}/>;
   case 'boolean': case 'alarm-indicator': return <StudioState {...props}/>;
   case 'map': case 'route': return <StudioMap {...props}/>;
