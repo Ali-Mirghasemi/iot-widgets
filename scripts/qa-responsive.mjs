@@ -118,6 +118,7 @@ try {
     console.log(`${entry.pass?'PASS':'FAIL'} ${name}: ${entry.widgets??0} widgets, ${entry.gauges??0} gauges, ${entry.gaugeIssues?.length??0} gauge issues, image ${entry.screenshot?'captured':'missing'}`);
     if(entry.gaugeIssues?.length)console.error('Gauge clipping: '+JSON.stringify(entry.gaugeIssues.slice(0,10)));
     if(entry.contrastIssues?.length)console.error('Cupertino contrast: '+JSON.stringify(entry.contrastIssues.slice(0,10)));
+    if(theme==='ios' && board==='catalog' && entry.contrastReadings===0) console.error('Cupertino QA: zero primary readings were found; inspect renderer markers and actual visual content.');
   }
 }catch(error){
   fatalError=String(error?.stack??error);

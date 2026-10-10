@@ -158,6 +158,7 @@ export function IoTWidget({
     style={style}
     data-iot-widget="true"
     data-widget-id={runtimeDefinition.id}
+    data-widget-visual={runtimeDefinition.visual}
     data-widget-theme={resolvedTheme.id}
     data-widget-size={resolvedSize}
     data-widget-view={resolvedView}

@@ -25,3 +25,14 @@ try {
   delete globalThis.document;
   delete globalThis.getComputedStyle;
 }
+
+// A missing iOS metric reading must fail QA even when there are no low-contrast nodes.
+const missingCard = {
+  getAttribute: key => key === 'data-widget-visual' ? 'metric' : 'temperature',
+  querySelector: () => ({ getAttribute: () => '#161e2e', querySelector: () => null }),
+};
+globalThis.document = { querySelectorAll: () => [missingCard] };
+const missing = inspectIOSReadingContrast();
+assert.equal(missing.expectedReadings, 1);
+assert.equal(missing.contrastReadings, 0);
+assert.equal(missing.contrastIssues[0].issue, 'missing primary reading');

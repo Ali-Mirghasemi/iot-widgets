@@ -24,21 +24,49 @@ export function inspectIOSReadingContrast() {
   };
   const issues = [];
   let readingCount = 0;
+  let expectedReadings = 0;
+  const requiresReading = new Set(['metric', 'battery', 'tank']);
   for (const card of document.querySelectorAll('[data-widget-theme="ios"]')) {
+    const visual = card.getAttribute('data-widget-visual');
+    const mustHaveReading = requiresReading.has(visual);
+    if (mustHaveReading) expectedReadings++;
     const frame = card.querySelector('[data-ios-palette]');
-    const reading = frame?.querySelector('[data-iot-reading]');
-    if (!reading || !frame) continue;
+    if (!frame) {
+      issues.push({ id: card.getAttribute('data-widget-id'), issue: 'missing Cupertino frame' });
+      continue;
+    }
+    const reading = frame.querySelector('[data-iot-reading]');
+    if (!reading) {
+      if (mustHaveReading) issues.push({ id: card.getAttribute('data-widget-id'), issue: 'missing primary reading' });
+      continue;
+    }
     readingCount++;
+    const id = card.getAttribute('data-widget-id');
     const bg = parseRgb(frame.getAttribute('data-ios-surface-color'));
-    const fg = parseRgb(getComputedStyle(reading).color);
+    const style = getComputedStyle(reading);
+    const fg = parseRgb(style.color);
     const ratio = bg && fg ? contrast(fg, bg) : null;
-    // Compact value font is >= 24px, so WCAG AA large text requires 3:1.
+    // The compact value is large text: 3:1 is the WCAG AA threshold.
     if (!ratio || ratio < 3) issues.push({
-      id: card.getAttribute('data-widget-id'),
-      issue: 'low contrast reading',
+      id, issue: 'low contrast reading',
       ratio: ratio === null ? null : Math.round(ratio * 100) / 100,
       palette: frame.getAttribute('data-ios-palette'),
     });
+    if (typeof reading.textContent === 'string' && !reading.textContent.trim()) issues.push({ id, issue: 'empty primary reading' });
+    if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0)
+      issues.push({ id, issue: 'hidden primary reading' });
+    const body = frame.querySelector('[data-responsive-widget-body]');
+    // Check the rendered geometry rather than trusting a non-empty DOM node.
+    if (typeof reading.getBoundingClientRect === 'function' && typeof body?.getBoundingClientRect === 'function') {
+      const r = reading.getBoundingClientRect();
+      const b = body.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2 || b.width < 2 || b.height < 2 ||
+          r.right < b.left + 2 || r.left > b.right - 2 || r.bottom < b.top + 2 || r.top > b.bottom - 2)
+        issues.push({ id, issue: 'reading not visible in widget body',
+          body: { width: Math.round(b.width), height: Math.round(b.height) },
+          reading: { width: Math.round(r.width), height: Math.round(r.height) },
+        });
+    }
   }
-  return { contrastReadings: readingCount, contrastIssues: issues };
+  return { contrastReadings: readingCount, expectedReadings, contrastIssues: issues };
 }
