@@ -1,0 +1,28 @@
+# Default text normalization
+* text=auto
+
+# JavaScript / TypeScript
+*.js    text eol=lf
+*.mjs   text eol=lf
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.json  text eol=lf
+
+# Linux scripts
+*.sh    text eol=lf
+
+# Windows scripts
+*.ps1   text eol=lf
+*.cmd   text eol=crlf
+*.bat   text eol=crlf
+
+# Documentation
+*.md    text eol=lf
+*.txt   text eol=lf
+
+# Binary files
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.webp  binary
+*.zip   binary

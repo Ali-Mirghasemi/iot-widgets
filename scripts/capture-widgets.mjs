@@ -2,13 +2,15 @@ import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { getQaThemes, screenshotOptions } from './qa-config.mjs';
 
 const root = process.cwd();
 const outDir = path.join(root, 'widget-screenshots');
 const port = Number(process.env.WIDGET_QA_PORT || 4173);
 const host = '127.0.0.1';
 const baseUrl = `http://${host}:${port}`;
-const themes = ['material','flat','minimal','gaming','ios','glass','studio','horizon'];
+const themes = getQaThemes();
+const imageOptions = screenshotOptions();
 const categories = ['metrics','controls','charts','location','tables','display'];
 const locale = process.env.WIDGET_QA_LOCALE === 'fa' ? 'fa' : 'en';
 const onlyTheme = process.env.WIDGET_QA_THEME;
@@ -68,6 +70,9 @@ const report = {
   locale,
   chromePath:chromePath || '(Playwright default)',
   headless,
+  imageFormat:imageOptions.type,
+  categorySheets:imageOptions.categorySheets,
+  widgetSheets:imageOptions.widgetSheets,
   captures:[],
   consoleErrors:[],
 };
@@ -207,21 +212,28 @@ try {
         });
       });
 
-      const file = path.join(themeDir, `${clean(category)}.png`);
-      await page.screenshot({ path:file, fullPage:true, animations:'disabled' });
+      // One category screenshot already captures the full page; no second pass needed.
+      const file = imageOptions.categorySheets
+        ? path.join(themeDir, `${clean(category)}.${imageOptions.extension}`)
+        : null;
+      if (file) {
+        await page.screenshot({ path:file, fullPage:true, animations:'disabled',
+          type:imageOptions.type, ...(imageOptions.quality ? { quality:imageOptions.quality } : {}) });
+      }
 
       const widgetDir = path.join(themeDir, 'widgets', clean(category));
-      await mkdir(widgetDir, { recursive:true });
+      if (imageOptions.widgetSheets) await mkdir(widgetDir, { recursive:true });
       const sections = page.locator('[data-qa-widget-section]');
       const sectionCount = await sections.count();
       const widgetFiles = [];
 
-      for (let i = 0; i < sectionCount; i++) {
+      for (let i = 0; imageOptions.widgetSheets && i < sectionCount; i++) {
         const section = sections.nth(i);
         const widgetId = await section.getAttribute('data-qa-widget-section');
         if (!widgetId) continue;
-        const widgetFile = path.join(widgetDir, `${clean(widgetId)}.png`);
-        await section.screenshot({ path:widgetFile, animations:'disabled' });
+        const widgetFile = path.join(widgetDir, `${clean(widgetId)}.${imageOptions.extension}`);
+        await section.screenshot({ path:widgetFile, animations:'disabled',
+          type:imageOptions.type, ...(imageOptions.quality ? { quality:imageOptions.quality } : {}) });
         widgetFiles.push(path.relative(root, widgetFile));
       }
 
@@ -229,7 +241,7 @@ try {
       report.captures.push({
         theme,
         category,
-        file:path.relative(root,file),
+        file:file ? path.relative(root,file) : null,
         widgetFiles,
         widgetVariants:diagnostics.length,
         suspectCount:suspects.length,

@@ -14,8 +14,9 @@
     "build:lib": "tsc -p tsconfig.lib.json",
     "pack:lib": "npm run build:lib && npm pack",
     "test:layout": "node scripts/test-dashboard-layout.mjs",
+    "test:qa": "node scripts/test-qa-config.mjs",
     "test:adaptive": "node scripts/test-adaptive.mjs",
-    "test": "npm run test:layout && npm run test:adaptive"
+    "test": "npm run test:layout && npm run test:adaptive && npm run test:qa"
   },
   "devDependencies": {
     "@emotion/react": "^11.14.0",

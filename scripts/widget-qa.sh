@@ -3,17 +3,19 @@
 # Bash equivalent of scripts/widget-qa.ps1 and scripts/widget-qa.cmd.
 set -Eeuo pipefail
 
-KNOWN_THEMES=(material flat minimal gaming ios glass studio horizon)
+KNOWN_THEMES=()
 THEME_INPUTS=()
 SELECTED_THEMES=()
 LOCALE="both"
 OUT_DIR="out"
 BROWSER_PATH=""
 WIDGET_PORT=0
-FULL_PORT=0
 HEADFUL=0
 KEEP_PROJECT_RAW=0
-VITE_PID=""
+PROFILE="review"
+IMAGE_FORMAT=""
+JPEG_QUALITY=85
+CATEGORY=""
 ACTIVE_STAGE=""
 FAILURES=()
 
@@ -25,9 +27,10 @@ Usage:
   ./scripts/widget-qa.sh ios
   ./scripts/widget-qa.sh --themes ios,flat --locale en
   ./scripts/widget-qa.sh --themes all --locale both
+  ./scripts/widget-qa.sh all --profile detailed --format png
 
 Options:
-  --themes, -Themes LIST       Themes: material,flat,minimal,gaming,ios,glass,studio,horizon,all
+  --themes, -Themes LIST       Themes are detected from WidgetThemeId; use all
                                (comma-separated, or multiple positional names)
   --locale, -Locale LOCALE     en | fa | both (default: both)
   --out-dir, -OutDir DIR       Output folder (default: project-root/out)
@@ -35,7 +38,10 @@ Options:
                                Chrome/Chromium/Edge executable
   --widget-port, -WidgetPort N
                                Port for widget capture (default: free port)
-  --full-port, -FullPort N     Port for full-page capture (default: free port)
+  --profile MODE              review (default) | detailed
+  --format FORMAT             jpeg (default) | png
+  --quality N                 JPEG quality 1-100 (default: 85)
+  --category CATEGORY         Optional: metrics,controls,charts,location,tables,display
   --headful, -Headful         Show the browser (default: headless)
   --keep-project-raw, -KeepProjectRaw
                                Retain raw screenshot folders at project root
@@ -49,8 +55,9 @@ Examples:
 
 Result:
   out/ios-qa.zip, out/flat-qa.zip, ... (one ZIP per selected theme)
-  A ZIP contains <locale>/widget-screenshots, <locale>/full-screenshots,
-  <locale>/logs, and QA-MANIFEST.txt.
+  Review ZIPs contain one full-page category screenshot and diagnostics,
+  not duplicated full-page captures or individual widget screenshot sheets.
+  Detailed ZIPs additionally include each individual widget sheet.
 
 Prerequisites:
   Node.js, npm, npm dependencies (npm ci / npm install), Chrome/Chromium/Edge,
@@ -80,8 +87,14 @@ while (($#)); do
       require_value "$@"; BROWSER_PATH="$2"; shift 2 ;;
     --widget-port|-WidgetPort)
       require_value "$@"; WIDGET_PORT="$2"; shift 2 ;;
-    --full-port|-FullPort)
-      require_value "$@"; FULL_PORT="$2"; shift 2 ;;
+    --profile|-Profile)
+      require_value "$@"; PROFILE="${2,,}"; shift 2 ;;
+    --format|--image-format|-ImageFormat)
+      require_value "$@"; IMAGE_FORMAT="${2,,}"; shift 2 ;;
+    --quality|-Quality)
+      require_value "$@"; JPEG_QUALITY="$2"; shift 2 ;;
+    --category|-Category)
+      require_value "$@"; CATEGORY="${2,,}"; shift 2 ;;
     --headful|-Headful) HEADFUL=1; shift ;;
     --keep-project-raw|-KeepProjectRaw) KEEP_PROJECT_RAW=1; shift ;;
     --) shift; THEME_INPUTS+=("$@"); break ;;
@@ -90,10 +103,27 @@ while (($#)); do
   esac
 done
 
+case "$PROFILE" in review|detailed) ;; *) die "Invalid profile '$PROFILE' (expected review or detailed)" ;; esac
+IMAGE_FORMAT="${IMAGE_FORMAT:-jpeg}"
+case "$IMAGE_FORMAT" in jpg|jpeg) IMAGE_FORMAT=jpeg ;; png) ;; *) die "Invalid image format '$IMAGE_FORMAT' (expected jpeg or png)" ;; esac
+[[ "$JPEG_QUALITY" =~ ^[0-9]+$ ]] && ((10#$JPEG_QUALITY >= 1 && 10#$JPEG_QUALITY <= 100)) || die "Quality must be from 1 to 100"
+case "$CATEGORY" in ''|metrics|controls|charts|location|tables|display) ;; *) die "Unknown category '$CATEGORY'" ;; esac
 case "$LOCALE" in en|fa|both) ;; *) die "Invalid locale '$LOCALE' (expected en, fa, or both)" ;; esac
-for port in "$WIDGET_PORT" "$FULL_PORT"; do
+for port in "$WIDGET_PORT"; do
   [[ "$port" =~ ^[0-9]+$ ]] && ((10#$port <= 65535)) || die "Invalid port '$port'"
 done
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+if [[ -f "$SCRIPT_DIR/package.json" ]]; then
+  PROJECT_ROOT="$SCRIPT_DIR"
+elif [[ -f "$SCRIPT_DIR/../package.json" ]]; then
+  PROJECT_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
+else
+  die "Cannot find package.json above the script. Put this file in <repo>/scripts/."
+fi
+command -v node >/dev/null 2>&1 || die "Node.js is not installed"
+mapfile -t KNOWN_THEMES < <(node "$PROJECT_ROOT/scripts/qa-themes.mjs" --lines)
+((${#KNOWN_THEMES[@]})) || die "Could not discover registered theme IDs"
 
 if ((${#THEME_INPUTS[@]} == 0)); then
   [[ -t 0 ]] || die "Specify at least one theme (for example: ./scripts/widget-qa.sh ios)"
@@ -125,15 +155,6 @@ for raw in "${THEME_INPUTS[@]}"; do
   done
 done
 ((${#SELECTED_THEMES[@]})) || die "No valid theme provided"
-
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
-if [[ -f "$SCRIPT_DIR/package.json" ]]; then
-  PROJECT_ROOT="$SCRIPT_DIR"
-elif [[ -f "$SCRIPT_DIR/../package.json" ]]; then
-  PROJECT_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
-else
-  die "Cannot find package.json beside the script or one directory above it. Put this file in <repo>/scripts/."
-fi
 
 command -v node >/dev/null 2>&1 || die "Node.js is not installed or not in PATH"
 command -v npm >/dev/null 2>&1 || die "npm is not installed or not in PATH"
@@ -194,43 +215,9 @@ server.listen(0, '127.0.0.1', () => {
 NODE
 }
 
-wait_for_http() {
-  local port="$1"
-  node - "$port" <<'NODE'
-const port = process.argv[2];
-const url = `http://127.0.0.1:${port}/`;
-const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-const deadline = Date.now() + 30000;
-let ready = false;
-while (Date.now() < deadline) {
-  try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(1800) });
-    if (response.status >= 200 && response.status < 500) {
-      ready = true;
-      break;
-    }
-  } catch {}
-  await sleep(300);
-}
-if (!ready) {
-  console.error(`Timed out waiting for Vite: ${url}`);
-  process.exitCode = 1;
-}
-NODE
-}
-
-stop_vite() {
-  if [[ -n "$VITE_PID" ]]; then
-    kill "$VITE_PID" 2>/dev/null || true
-    wait "$VITE_PID" 2>/dev/null || true
-    VITE_PID=""
-  fi
-}
-
 cleanup() {
   local status=$?
   trap - EXIT INT TERM
-  stop_vite
   if [[ -n "$ACTIVE_STAGE" && -d "$ACTIVE_STAGE" ]]; then
     rm -rf -- "$ACTIVE_STAGE"
   fi
@@ -251,19 +238,6 @@ run_npm_capture() {
   fi
   printf 'npm run %s failed. See: %s\n' "$npm_script" "$log_file" >&2
   return 1
-}
-
-start_vite() {
-  local port="$1" stdout_file="$2" stderr_file="$3"
-  node "$PROJECT_ROOT/node_modules/vite/bin/vite.js" \
-    --host 127.0.0.1 --port "$port" --strictPort \
-    >"$stdout_file" 2>"$stderr_file" &
-  VITE_PID=$!
-  if ! wait_for_http "$port"; then
-    printf 'Vite failed to start. See: %s and %s\n' "$stdout_file" "$stderr_file" >&2
-    stop_vite
-    return 1
-  fi
 }
 
 archive_stage() {
@@ -298,7 +272,7 @@ fi
 cd -- "$PROJECT_ROOT"
 RUN_START="$(date '+%Y-%m-%d %H:%M:%S %z')"
 for theme in "${SELECTED_THEMES[@]}"; do
-  # One fresh ZIP for each theme; no cross-theme screenshots can leak into it.
+  # One fresh ZIP for each theme, with no duplicate full-page captures.
   rm -rf -- "$OUTPUT_ROOT/$theme" "$OUTPUT_ROOT/.$theme-qa-staging"
   archive="$OUTPUT_ROOT/$theme-qa.zip"
   rm -f -- "$archive"
@@ -313,9 +287,12 @@ for theme in "${SELECTED_THEMES[@]}"; do
     mkdir -p -- "$log_dir"
     export WIDGET_QA_THEME="$theme" WIDGET_QA_LOCALE="$locale_name"
     export PLAYWRIGHT_CHROME_PATH="$BROWSER_EXECUTABLE" WIDGET_QA_HEADFUL="$HEADFUL"
-    unset WIDGET_QA_CATEGORY WIDGET_QA_PORT WIDGET_QA_URL || true
+    export WIDGET_QA_IMAGE_FORMAT="$IMAGE_FORMAT" WIDGET_QA_JPEG_QUALITY="$JPEG_QUALITY"
+    export WIDGET_QA_CATEGORY_SHEETS=1
+    if [[ "$PROFILE" == review ]]; then export WIDGET_QA_WIDGET_SHEETS=0; else export WIDGET_QA_WIDGET_SHEETS=1; fi
+    if [[ -n "$CATEGORY" ]]; then export WIDGET_QA_CATEGORY="$CATEGORY"; else unset WIDGET_QA_CATEGORY || true; fi
+    unset WIDGET_QA_PORT WIDGET_QA_URL || true
     widget_status="NOT RUN"
-    full_status="NOT RUN"
 
     # 1. Single-widget category sheets and diagnostics (script starts its own Vite).
     export WIDGET_QA_PORT="${WIDGET_PORT:-0}"
@@ -337,29 +314,9 @@ for theme in "${SELECTED_THEMES[@]}"; do
     fi
     unset WIDGET_QA_PORT
 
-    # 2. Full page category screenshots (needs a separately started Vite).
-    port="$FULL_PORT"
-    [[ "$port" != 0 ]] || port="$(free_tcp_port)"
-    rm -rf -- "$PROJECT_ROOT/full-screenshots"
-    if start_vite "$port" "$log_dir/vite-full.stdout.log" "$log_dir/vite-full.stderr.log"; then
-      export WIDGET_QA_URL="http://127.0.0.1:$port"
-      if run_npm_capture screenshots:full "$log_dir/npm-screenshots-full.log" && \
-         [[ -d "$PROJECT_ROOT/full-screenshots/$theme" ]]; then
-        mkdir -p -- "$locale_out/full-screenshots"
-        cp -R -- "$PROJECT_ROOT/full-screenshots/$theme" "$locale_out/full-screenshots/"
-        full_status="PASS"
-      else
-        full_status="FAIL"
-        FAILURES+=("$theme/$locale_name full screenshots failed (see logs)")
-        printf 'Failed: %s/%s full screenshots\n' "$theme" "$locale_name" >&2
-      fi
-      unset WIDGET_QA_URL
-    else
-      full_status="FAIL"
-      FAILURES+=("$theme/$locale_name full screenshots failed: Vite unavailable")
-    fi
-    stop_vite
-    theme_results+=("$locale_name: widget=$widget_status, full=$full_status")
+    # The screenshot above already uses fullPage:true, therefore a second
+    # screenshots:full pass would generate the same category images again.
+    theme_results+=("$locale_name: widget=$widget_status ($PROFILE; $IMAGE_FORMAT)")
   done
 
   git_commit="$(git -C "$PROJECT_ROOT" rev-parse --short HEAD 2>/dev/null || true)"
@@ -369,13 +326,13 @@ for theme in "${SELECTED_THEMES[@]}"; do
     printf 'Theme: %s\n' "$theme"
     printf 'Locales: %s\n' "${LOCALES[*]}"
     printf 'Browser: %s\n' "$BROWSER_EXECUTABLE"
+    printf 'Profile: %s\nFormat: %s\nJPEG quality: %s\n' "$PROFILE" "$IMAGE_FORMAT" "$JPEG_QUALITY"
     printf 'Git commit: %s\n\nResults:\n' "$git_commit"
     printf '%s\n' "${theme_results[@]}"
     printf '\nArchive layout:\n'
-    printf '%s\n' '  <locale>/widget-screenshots/  per-widget/category screenshots and diagnostics' \
-                    '  <locale>/full-screenshots/    full-page screenshots' \
-                    '  <locale>/logs/                console and Vite logs' \
-                    '  QA-MANIFEST.txt               this file'
+    printf '%s\n' '  <locale>/widget-screenshots/ category screenshots, diagnostics, optional widget images' \
+                    '  <locale>/logs/               capture logs' \
+                    '  QA-MANIFEST.txt              this file'
     printf '\nOnly requested locales are included.\n'
   } >"$ACTIVE_STAGE/QA-MANIFEST.txt"
 
@@ -393,6 +350,7 @@ printf 'Started:  %s\n' "$RUN_START"
 printf 'Finished: %s\n' "$(date '+%Y-%m-%d %H:%M:%S %z')"
 printf 'Themes:   %s\n' "${SELECTED_THEMES[*]}"
 printf 'Locales:  %s\n' "${LOCALES[*]}"
+printf 'Profile:  %s (%s)\n' "$PROFILE" "$IMAGE_FORMAT"
 printf 'Output:   %s\n' "$OUTPUT_ROOT"
 if ((${#FAILURES[@]} == 0)); then
   printf '\nRESULT: PASS\n'

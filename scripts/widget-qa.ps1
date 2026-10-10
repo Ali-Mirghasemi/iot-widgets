@@ -16,13 +16,25 @@ param(
 
     [switch]$Headful,
 
-    [switch]$KeepProjectRaw
+    [switch]$KeepProjectRaw,
+
+    [ValidateSet('review', 'detailed')]
+    [string]$Profile = 'review',
+
+    [ValidateSet('png', 'jpeg', 'jpg')]
+    [string]$ImageFormat = 'jpeg',
+
+    [ValidateRange(1, 100)]
+    [int]$Quality = 85,
+
+    [ValidateSet('', 'metrics', 'controls', 'charts', 'location', 'tables', 'display')]
+    [string]$Category = ''
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$KnownThemes = @('material', 'flat', 'minimal', 'gaming', 'ios', 'glass', 'studio', 'horizon')
+$KnownThemes = @() # Loaded from the canonical WidgetThemeId type below
 
 # The script can live either in <project>\scripts or directly in <project>.
 if (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'package.json')) {
@@ -177,73 +189,6 @@ function Invoke-NpmScript {
     }
 }
 
-function Wait-ForHttp {
-    param(
-        [Parameter(Mandatory)] [string]$Url,
-        [int]$TimeoutSeconds = 30
-    )
-
-    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
-    while ((Get-Date) -lt $deadline) {
-        try {
-            $params = @{
-                Uri = $Url
-                Method = 'GET'
-                TimeoutSec = 2
-                ErrorAction = 'Stop'
-            }
-            if ($PSVersionTable.PSVersion.Major -lt 6) {
-                $params['UseBasicParsing'] = $true
-            }
-            $response = Invoke-WebRequest @params
-            if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 500) {
-                return
-            }
-        } catch {
-            Start-Sleep -Milliseconds 300
-        }
-    }
-    throw "Timed out waiting for Vite at $Url"
-}
-
-function Start-ViteServer {
-    param(
-        [Parameter(Mandatory)] [int]$Port,
-        [Parameter(Mandatory)] [string]$StdoutLog,
-        [Parameter(Mandatory)] [string]$StderrLog,
-        [Parameter(Mandatory)] [string]$NodeCommand
-    )
-
-    $viteJs = Join-Path $ProjectRoot 'node_modules\vite\bin\vite.js'
-    if (-not (Test-Path -LiteralPath $viteJs)) {
-        throw "Vite was not found at $viteJs. Run npm install first."
-    }
-
-    $viteArg = '"' + $viteJs + '"'
-    $startParams = @{
-        FilePath = $NodeCommand
-        ArgumentList = @($viteArg, '--host', '127.0.0.1', '--port', [string]$Port, '--strictPort')
-        WorkingDirectory = $ProjectRoot
-        PassThru = $true
-        WindowStyle = 'Hidden'
-        RedirectStandardOutput = $StdoutLog
-        RedirectStandardError = $StderrLog
-    }
-    $process = Start-Process @startParams
-
-    try {
-        Wait-ForHttp -Url "http://127.0.0.1:$Port" -TimeoutSeconds 30
-    } catch {
-        if (-not $process.HasExited) {
-            Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
-        }
-        $stderr = if (Test-Path $StderrLog) { Get-Content $StderrLog -Raw } else { '' }
-        throw "Vite failed to start. $stderr"
-    }
-
-    return $process
-}
-
 function Copy-CleanDirectory {
     param(
         [Parameter(Mandatory)] [string]$Source,
@@ -298,29 +243,6 @@ function Copy-WidgetQaOutput {
     }
 }
 
-function Copy-FullQaOutput {
-    param(
-        [Parameter(Mandatory)] [string]$SourceRoot,
-        [Parameter(Mandatory)] [string]$Theme,
-        [Parameter(Mandatory)] [string]$Destination
-    )
-
-    if (-not (Test-Path -LiteralPath $SourceRoot)) {
-        throw "Expected output directory does not exist: $SourceRoot"
-    }
-
-    $sourceTheme = Join-Path $SourceRoot $Theme
-    if (-not (Test-Path -LiteralPath $sourceTheme)) {
-        throw "Expected theme output does not exist: $sourceTheme"
-    }
-
-    if (Test-Path -LiteralPath $Destination) {
-        Remove-Item -LiteralPath $Destination -Recurse -Force
-    }
-    New-Item -ItemType Directory -Path $Destination -Force | Out-Null
-    Copy-Item -LiteralPath $sourceTheme -Destination (Join-Path $Destination $Theme) -Recurse -Force
-}
-
 function New-ZipFromDirectory {
     param(
         [Parameter(Mandatory)] [string]$SourceDirectory,
@@ -343,11 +265,17 @@ function New-ZipFromDirectory {
     )
 }
 
+$NodeCommand = Resolve-NodeCommand
+$KnownThemes = @(& $NodeCommand (Join-Path $ProjectRoot 'scripts/qa-themes.mjs') --lines)
+if ($LASTEXITCODE -ne 0 -or $KnownThemes.Count -eq 0) {
+    throw 'Could not read the WidgetThemeId theme list from the source.'
+}
 $SelectedThemes = Resolve-ThemeList $Themes
 $Locales = if ($Locale -eq 'both') { @('en', 'fa') } else { @($Locale) }
 $BrowserExecutable = Resolve-BrowserExecutable $BrowserPath
 $NpmCommand = Resolve-NpmCommand
 $NodeCommand = Resolve-NodeCommand
+if ($FullPort -gt 0) { Write-Warning '-FullPort is ignored: the second full-page capture is intentionally disabled.' }
 
 $packageJson = Join-Path $ProjectRoot 'package.json'
 if (-not (Test-Path -LiteralPath $packageJson)) {
@@ -363,7 +291,11 @@ $EnvNames = @(
     'WIDGET_QA_PORT',
     'WIDGET_QA_URL',
     'WIDGET_QA_HEADFUL',
-    'PLAYWRIGHT_CHROME_PATH'
+    'PLAYWRIGHT_CHROME_PATH',
+    'WIDGET_QA_IMAGE_FORMAT',
+    'WIDGET_QA_JPEG_QUALITY',
+    'WIDGET_QA_CATEGORY_SHEETS',
+    'WIDGET_QA_WIDGET_SHEETS'
 )
 $SavedEnv = @{}
 foreach ($name in $EnvNames) {
@@ -409,11 +341,17 @@ try {
                 $env:WIDGET_QA_HEADFUL = if ($Headful) { '1' } else { '0' }
 
                 $widgetsStatus = 'NOT RUN'
-                $fullStatus = 'NOT RUN'
                 $widgetsDest = Join-Path $localeOut 'widget-screenshots'
-                $fullDest = Join-Path $localeOut 'full-screenshots'
 
-                # 1) Individual widget sheets + diagnostics.
+                # One screenshot capture pass: its category images already use
+                # fullPage:true, so a second 'screenshots:full' pass would duplicate them.
+                $env:WIDGET_QA_IMAGE_FORMAT = if ($ImageFormat -eq 'jpg') { 'jpeg' } else { $ImageFormat }
+                $env:WIDGET_QA_JPEG_QUALITY = [string]$Quality
+                $env:WIDGET_QA_CATEGORY_SHEETS = '1'
+                $env:WIDGET_QA_WIDGET_SHEETS = if ($Profile -eq 'review') { '0' } else { '1' }
+                if ($Category) { $env:WIDGET_QA_CATEGORY = $Category }
+                else { Remove-Item Env:WIDGET_QA_CATEGORY -ErrorAction SilentlyContinue }
+
                 try {
                     $port = if ($WidgetPort -gt 0) { $WidgetPort } else { Get-FreeTcpPort }
                     $env:WIDGET_QA_PORT = [string]$port
@@ -435,39 +373,7 @@ try {
                     Write-Host $message -ForegroundColor Red
                 }
 
-                # 2) Full-page contact sheets. This script expects an already-running Vite server.
-                $viteProcess = $null
-                try {
-                    $port = if ($FullPort -gt 0) { $FullPort } else { Get-FreeTcpPort }
-                    $viteStdout = Join-Path $logDir 'vite-full.stdout.log'
-                    $viteStderr = Join-Path $logDir 'vite-full.stderr.log'
-                    $viteProcess = Start-ViteServer -Port $port -StdoutLog $viteStdout -StderrLog $viteStderr -NodeCommand $NodeCommand
-
-                    $env:WIDGET_QA_URL = "http://127.0.0.1:$port"
-                    Remove-Item Env:WIDGET_QA_PORT -ErrorAction SilentlyContinue
-
-                    # Full-page output is also cleaned before every locale/theme run.
-                    Reset-RawOutput -Name 'full-screenshots'
-
-                    $fullLog = Join-Path $logDir 'npm-screenshots-full.log'
-                    Invoke-NpmScript -Name 'screenshots:full' -LogFile $fullLog -NpmCommand $NpmCommand
-
-                    $rawFull = Join-Path $ProjectRoot 'full-screenshots'
-                    Copy-FullQaOutput -SourceRoot $rawFull -Theme $theme -Destination $fullDest
-                    $fullStatus = 'PASS'
-                } catch {
-                    $fullStatus = 'FAIL'
-                    $message = "$theme/$localeName full screenshots: $($_.Exception.Message)"
-                    $Failures.Add($message)
-                    Write-Host $message -ForegroundColor Red
-                } finally {
-                    if ($viteProcess -and -not $viteProcess.HasExited) {
-                        Stop-Process -Id $viteProcess.Id -Force -ErrorAction SilentlyContinue
-                        try { $viteProcess.WaitForExit(5000) } catch {}
-                    }
-                }
-
-                $themeResults.Add("${localeName}: widget=$widgetsStatus, full=$fullStatus")
+                $themeResults.Add("${localeName}: widget=$widgetsStatus ($Profile; $ImageFormat)")
             }
 
             # One manifest and one ZIP per theme. No duplicate ZIPs or raw folders remain in out/.
@@ -482,18 +388,20 @@ Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss K')
 Theme: $theme
 Locales: $($Locales -join ', ')
 Browser: $BrowserExecutable
+Profile: $Profile
+Image format: $ImageFormat
+JPEG quality: $Quality
 Git commit: $gitCommit
 
 Results:
 $($themeResults -join [Environment]::NewLine)
 
 Archive layout:
-- en/widget-screenshots/   English individual/category screenshots + report.json
-- en/full-screenshots/     English full-page category screenshots
+- en/widget-screenshots/   English full-page category images + report.json
 - en/logs/                 English QA logs
-- fa/widget-screenshots/   Persian/RTL individual/category screenshots + report.json
-- fa/full-screenshots/     Persian/RTL full-page category screenshots
+- fa/widget-screenshots/   Persian/RTL full-page category images + report.json
 - fa/logs/                 Persian/RTL QA logs
+- Detailed profile also includes widget-screenshots/<theme>/widgets/*
 - QA-MANIFEST.txt          this file
 
 Only requested locales are included.
@@ -539,6 +447,7 @@ $summary.Add("Started:  $($RunStart.ToString('yyyy-MM-dd HH:mm:ss K'))")
 $summary.Add("Finished: $($RunEnd.ToString('yyyy-MM-dd HH:mm:ss K'))")
 $summary.Add("Themes:   $($SelectedThemes -join ', ')")
 $summary.Add("Locales:  $($Locales -join ', ')")
+$summary.Add("Profile:  $Profile ($ImageFormat)")
 $summary.Add("Output:   $OutputRoot")
 $summary.Add('')
 if ($Failures.Count -eq 0) {

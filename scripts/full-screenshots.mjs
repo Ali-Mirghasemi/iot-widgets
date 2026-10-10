@@ -6,6 +6,7 @@ import {
 } from 'node:fs/promises';
 
 import path from 'node:path';
+import { getQaThemes, screenshotOptions } from './qa-config.mjs';
 
 const root = process.cwd();
 
@@ -27,16 +28,8 @@ if (!executablePath) {
   );
 }
 
-const themes = [
-  'material',
-  'flat',
-  'minimal',
-  'gaming',
-  'ios',
-  'glass',
-  'studio',
-  'horizon',
-];
+const themes = getQaThemes();
+const imageOptions = screenshotOptions();
 
 const categories = [
   'metrics',
@@ -248,7 +241,7 @@ for (
       const screenshotFile =
         path.join(
           themeDir,
-          `${category}-FULL.png`
+          `${category}-FULL.${imageOptions.extension}`
         );
 
       /*
@@ -272,6 +265,8 @@ for (
 
         caret:
           'hide',
+        type:imageOptions.type,
+        ...(imageOptions.quality ? { quality:imageOptions.quality } : {}),
       });
 
       console.log(
