@@ -38,18 +38,18 @@ function StudioMetric({def,theme,size,view,history}:WidgetRendererProps){
  const fill=bounded(100*(value-minConfigured)/Math.max(1,max-minConfigured));
  const detailed=currentView==='detailed' && Boolean(history?.length);
  if(currentView==='compact') return <Box sx={{height:'100%',display:'grid',placeItems:'center',textAlign:'center'}}><Value value={value} unit={unit} color={theme.foreground}/></Box>;
- return <Box sx={{height:'100%',minHeight:0,minWidth:0,display:'flex',flexDirection:'column',gap:currentView==='compact'?.25:1.1,overflow:'hidden'}}>
+ return <Box sx={{height:'100%',minHeight:0,minWidth:0,display:'flex',flexDirection:'column',gap:1.1,overflow:'hidden'}}>
    <Box sx={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:1,minWidth:0}}>
      <Value value={value} unit={unit} color={theme.foreground}/>
-     {currentView!=='compact'&&Number.isFinite(trend)&&trend!==0&&<Typography component="span" sx={{flexShrink:0,color:trend>=0?theme.accent2:'#f59e83',fontSize:11,fontWeight:750,bgcolor:(trend>=0?theme.accent2:'#f59e83')+'15',borderRadius:3,px:1,py:.45}}>{trend>=0?'↗':'↘'} {Math.abs(trend)}%</Typography>}
+     {Number.isFinite(trend)&&trend!==0&&<Typography component="span" sx={{flexShrink:0,color:trend>=0?theme.accent2:'#f59e83',fontSize:11,fontWeight:750,bgcolor:(trend>=0?theme.accent2:'#f59e83')+'15',borderRadius:3,px:1,py:.45}}>{trend>=0?'↗':'↘'} {Math.abs(trend)}%</Typography>}
    </Box>
    {detailed ? <>
      <Box sx={{flex:1,minHeight:0,overflow:'hidden'}}><Sparkline values={history!} color={theme.accent} muted={theme.muted}/></Box>
      <Box sx={{display:'flex',justifyContent:'space-between',gap:1}}><Typography sx={{fontSize:10,color:theme.muted}}>History</Typography><Typography sx={{fontSize:10,color:theme.muted}}>{history!.length} samples · Latest {value}{unit}</Typography></Box>
-   </> : currentView!=='compact' ? <>
+   </> : <>
      <Box sx={{mt:'auto',height:9,bgcolor:theme.border,borderRadius:12,overflow:'hidden',flexShrink:0}}><Box sx={{height:'100%',width:fill+'%',borderRadius:12,background:`linear-gradient(90deg,${theme.accent},${theme.accent2})`}}/></Box>
      <Box sx={{display:'flex',justifyContent:'space-between',minWidth:0}}><Typography sx={{fontSize:10,color:theme.muted}}>{minConfigured}{unit}</Typography><Typography sx={{fontSize:10,color:theme.muted}}>{max}{unit}</Typography></Box>
-   </> : null}
+   </>}
  </Box>;
 }
 
@@ -222,7 +222,7 @@ export function StudioVisualRenderer(props:WidgetRendererProps){
   case 'boolean': case 'alarm-indicator': return <StudioState {...props}/>;
   case 'map': case 'route': return <StudioMap {...props}/>;
   case 'events': case 'alarms': return <StudioList {...props}/>;
-  default: if ((props.view??resolveWidgetView(props.size))==='compact' && props.def.visual!=='switch') {
+  default: if ((props.view??resolveWidgetView(props.size))==='compact') {
     const Icon=props.def.icon;
     return <Box sx={{display:'flex',height:'100%',alignItems:'center',justifyContent:'center',gap:1.2,overflow:'hidden',color:props.theme.foreground}}><Icon sx={{color:props.theme.accent,fontSize:24}}/><Typography sx={{fontSize:13,color:props.theme.muted,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{props.locale==='fa'?props.def.titleFa:props.def.titleEn}</Typography></Box>;
   }
