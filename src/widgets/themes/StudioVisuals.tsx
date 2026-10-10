@@ -61,8 +61,8 @@ function StudioGauge({def,theme,size,view,history}:WidgetRendererProps){
  const unit=string(def.mock.unit);
  const tone=pct>=90?'#f59e83':pct>=72?theme.accent2:theme.accent;
  const status=pct>=90?'High':pct>=72?'Elevated':'Normal';
- const gaugeSize=compact?92:detailed?(large?208:176):(wide?150:132);
- const spark=history?.length?history:[32,40,36,45,56,53,61,66,64,69];
+ const hasHistory=Boolean(history && history.length >= 2);
+ const gaugeSize=compact?92:detailed?(hasHistory?(large?208:176):(large?244:210)):(wide?150:132);
  const gaugeFace=<Box sx={{width:gaugeSize,height:gaugeSize,maxWidth:'100%',maxHeight:'100%',aspectRatio:'1',position:'relative',display:'grid',placeItems:'center',flex:'0 0 auto'}}>
    <Box sx={{position:'absolute',inset:0,borderRadius:'50%',background:`conic-gradient(${tone} ${pct}%, ${theme.border} ${pct}% 100%)`,transform:'rotate(-90deg)',boxShadow:`inset 0 0 0 1px ${theme.border}`}}/>
    <Box sx={{position:'absolute',inset:compact?'14%':'12%',borderRadius:'50%',bgcolor:theme.surface,boxShadow:`inset 0 0 0 1px ${theme.border}`}}/>
@@ -86,7 +86,7 @@ function StudioGauge({def,theme,size,view,history}:WidgetRendererProps){
      </Box>
    </Box>
  </Box>;
- return <Box sx={{height:'100%',minHeight:0,display:'grid',gridTemplateRows:'auto auto minmax(0,1fr)',gap:1.15,direction:'ltr',overflow:'hidden'}}>
+ return <Box sx={{height:'100%',minHeight:0,display:'grid',gridTemplateRows:hasHistory?'auto auto minmax(0,1fr)':'minmax(0,1fr) auto',gap:1.15,direction:'ltr',overflow:'hidden'}}>
    <Box sx={{display:'grid',gridTemplateColumns:(wide||large)?'minmax(160px,.95fr) minmax(0,1.05fr)':'1fr',alignItems:'center',gap:1.4,minHeight:0}}>
      <Box sx={{display:'grid',placeItems:'center',minHeight:0}}>{gaugeFace}</Box>
      <Box sx={{minWidth:0,display:'grid',gap:1,alignContent:'center'}}>
@@ -104,10 +104,10 @@ function StudioGauge({def,theme,size,view,history}:WidgetRendererProps){
      <Box sx={{border:`1px solid ${theme.border}`,borderRadius:2,px:1,py:.9}}><Typography sx={{fontSize:9.5,color:theme.muted}}>Critical</Typography><Typography sx={{fontSize:12.5,fontWeight:760,color:theme.foreground}}>{Math.round(max*.9)} {unit}</Typography></Box>
      <Box sx={{border:`1px solid ${theme.border}`,borderRadius:2,px:1,py:.9}}><Typography sx={{fontSize:9.5,color:theme.muted}}>Headroom</Typography><Typography sx={{fontSize:12.5,fontWeight:760,color:theme.foreground}}>{Math.max(0,Number((max-value).toFixed(1)))} {unit}</Typography></Box>
    </Box>
-   <Box sx={{minHeight:0,border:`1px solid ${theme.border}`,borderRadius:2,p:.8,overflow:'hidden'}}>
-     <Box sx={{display:'flex',justifyContent:'space-between',mb:.45}}><Typography sx={{fontSize:10,color:theme.muted}}>Load history</Typography><Typography sx={{fontSize:10,color:theme.muted}}>{spark.length} samples</Typography></Box>
-     <Box sx={{height:'100%',minHeight:70}}><Sparkline values={spark} color={tone} muted={theme.muted}/></Box>
-   </Box>
+   {hasHistory&&<Box sx={{minHeight:0,border:`1px solid ${theme.border}`,borderRadius:2,p:.8,overflow:'hidden'}}>
+     <Box sx={{display:'flex',justifyContent:'space-between',mb:.45}}><Typography sx={{fontSize:10,color:theme.muted}}>Load history</Typography><Typography sx={{fontSize:10,color:theme.muted}}>{history!.length} samples</Typography></Box>
+     <Box sx={{height:'100%',minHeight:70}}><Sparkline values={history!} color={tone} muted={theme.muted}/></Box>
+   </Box>}
  </Box>;
 }
 

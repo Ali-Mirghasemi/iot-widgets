@@ -25,19 +25,20 @@ export type DashboardGridProps = {
   gap?: number;
 };
 
-type Gesture = {kind:'drag'|'resize';id:string;startX:number;startY:number;item:DashboardItem;items:DashboardItem[];unitX:number;unitY:number};
+type Gesture = {kind:'drag'|'resize';id:string;startX:number;startY:number;item:DashboardItem;items:DashboardItem[];unitX:number;unitY:number;lastDx:number;lastDy:number};
 
 export function DashboardGrid({items,editable=false,onChange,renderWidget,onExpand,onContextItem,columns=12,rowHeight=98,gap=14}:DashboardGridProps){
   const ref=useRef<HTMLDivElement>(null);
   const minFor=(item:DashboardItem,n:number)=>getWidgetGridMinimum(getWidgetDefinition(item.widgetId),n);
   const gesture=useRef<Gesture|null>(null);
-  const maxRow=items.reduce((r,i)=>Math.max(r,i.y+i.h),0);
+  const layout=settleDashboard(items,undefined,columns,minFor);
+  const maxRow=layout.reduce((r,i)=>Math.max(r,i.y+i.h),0);
   const begin=(event:PointerEvent<HTMLElement>,item:DashboardItem,kind:'drag'|'resize')=>{
     if(!editable || event.button!==0)return;
     event.stopPropagation();event.preventDefault();
     const parent=ref.current?.getBoundingClientRect();if(!parent)return;
-    const unitX=(parent.width-gap*(columns-1))/columns+gap;
-    gesture.current={kind,id:item.id,startX:event.clientX,startY:event.clientY,item:{...item},items:items.map(i=>({...i})),unitX,unitY:rowHeight+gap};
+    const unitX=Math.max(1,(parent.width+gap)/columns);
+    gesture.current={kind,id:item.id,startX:event.clientX,startY:event.clientY,item:{...item},items:layout.map(i=>({...i})),unitX,unitY:rowHeight+gap,lastDx:0,lastDy:0};
     event.currentTarget.setPointerCapture(event.pointerId);
   };
   const move=(event:PointerEvent<HTMLElement>)=>{
@@ -45,6 +46,8 @@ export function DashboardGrid({items,editable=false,onChange,renderWidget,onExpa
     event.preventDefault();
     const dx=Math.round((event.clientX-g.startX)/g.unitX);
     const dy=Math.round((event.clientY-g.startY)/g.unitY);
+    if(dx===g.lastDx&&dy===g.lastDy)return;
+    g.lastDx=dx;g.lastDy=dy;
     const next=g.items.map(i=>{
       if(i.id!==g.id)return {...i};
       if(g.kind==='drag') return {...i,x:Math.max(0,Math.min(columns-i.w,g.item.x+dx)),y:Math.max(0,g.item.y+dy)};
@@ -59,23 +62,35 @@ export function DashboardGrid({items,editable=false,onChange,renderWidget,onExpa
     gesture.current=null;
     if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);
   };
-  return <Box ref={ref} data-dashboard-grid="true" sx={{position:'relative',width:'100%',minHeight:editable?Math.max(400,maxRow*(rowHeight+gap)):Math.max(400,maxRow*(rowHeight+gap)),
+  const nudge=(item:DashboardItem,dx:number,dy:number)=>{
+    const next=layout.map(i=>i.id===item.id?{...i,x:Math.max(0,Math.min(columns-i.w,i.x+dx)),y:Math.max(0,i.y+dy)}:i);
+    onChange(settleDashboard(next,item.id,columns,minFor));
+  };
+  const height=maxRow>0?maxRow*rowHeight+(maxRow-1)*gap:editable?rowHeight:0;
+  return <Box ref={ref} data-dashboard-grid="true" sx={{position:'relative',width:'100%',minHeight:height,
     '@media (max-width:850px)':{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gridAutoRows:'auto',gap:2,minHeight:'auto'},
     '@media (max-width:520px)':{gridTemplateColumns:'1fr'},
   }}>
-    {items.map(item=><Box key={item.id} data-dashboard-item={item.id} onContextMenu={event=>{event.preventDefault();onContextItem?.(item,event);}} sx={{position:'absolute',left:`calc(${item.x/columns*100}% + ${item.x/columns*gap}px)`,top:item.y*(rowHeight+gap),
+    {layout.map(item=><Box key={item.id} data-dashboard-item={item.id}
+      onContextMenu={event=>{event.preventDefault();onContextItem?.(item,event);}}
+      onPointerDown={event=>{if(!editable)return;const target=event.target as HTMLElement;begin(event,item,target.closest('[data-dashboard-resize]')?'resize':'drag');}}
+      onPointerMove={move} onPointerUp={end} onPointerCancel={end}
+      sx={{position:'absolute',left:`calc(${item.x/columns*100}% + ${item.x/columns*gap}px)`,top:item.y*(rowHeight+gap),
       width:`calc(${item.w/columns*100}% - ${gap*(1-item.w/columns)}px)`,height:item.h*rowHeight+(item.h-1)*gap,
       minWidth:0,minHeight:0,zIndex:gesture.current?.id===item.id?3:1,
+      cursor:editable?'grab':undefined,touchAction:editable?'none':undefined,userSelect:editable?'none':undefined,
+      transition:gesture.current?.id===item.id?'none':'left .16s ease, top .16s ease, width .16s ease, height .16s ease',
+      outline:editable?'1px dashed rgba(100,140,185,.42)':undefined,outlineOffset:editable?2:undefined,
       '&:hover .dashboard-actions':{opacity:1},
-      '@media (max-width:850px)':{position:'relative',left:'auto',top:'auto',width:'auto',height:Math.max(194,item.h*(rowHeight+gap)-gap),gridColumn:(getWidgetDefinition(item.widgetId) && isCanvasWidget(getWidgetDefinition(item.widgetId)!))?'1 / -1':'span 1',gridRow:'span 1'},
+      '@media (max-width:850px)':{position:'relative',left:'auto',top:'auto',width:'auto',order:item.y*(columns+1)+item.x,height:Math.max(194,item.h*(rowHeight+gap)-gap),gridColumn:(getWidgetDefinition(item.widgetId) && isCanvasWidget(getWidgetDefinition(item.widgetId)!))?'1 / -1':'span 1',gridRow:'span 1'},
       '@media (max-width:520px)':{gridColumn:'1 / -1',height:Math.max(210,item.h*(rowHeight+gap)-gap)},
     }}>
       <Box sx={{height:'100%',width:'100%',pointerEvents:editable?'none':'auto'}}>{renderWidget(item)}</Box>
       {editable && <>
         <Box className="dashboard-actions" sx={{position:'absolute',top:4,left:4,zIndex:6,display:'flex',gap:.4,opacity:1,transition:'opacity .2s'}}>
-          <Tooltip title="Drag to reorder"><Box component="button" type="button" aria-label={`Move ${item.widgetId}`} onPointerDown={e=>begin(e,item,'drag')} onPointerMove={move} onPointerUp={end} onPointerCancel={end} sx={{all:'unset',touchAction:'none',cursor:'grab',width:36,height:32,display:'grid',placeItems:'center',bgcolor:'rgba(20,30,48,.90)',border:'1px solid rgba(255,255,255,.23)',borderRadius:1.5,color:'#fff','&:active':{cursor:'grabbing'}}}><DragIndicatorRounded fontSize="small"/></Box></Tooltip>
+          <Tooltip title="Drag or use arrow keys to reorder"><Box component="button" type="button" aria-label={`Move ${item.widgetId}`} onKeyDown={event=>{const moves:Record<string,[number,number]>={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};const delta=moves[event.key];if(!delta)return;event.preventDefault();nudge(item,...delta);}} sx={{all:'unset',touchAction:'none',cursor:'grab',width:36,height:32,display:'grid',placeItems:'center',bgcolor:'rgba(20,30,48,.90)',border:'1px solid rgba(255,255,255,.23)',borderRadius:1.5,color:'#fff','&:active':{cursor:'grabbing'}}}><DragIndicatorRounded fontSize="small"/></Box></Tooltip>
         </Box>
-        <Tooltip title="Drag to resize"><Box component="button" type="button" aria-label={`Resize ${item.widgetId}`} onPointerDown={e=>begin(e,item,'resize')} onPointerMove={move} onPointerUp={end} onPointerCancel={end} sx={{all:'unset',touchAction:'none',position:'absolute',right:0,bottom:0,zIndex:7,cursor:'nwse-resize',width:32,height:32,display:'grid',placeItems:'center',color:'#fff',background:'linear-gradient(135deg,transparent 25%,rgba(28,43,65,.9) 26%)',borderBottomRightRadius:2}}><Box sx={{fontSize:23,fontWeight:900,transform:'rotate(-45deg)',lineHeight:1}}>⌁</Box></Box></Tooltip>
+        <Tooltip title="Drag to resize"><Box component="button" data-dashboard-resize="true" type="button" aria-label={`Resize ${item.widgetId}`}  sx={{all:'unset',touchAction:'none',position:'absolute',right:0,bottom:0,zIndex:7,cursor:'nwse-resize',width:32,height:32,display:'grid',placeItems:'center',color:'#fff',background:'linear-gradient(135deg,transparent 25%,rgba(28,43,65,.9) 26%)',borderBottomRightRadius:2}}><Box sx={{fontSize:23,fontWeight:900,transform:'rotate(-45deg)',lineHeight:1}}>⌁</Box></Box></Tooltip>
       </>}
       {!editable&&onExpand&&<Box className="dashboard-actions" sx={{position:'absolute',right:9,top:8,zIndex:6,opacity:0,transition:'opacity .2s'}}><Tooltip title="Expand widget"><IconButton aria-label={`Expand ${item.widgetId}`} size="small" onClick={()=>onExpand(item)} sx={{bgcolor:'rgba(22,30,46,.92)',color:'#fff',width:29,height:29,'&:hover':{bgcolor:'rgba(22,30,46,1)'}}}><OpenInFullRounded sx={{fontSize:16}}/></IconButton></Tooltip></Box>}
     </Box>)}
