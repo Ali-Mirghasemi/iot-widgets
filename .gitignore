@@ -4,6 +4,7 @@ widget-screenshots/
 full-screenshots/
 *.zip
 *.rar
+*.patch
 .DS_Store
 dist/
 out/
