@@ -1,0 +1,13 @@
+import { strict as assert } from 'node:assert';
+import path from 'node:path';
+import { browserCandidates,resolveBrowserExecutable,archiveStatus } from './qa-browser.mjs';
+const mockWin={platform:'win32',bundledPath:'C:\\missing\\chrome.exe',env:{PROGRAMFILES:'C:\\Program Files',LOCALAPPDATA:'C:\\Users\\Test\\AppData\\Local'}};
+assert.equal(resolveBrowserExecutable(mockWin,p=>p.endsWith(path.win32.normalize('Google/Chrome/Application/chrome.exe'))).source,'system Chrome');
+assert.equal(resolveBrowserExecutable({...mockWin,override:'C:\\Custom\\chrome.exe'},p=>p.endsWith(path.win32.normalize('Custom/chrome.exe'))).source,'explicit');
+assert.throws(()=>resolveBrowserExecutable(mockWin,()=>false),/npx playwright install chromium/);
+assert.deepEqual(browserCandidates({...mockWin,override:'/hello/does-not-exist'}).map(c=>c.source),['explicit']);
+assert.equal(archiveStatus({expected:2,report:[{pass:true,screenshot:true},{pass:true,screenshot:true}]}),'PASS');
+assert.equal(archiveStatus({expected:2,report:[{pass:true,screenshot:true}]}),'FAIL');
+assert.equal(archiveStatus({expected:1,report:[{pass:true,screenshot:false}]}),'FAIL');
+assert.equal(archiveStatus({expected:1,report:[{pass:true,screenshot:true}],fatalError:'launch failed'}),'FAIL');
+console.log('Responsive browser discovery and archive gating OK.');
