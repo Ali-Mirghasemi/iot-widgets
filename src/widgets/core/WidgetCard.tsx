@@ -49,7 +49,7 @@ export function WidgetCard({ def, theme, locale, forcedSize, qaMode=false }: Pro
   return <>
     <Box
       className={`widget-grid-item size-${size.replace('x','-')}`}
-      sx={{minWidth:0}}
+      sx={{minWidth:0,position:'relative'}}
       onContextMenu={handleContextMenu}
       data-widget-card="true"
       data-widget-id={def.id}

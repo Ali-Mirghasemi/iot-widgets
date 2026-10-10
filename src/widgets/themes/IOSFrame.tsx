@@ -33,7 +33,7 @@ function statusTone(status: string) {
 
 export function IOSFrame(p: IOSFrameProps) {
   const original=dims(p.size);
-  const d={...original,compact:p.view==='compact'||original.compact,roomy:p.view==='compact'?false:original.roomy};
+  const d={...original,compact:p.view==='compact'||original.compact,roomy:p.view==='compact'||p.view==='standard'?false:original.roomy};
   const Icon = p.def.icon;
   const title = p.locale === 'fa' ? p.def.titleFa : p.def.titleEn;
   const tone = statusTone(p.status);
@@ -53,9 +53,16 @@ export function IOSFrame(p: IOSFrameProps) {
 
   return <Box data-ios-palette={dark ? 'dark' : 'light'} data-ios-surface-color={face} sx={{
     height: '100%',
+    width: '100%',
     minHeight: 0,
+    minWidth: 0,
+    boxSizing: 'border-box',
     overflow: 'hidden',
-    position: 'relative',
+    // Fill the positioned IoTWidget/WidgetCard slot even if a parent has
+    // an intrinsically-sized flex child. Percentage height alone previously
+    // let the header/footer collapse into a short strip on Nexus cards.
+    position: 'absolute',
+    inset: 0,
     borderRadius: d.compact ? '18px' : '20px',
     background: dark ? `linear-gradient(155deg,${face},${face})` : 'linear-gradient(180deg,rgba(255,255,255,.94),rgba(248,249,251,.94))',
     backgroundColor: face,

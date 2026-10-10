@@ -13,6 +13,7 @@ import Check from '@mui/icons-material/Check';
 import Remove from '@mui/icons-material/Remove';
 import PowerSettingsNew from '@mui/icons-material/PowerSettingsNew';
 import type { Locale, WidgetDefinition, WidgetSize, WidgetThemeTokens } from '../core/types';
+import type { ResolvedWidgetView } from '../../library/adaptive';
 import { bars, heat, spark, spark2 } from '../data/mockData';
 
 interface Props {
@@ -20,6 +21,7 @@ interface Props {
   theme: WidgetThemeTokens;
   locale: Locale;
   size: WidgetSize;
+  view?: ResolvedWidgetView;
 }
 
 type TableMode = 'table' | 'measurement-list' | 'alarms' | 'events' | 'logs';
@@ -100,7 +102,7 @@ function Sparkline({
 }
 
 function ValueText({ value, unit, compact = false, large = false }: { value: string | number; unit?: string; compact?: boolean; large?: boolean }) {
-  return <Typography component="div" sx={{
+  return <Typography component="div" data-iot-reading="true" sx={{
     direction: 'ltr',
     display: 'flex',
     alignItems: 'baseline',
@@ -110,6 +112,7 @@ function ValueText({ value, unit, compact = false, large = false }: { value: str
     lineHeight: 1.16,
     letterSpacing: '-.045em',
     color: C.label,
+    minWidth: 0,
     fontVariantNumeric: 'tabular-nums',
   }}>
     <Box component="span" sx={{ lineHeight: 1.16 }}>{value}</Box>
@@ -675,7 +678,15 @@ function AlarmIndicator({ def, locale, size }: Props) {
   return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 1.1, direction: locale === 'fa' ? 'rtl' : 'ltr' }}><Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}><Box sx={{ width: p.compact ? 54 : 64, height: p.compact ? 54 : 64, borderRadius: '18px', display: 'grid', placeItems: 'center', bgcolor: `${tone}18`, color: tone }}><Icon sx={{ fontSize: p.compact ? 29 : 34 }} /></Box><Box sx={{ display: 'flex', alignItems: 'center', gap: .55, mt: .4 }}><Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: tone, boxShadow: active ? `0 0 0 4px ${tone}18` : 'none' }} />{!p.compact && <MicroLabel tone={tone}>{active ? 'ACTIVE' : 'READY'}</MicroLabel>}</Box></Box><Box><Typography sx={{ fontSize: p.compact ? 21 : 28, fontWeight: 720, lineHeight: 1, color: tone }}>{label}</Typography><Typography sx={{ mt: .6, fontSize: 11.5, color: C.secondary }}>{detail}</Typography></Box>{p.roomy && <Box><SectionDivider /><Box sx={{ pt: .95, display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 1 }}><StatCell label={localeText(locale, 'Severity', 'شدت')} value={active ? severity.toUpperCase() : 'NORMAL'} accent={tone} /><StatCell label={localeText(locale, 'Last event', 'آخرین رخداد')} value={active ? '09:42' : 'Yesterday'} /></Box></Box>}</Box>;
 }
 
-export function IOSVisualRenderer(props: Props) {
+export function IOSVisualRenderer(input: Props) {
+  // Theme components historically sized their internals from the logical
+  // 2x2/3x3 label, even when a phone provided only a short content region.
+  // Respect the shared measured density and select a suitably compact visual.
+  const props: Props = input.view === 'compact'
+    ? { ...input, size: '1x1' }
+    : input.view === 'standard' && ['2x2', '2x3', '3x2', '3x3'].includes(input.size)
+      ? { ...input, size: '2x1' }
+      : input;
   const v = props.def.visual;
   if (v === 'metric') return <Metric {...props} />;
   if (v === 'battery') return <Battery {...props} />;
