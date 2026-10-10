@@ -8,6 +8,7 @@ import { IOSVisualRenderer } from '../themes/IOSVisuals';
 import { MaterialVisualRenderer } from '../themes/MaterialVisuals';
 import { MinimalVisualRenderer } from '../themes/MinimalVisuals';
 import { resolveWidgetView, type ResolvedWidgetView } from '../../library/adaptive';
+import { TactileVisualRenderer } from '../themes/TactileVisuals';
 import { ProcessVisualRenderer } from '../themes/ProcessVisuals';
 import { StudioVisualRenderer } from '../themes/StudioVisuals';
 import { AdaptiveGauge } from './AdaptiveGauge';
@@ -25,6 +26,7 @@ export interface WidgetRendererProps {
 }
 
 const visualRenderers: Record<WidgetThemeId, ComponentType<WidgetRendererProps>> = {
+  tactile: TactileVisualRenderer,
   industrial: ProcessVisualRenderer,
   studio: StudioVisualRenderer,
   horizon: StudioVisualRenderer,
@@ -82,7 +84,7 @@ export function WidgetVisualRenderer(props: WidgetRendererProps) {
     content=<Box sx={{height:'100%',display:'grid',placeItems:'center',color:props.theme.muted,textAlign:'center',px:1,fontSize:12}}>
       {props.locale==='fa'?'برای دیدن جزئیات ویجت را بزرگ کنید':'Expand to see details'}
     </Box>;
-  else if(view==='compact' && !['industrial'].includes(props.theme.id) && !['switch','button','direction','slider','input','thermostat','color'].includes(props.def.visual)
+  else if(view==='compact' && !['industrial','tactile'].includes(props.theme.id) && !['switch','button','direction','slider','input','thermostat','color'].includes(props.def.visual)
     && ['metric','battery','signal','tank','boolean','alarm-indicator'].includes(props.def.visual))
     content=<CompactReading {...renderProps}/>;
   else content=<Renderer {...renderProps}/>;

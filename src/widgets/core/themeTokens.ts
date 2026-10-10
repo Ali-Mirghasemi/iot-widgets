@@ -1,6 +1,13 @@
 import type { WidgetThemeId, WidgetThemeTokens } from './types';
 
 export const widgetThemes: Record<WidgetThemeId, WidgetThemeTokens> = {
+  tactile: {
+    id: 'tactile', label: 'Tactile / Smart Home', background: '#f3efe9',
+    surface: '#fffcf8', foreground: '#24312e', muted: '#64746d',
+    accent: '#d37758', accent2: '#3e9d8a', border: '#e7ddd3',
+    radius: 28, shadow: '0 12px 32px rgba(105,70,54,.10)', headerWeight: 780,
+    paletteMode: 'light', fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif',
+  },
   industrial: {
     id: 'industrial', label: 'Industrial Process / HMI', background: '#0b1014',
     surface: '#131b20', foreground: '#e5f2ed', muted: '#9db3af',

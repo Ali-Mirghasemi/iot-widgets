@@ -4,6 +4,7 @@ import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import MoreHoriz from '@mui/icons-material/MoreHoriz';
 import type { Locale, WidgetDefinition, WidgetSize, WidgetThemeTokens } from './types';
 import type { ResolvedWidgetView } from '../../library/adaptive';
+import { TactileFrame } from '../themes/TactileFrame';
 import { ProcessFrame } from '../themes/ProcessFrame';
 import { IOSFrame as IOSThemeFrame } from '../themes/IOSFrame';
 import { GlassFrame as AuroraGlassFrame } from '../themes/GlassFrame';
@@ -268,6 +269,7 @@ function StudioFrame(p: WidgetFrameProps) {
 
 export function WidgetFrame(props: WidgetFrameProps) {
   switch (props.theme.id) {
+    case 'tactile': return <TactileFrame {...props}/>;
     case 'industrial': return <ProcessFrame {...props}/>;
     case 'studio': case 'horizon': return <StudioFrame {...props}/>;
     case 'flat': return <FlatFrame {...props}/>;
