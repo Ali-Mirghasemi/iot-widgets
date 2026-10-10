@@ -1,14 +1,21 @@
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { getQaThemes, screenshotOptions } from './qa-config.mjs';
 
-const root = process.cwd();
-const outDir = path.join(root, 'widget-screenshots');
+// Resolve from the script location, not from a shell's current directory.
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const outDir = path.resolve(process.env.WIDGET_QA_OUTPUT_DIR || path.join(root, 'widget-screenshots'));
 const port = Number(process.env.WIDGET_QA_PORT || 4173);
 const host = '127.0.0.1';
-const baseUrl = `http://${host}:${port}`;
+const externalUrl = process.env.WIDGET_QA_URL?.trim();
+const baseUrl = externalUrl ? new URL(externalUrl).origin : `http://${host}:${port}`;
+if (outDir === root || outDir === path.parse(outDir).root || outDir === path.join(root, '.git') || outDir.startsWith(path.join(root, '.git') + path.sep)) {
+  throw new Error(`Unsafe QA screenshot output directory: ${outDir}`);
+}
+
 const themes = getQaThemes();
 const imageOptions = screenshotOptions();
 const categories = ['metrics','controls','charts','location','tables','display'];
@@ -23,28 +30,26 @@ const headless = process.env.WIDGET_QA_HEADFUL === '1' ? false : true;
 if (!selectedThemes.length) throw new Error(`Unknown WIDGET_QA_THEME=${onlyTheme}`);
 if (!selectedCategories.length) throw new Error(`Unknown WIDGET_QA_CATEGORY=${onlyCategory}`);
 
-await rm(outDir, { recursive:true, force:true });
+// The parallel runner assigns a UNIQUE WIDGET_QA_OUTPUT_DIR to each worker.
+// Never use the shared legacy directory when the coordinator provides one.
+await rm(outDir, { recursive:true, force:true, maxRetries:6, retryDelay:250 });
 await mkdir(outDir, { recursive:true });
 
-// Launch Vite directly with Node. This avoids Windows npm.cmd spawn EINVAL issues.
-const viteBin = path.join(root, 'node_modules', 'vite', 'bin', 'vite.js');
-const server = spawn(
-  process.execPath,
-  [viteBin, '--host', host, '--port', String(port), '--strictPort'],
-  {
-    cwd:root,
-    env:{...process.env, BROWSER:'none'},
-    stdio:['ignore','pipe','pipe'],
-    windowsHide:true,
-  },
-);
-
+// The coordinator owns Vite. Direct `npm run screenshots` still starts its own.
+let server;
 let serverLog = '';
-server.stdout.on('data', d => { const line=d.toString(); serverLog += line; process.stdout.write(`[vite] ${line}`); });
-server.stderr.on('data', d => { const line=d.toString(); serverLog += line; process.stderr.write(`[vite] ${line}`); });
-
 let serverExit = null;
-server.on('exit', (code, signal) => { serverExit = { code, signal }; });
+if (!externalUrl) {
+  const viteBin = path.join(root, 'node_modules', 'vite', 'bin', 'vite.js');
+  server = spawn(process.execPath,
+    [viteBin, '--host', host, '--port', String(port), '--strictPort'], {
+      cwd:root, env:{...process.env, BROWSER:'none'},
+      stdio:['ignore','pipe','pipe'], windowsHide:true,
+    });
+  server.stdout.on('data', d => { const line=d.toString(); serverLog += line; process.stdout.write(`[vite] ${line}`); });
+  server.stderr.on('data', d => { const line=d.toString(); serverLog += line; process.stderr.write(`[vite] ${line}`); });
+  server.on('exit', (code, signal) => { serverExit = { code, signal }; });
+}
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -156,6 +161,12 @@ try {
         window.scrollTo(0,0);
       });
       await page.waitForTimeout(150);
+      const renderedDirection = await page.locator('[data-qa-page="true"]').getAttribute('dir');
+      const expectedDirection = locale === 'fa' ? 'rtl' : 'ltr';
+      if (renderedDirection !== expectedDirection) {
+        await saveFailure(page, theme, category, `Wrong page direction: ${renderedDirection}, expected ${expectedDirection}`);
+        throw new Error(`Incorrect ${locale} page direction for ${theme}/${category}`);
+      }
 
       const qaErrors = await page.locator('[data-qa-error="true"]').evaluateAll(nodes => nodes.map(node => ({
         id:node.getAttribute('data-widget-id'),
@@ -215,6 +226,11 @@ try {
         });
       });
 
+      if (!diagnostics.length || diagnostics.some(item => item.theme !== theme || item.category !== category)) {
+        await saveFailure(page, theme, category, 'Missing widgets or rendered theme/category mismatch');
+        throw new Error(`Wrong widget content for ${theme}/${category}: ${diagnostics.length} variants`);
+      }
+
       // One category screenshot already captures the full page; no second pass needed.
       const file = imageOptions.categorySheets
         ? path.join(themeDir, `${clean(category)}.${imageOptions.extension}`)
@@ -237,14 +253,15 @@ try {
         const widgetFile = path.join(widgetDir, `${clean(widgetId)}.${imageOptions.extension}`);
         await section.screenshot({ path:widgetFile, animations:'disabled',
           type:imageOptions.type, ...(imageOptions.quality ? { quality:imageOptions.quality } : {}) });
-        widgetFiles.push(path.relative(root, widgetFile));
+        widgetFiles.push(path.relative(outDir, widgetFile).replaceAll(path.sep,'/'));
       }
 
       const suspects = diagnostics.filter(item => item.cardScrollOverflow || item.bodyScrollOverflow || item.suspects.length);
       report.captures.push({
         theme,
         category,
-        file:file ? path.relative(root,file) : null,
+        renderedDirection,
+        file:file ? path.relative(outDir,file).replaceAll(path.sep,'/') : null,
         widgetFiles,
         widgetVariants:diagnostics.length,
         suspectCount:suspects.length,
@@ -257,11 +274,20 @@ try {
     }
   }
 
+  // A real browser page can load but contain no widgets; never call that PASS.
+  const empty = report.captures.filter(c => c.widgetVariants === 0 || !c.file && imageOptions.categorySheets);
+  const errors = report.captures.flatMap(c => c.renderErrors);
+  if (empty.length || errors.length || report.consoleErrors.length) {
+    throw new Error(`Invalid QA capture: ${empty.length} empty categories, ${errors.length} widget render errors, ${report.consoleErrors.length} browser errors`);
+  }
   await writeFile(path.join(outDir,'report.json'), JSON.stringify(report,null,2), 'utf8');
   const summary = report.captures.map(c => `${c.theme.padEnd(9)} ${c.category.padEnd(10)} ${String(c.widgetVariants).padStart(3)} variants | ${String(c.suspectCount).padStart(3)} overflow | ${String(c.renderErrorCount).padStart(3)} render errors | ${c.file}`).join('\n');
   await writeFile(path.join(outDir,'SUMMARY.txt'), `IoT Widget Visual QA\nGenerated: ${report.generatedAt}\nBrowser: ${report.chromePath}\nHeadless: ${report.headless}\n\n${summary}\n\nConsole/page errors: ${report.consoleErrors.length}\n`, 'utf8');
   console.log(`\nDone. Screenshots and diagnostics: ${outDir}`);
+} catch (error) {
+  await writeFile(path.join(outDir, 'QA-CAPTURE-ERROR.txt'), `${error.stack || error}\n\nVITE LOG\n${serverLog}`, 'utf8').catch(() => {});
+  throw error;
 } finally {
   if (browser) await browser.close();
-  if (!server.killed) server.kill('SIGTERM');
+  if (server && !server.killed) server.kill('SIGTERM');
 }
