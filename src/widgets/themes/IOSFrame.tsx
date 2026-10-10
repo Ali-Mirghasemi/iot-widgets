@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import MoreHoriz from '@mui/icons-material/MoreHoriz';
 import type { Locale, WidgetDefinition, WidgetSize, WidgetThemeTokens } from '../core/types';
@@ -50,24 +50,10 @@ export function IOSFrame(p: IOSFrameProps) {
   const panel = dark ? 'rgba(255,255,255,.07)' : 'rgba(255,255,255,.72)';
   const fill = dark ? 'rgba(220,231,255,.12)' : 'rgba(118,118,128,.10)';
   const fillStrong = dark ? 'rgba(220,231,255,.18)' : 'rgba(118,118,128,.16)';
-
-  return <Box data-ios-palette={dark ? 'dark' : 'light'} data-ios-surface-color={face} sx={{
-    height: '100%',
-    width: '100%',
-    minHeight: 0,
-    minWidth: 0,
-    boxSizing: 'border-box',
-    overflow: 'hidden',
-    // Fill the positioned IoTWidget/WidgetCard slot even if a parent has
-    // an intrinsically-sized flex child. Percentage height alone previously
-    // let the header/footer collapse into a short strip on Nexus cards.
-    position: 'absolute',
-    inset: 0,
-    borderRadius: d.compact ? '18px' : '20px',
-    background: dark ? `linear-gradient(155deg,${face},${face})` : 'linear-gradient(180deg,rgba(255,255,255,.94),rgba(248,249,251,.94))',
-    backgroundColor: face,
-    border: `1px solid ${border}`,
-    boxShadow: dark ? '0 12px 30px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.06)' : '0 10px 28px rgba(15,23,42,.075), inset 0 1px 0 rgba(255,255,255,.82)',
+  // Use native CSS custom properties, not MUI's sx custom property parser.
+  // The iOS visual renderer uses var(--iot-ios-label). If that variable is
+  // missing, its dark-text fallback becomes nearly invisible on a dark card.
+  const iosColors = {
     '--iot-ios-label': ink,
     '--iot-ios-secondary': secondary,
     '--iot-ios-tertiary': tertiary,
@@ -76,8 +62,29 @@ export function IOSFrame(p: IOSFrameProps) {
     '--iot-ios-fill-strong': fillStrong,
     '--iot-ios-surface': panel,
     '--iot-ios-blue': p.theme.inheritPalette ? p.theme.accent : '#0A84FF',
-    display: 'flex',
-    flexDirection: 'column',
+  } as CSSProperties;
+
+  return <Box data-ios-palette={dark ? 'dark' : 'light'} data-ios-surface-color={face} style={iosColors} sx={{
+    height: '100%',
+    width: '100%',
+    minHeight: 0,
+    minWidth: 0,
+    boxSizing: 'border-box',
+    overflow: 'hidden',
+    // Remain in the normal layout flow. An absolutely positioned frame can
+    // shrink the intrinsic-height chain, leaving the visual body at 0px while
+    // the dashboard still reserves a full-height slot for the widget.
+    position: 'relative',
+    borderRadius: d.compact ? '18px' : '20px',
+    background: dark ? `linear-gradient(155deg,${face},${face})` : 'linear-gradient(180deg,rgba(255,255,255,.94),rgba(248,249,251,.94))',
+    backgroundColor: face,
+    border: `1px solid ${border}`,
+    boxShadow: dark ? '0 12px 30px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.06)' : '0 10px 28px rgba(15,23,42,.075), inset 0 1px 0 rgba(255,255,255,.82)',
+    display: 'grid',
+    // The middle track is a definite, shrinkable region for the visual.
+    // Percentage-height children (including the size-contained renderer)
+    // must never resolve against an auto-sized flex item.
+    gridTemplateRows: d.roomy ? 'auto minmax(0,1fr) auto' : 'auto minmax(0,1fr)',
     color: ink,
     transition: 'transform .18s ease, box-shadow .18s ease',
     '&:hover': { transform: 'translateY(-1px)', boxShadow: dark ? '0 14px 34px rgba(0,0,0,.28)' : '0 14px 34px rgba(15,23,42,.095), inset 0 1px 0 rgba(255,255,255,.9)' },
@@ -116,7 +123,7 @@ export function IOSFrame(p: IOSFrameProps) {
       </Box>
     </Box>
 
-    <Box sx={{ flex: 1, minHeight: 0, px: d.compact ? 1.2 : 1.4, pt: d.compact ? .35 : .55, pb: d.roomy ? .8 : 1.15, overflow: 'hidden' }}>{p.children}</Box>
+    <Box data-ios-content-slot="true" sx={{ minHeight: 0, minWidth: 0, height: '100%', display: 'grid', gridTemplateRows: 'minmax(0,1fr)', px: d.compact ? 1.2 : 1.4, pt: d.compact ? .35 : .55, pb: d.roomy ? .8 : 1.15, overflow: 'hidden' }}>{p.children}</Box>
 
     {d.roomy && <Box sx={{
       minHeight: 28,
