@@ -1,6 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import type { WidgetRendererProps } from './WidgetVisuals';
 import type { ResolvedWidgetView } from '../../library/adaptive';
+import { measureGaugeLayout } from './gaugeSizing';
 
 const finite = (input: unknown, fallback: number) => typeof input === 'number' && Number.isFinite(input) ? input : fallback;
 const clamp = (value:number) => Math.max(0,Math.min(1,value));
@@ -25,12 +26,11 @@ export function AdaptiveGauge({def,theme,locale,history,view='standard',bounds}:
   const isDark=theme.paletteMode==='dark'||['studio','gaming','glass','horizon'].includes(theme.id);
   const track=isDark?theme.border:theme.border;
   const radius=75,circ=2*Math.PI*radius,arc=circ*.75;
-  const w=bounds?.width??280,h=bounds?.height??160;
-  const horizontal=view!=='compact' && w>=410 && h>=135;
-  const detailed=view==='detailed' && w>=350 && h>=255;
+  const {horizontal,detailed,showTrace,diameter,traceHeight}=measureGaugeLayout(bounds,view,history?.length??0);
   const readable=Number.isInteger(value)?value.toLocaleString(locale==='fa'?'fa-IR':'en-US'):value.toLocaleString(locale==='fa'?'fa-IR':'en-US',{maximumFractionDigits:2});
-  const dial=<Box sx={{width:'100%',height:'100%',maxWidth:horizontal?270:340,maxHeight:'100%',minHeight:0,display:'grid',placeItems:'center',mx:'auto'}}>
-    <svg width="100%" height="100%" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet" role="img" aria-label={`${readable} ${unit} (${Math.round(pct*100)}%)`} style={{display:'block',maxHeight:'100%',overflow:'visible'}}>
+  const dial=<Box data-adaptive-gauge-face="true" sx={{width:diameter,height:diameter,flex:'0 0 auto',minWidth:0,minHeight:0,
+    display:'grid',placeItems:'center',mx:'auto',my:'auto',overflow:'hidden'}}>
+    <svg width="100%" height="100%" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet" role="img" aria-label={`${readable} ${unit} (${Math.round(pct*100)}%)`} style={{display:'block',width:'100%',height:'100%',overflow:'hidden'}}>
       <circle cx="100" cy="100" r={radius} stroke={track} strokeWidth="13" strokeLinecap="round" fill="none"
         strokeDasharray={`${arc} ${circ}`} transform="rotate(135 100 100)"/>
       <circle cx="100" cy="100" r={radius} stroke={accent} strokeWidth="13" strokeLinecap="round" fill="none"
@@ -64,9 +64,8 @@ export function AdaptiveGauge({def,theme,locale,history,view='standard',bounds}:
       </Box>
     </Box>}
   </Box>;
-  const showTrace=detailed && Boolean(history?.length && history.length>=2) && h>=340;
-  return <Box dir="ltr" data-adaptive-gauge="true" sx={{height:'100%',width:'100%',minHeight:0,minWidth:0,display:'grid',gridTemplateRows:showTrace?'minmax(0,3fr) minmax(64px,1fr)':'minmax(0,1fr)',gap:showTrace?1.2:0,overflow:'hidden'}}>
-    <Box sx={{display:'grid',height:'100%',minHeight:0,minWidth:0,gridTemplateColumns:horizontal?'minmax(0,1fr) minmax(0,1fr)':'minmax(0,1fr)',gap:horizontal?1.2:0,alignItems:'stretch'}}>
+  return <Box dir="ltr" data-adaptive-gauge="true" sx={{height:'100%',width:'100%',minHeight:0,minWidth:0,display:'grid',gridTemplateRows:showTrace?`minmax(0,1fr) ${traceHeight}px`:'minmax(0,1fr)',gap:showTrace?1.2:0,overflow:'hidden'}}>
+    <Box sx={{display:'grid',height:'100%',minHeight:0,minWidth:0,overflow:'hidden',gridTemplateColumns:horizontal?'minmax(0,1fr) minmax(0,1fr)':'minmax(0,1fr)',gap:horizontal?1.2:0,alignItems:'stretch'}}>
       {dial}
       {horizontal&&details}
     </Box>
