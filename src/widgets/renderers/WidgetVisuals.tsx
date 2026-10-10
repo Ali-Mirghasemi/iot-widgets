@@ -48,7 +48,7 @@ function CompactReading({def,theme}:WidgetRendererProps){
   const value = active?(raw?'On':'Off'):(typeof raw==='number'||typeof raw==='string'?raw:'—');
   const unit = typeof def.mock.unit==='string'?def.mock.unit:'';
   return <Box sx={{height:'100%',minHeight:0,display:'flex',alignItems:'center',minWidth:0,justifyContent:'center',gap:1,overflow:'hidden'}}>
-    <Typography sx={{fontSize:'clamp(24px,10cqw,43px)',lineHeight:1.1,fontWeight:800,letterSpacing:'-.055em',color:theme.foreground,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',fontVariantNumeric:'tabular-nums'}}>{value}</Typography>
+    <Typography data-iot-reading='true' sx={{fontSize:'clamp(24px,10cqw,43px)',lineHeight:1.1,fontWeight:800,letterSpacing:'-.055em',color:theme.foreground,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',fontVariantNumeric:'tabular-nums'}}>{value}</Typography>
     {!active && <Typography sx={{fontSize:11,fontWeight:750,color:theme.muted,whiteSpace:'nowrap'}}>{unit}</Typography>}
   </Box>;
 }

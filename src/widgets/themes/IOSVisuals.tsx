@@ -25,19 +25,19 @@ interface Props {
 type TableMode = 'table' | 'measurement-list' | 'alarms' | 'events' | 'logs';
 
 const C = {
-  blue: '#0A84FF',
+  blue: 'var(--iot-ios-blue, #0A84FF)',
   green: '#30D158',
   orange: '#FF9F0A',
   red: '#FF453A',
   purple: '#BF5AF2',
   cyan: '#64D2FF',
-  label: '#1C1C1E',
-  secondary: '#636366',
-  tertiary: '#8E8E93',
-  separator: 'rgba(60,60,67,.14)',
-  fill: 'rgba(118,118,128,.10)',
-  fillStrong: 'rgba(118,118,128,.16)',
-  surface: 'rgba(255,255,255,.72)',
+  label: 'var(--iot-ios-label, #1C1C1E)',
+  secondary: 'var(--iot-ios-secondary, #636366)',
+  tertiary: 'var(--iot-ios-tertiary, #8E8E93)',
+  separator: 'var(--iot-ios-separator, rgba(60,60,67,.14))',
+  fill: 'var(--iot-ios-fill, rgba(118,118,128,.10))',
+  fillStrong: 'var(--iot-ios-fill-strong, rgba(118,118,128,.16))',
+  surface: 'var(--iot-ios-surface, rgba(255,255,255,.72))',
 };
 
 const n = (value: unknown, fallback = 0) => typeof value === 'number' ? value : fallback;
