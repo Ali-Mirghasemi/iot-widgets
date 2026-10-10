@@ -36,3 +36,33 @@ const missing = inspectIOSReadingContrast();
 assert.equal(missing.expectedReadings, 1);
 assert.equal(missing.contrastReadings, 0);
 assert.equal(missing.contrastIssues[0].issue, 'missing primary reading');
+
+// Regression: a visible reading inside a 0px-high body is NOT a valid widget.
+function geometryCase(bodyHeight) {
+  const rect=(x,y,width,height)=>({left:x,top:y,width,height,right:x+width,bottom:y+height});
+  const reading={textContent:'24.8 °C',getBoundingClientRect:()=>rect(20,60,130,46)};
+  const body={getBoundingClientRect:()=>rect(10,52,333,bodyHeight)};
+  const slot={getBoundingClientRect:()=>rect(10,52,333,bodyHeight)};
+  const frame={
+    getAttribute:key=>key==='data-ios-surface-color'?'#161f2f':'dark',
+    querySelector:key=>key==='[data-iot-reading]'?reading:key==='[data-responsive-widget-body]'?body:key==='[data-ios-content-slot]'?slot:null,
+    getBoundingClientRect:()=>rect(10,10,353,190),
+  };
+  const card={getAttribute:key=>key==='data-widget-visual'?'metric':'temperature',querySelector:()=>frame};
+  globalThis.document={querySelectorAll:()=>[card]};
+  globalThis.getComputedStyle=el=>({color:'rgb(241,245,255)',display:'flex',visibility:'visible',opacity:'1',getPropertyValue:()=>el===frame?'#f1f5ff':''});
+  return inspectIOSReadingContrast();
+}
+try {
+  const collapsed=geometryCase(0);
+  assert(collapsed.contrastIssues.some(issue=>issue.issue==='reading not visible in widget body'));
+  const clipped=collapsed.contrastIssues.find(issue=>issue.issue==='reading not visible in widget body');
+  assert.equal(clipped.body.height,0);
+  assert.equal(clipped.frame.height,190);
+  assert.equal(clipped.slot.height,0);
+  assert.equal(geometryCase(145).contrastIssues.length,0,'a visible reading inside a sized body passes');
+  console.log('Cupertino geometry QA: zero-height body and visible reading cases passed.');
+} finally {
+  delete globalThis.document;
+  delete globalThis.getComputedStyle;
+}

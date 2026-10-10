@@ -51,6 +51,9 @@ export function inspectIOSReadingContrast() {
       id, issue: 'low contrast reading',
       ratio: ratio === null ? null : Math.round(ratio * 100) / 100,
       palette: frame.getAttribute('data-ios-palette'),
+      foreground: style.color,
+      surface: frame.getAttribute('data-ios-surface-color'),
+      token: getComputedStyle(frame).getPropertyValue?.('--iot-ios-label')?.trim() || '(unset)',
     });
     if (typeof reading.textContent === 'string' && !reading.textContent.trim()) issues.push({ id, issue: 'empty primary reading' });
     if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0)
@@ -65,6 +68,10 @@ export function inspectIOSReadingContrast() {
         issues.push({ id, issue: 'reading not visible in widget body',
           body: { width: Math.round(b.width), height: Math.round(b.height) },
           reading: { width: Math.round(r.width), height: Math.round(r.height) },
+          // Include the frame/content slot to distinguish a CSS grid-height
+          // regression from an individual visual renderer overflowing.
+          frame: (() => { const box=frame.getBoundingClientRect?.();return box?{width:Math.round(box.width),height:Math.round(box.height)}:null; })(),
+          slot: (() => { const box=frame.querySelector('[data-ios-content-slot]')?.getBoundingClientRect?.();return box?{width:Math.round(box.width),height:Math.round(box.height)}:null; })(),
         });
     }
   }
