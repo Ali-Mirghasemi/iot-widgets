@@ -4,6 +4,7 @@ import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import MoreHoriz from '@mui/icons-material/MoreHoriz';
 import type { Locale, WidgetDefinition, WidgetSize, WidgetThemeTokens } from './types';
 import type { ResolvedWidgetView } from '../../library/adaptive';
+import { ProcessFrame } from '../themes/ProcessFrame';
 import { IOSFrame as IOSThemeFrame } from '../themes/IOSFrame';
 import { GlassFrame as AuroraGlassFrame } from '../themes/GlassFrame';
 import { GamingFrame as GamingThemeFrame } from '../themes/GamingVisuals';
@@ -267,6 +268,7 @@ function StudioFrame(p: WidgetFrameProps) {
 
 export function WidgetFrame(props: WidgetFrameProps) {
   switch (props.theme.id) {
+    case 'industrial': return <ProcessFrame {...props}/>;
     case 'studio': case 'horizon': return <StudioFrame {...props}/>;
     case 'flat': return <FlatFrame {...props}/>;
     case 'minimal': return <MinimalFrame {...props}/>;

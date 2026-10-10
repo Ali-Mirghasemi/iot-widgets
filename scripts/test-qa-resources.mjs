@@ -1,8 +1,9 @@
 /** Deterministic CPU/RAM sizing tests; do not require Chromium. */
 import assert from 'node:assert/strict';
+import { getQaThemes } from './qa-config.mjs';
 import { GiB, detectQaResources, estimatedCaptureBytes, planQaConcurrency, memoryAdmissionAllowed } from './qa-resources.mjs';
 
-const tasks = ['glass','gaming','studio','horizon','ios','flat','material','minimal'].flatMap(theme => [
+const tasks = getQaThemes().flatMap(theme => [
   {theme,locale:'en'}, {theme,locale:'fa'},
 ]);
 const plan = (threads,total,available,profile='review',jobs='auto') => planQaConcurrency({

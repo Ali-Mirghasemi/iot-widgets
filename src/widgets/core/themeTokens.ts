@@ -1,6 +1,13 @@
 import type { WidgetThemeId, WidgetThemeTokens } from './types';
 
 export const widgetThemes: Record<WidgetThemeId, WidgetThemeTokens> = {
+  industrial: {
+    id: 'industrial', label: 'Industrial Process / HMI', background: '#0b1014',
+    surface: '#131b20', foreground: '#e5f2ed', muted: '#9db3af',
+    accent: '#55e0bd', accent2: '#efbc66', border: '#334b50',
+    radius: 3, shadow: '0 6px 20px rgba(0,0,0,.28)', headerWeight: 850,
+    paletteMode: 'dark', fontFamily: '"IBM Plex Mono", "Roboto Mono", ui-monospace, monospace',
+  },
   horizon: {
     id: 'horizon', label: 'Horizon / Editorial', background: '#f3f1ed',
     surface: '#fffcf8', foreground: '#253341', muted: '#7a838c',

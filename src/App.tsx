@@ -52,7 +52,7 @@ function ShowcaseApp() {
         <Typography sx={{ mt:1,color:'#aab5c8',maxWidth:720,fontSize:{xs:14,md:16} }}>{t.subtitle}</Typography>
         <Box sx={{ display:'flex',gap:1.2,mt:3,flexWrap:'wrap' }}>
           <Stat icon={<WidgetsOutlined/>} value={widgetRegistry.length} label={locale==='fa'?'نوع ویجت':'widget types'} />
-          <Stat icon={<PaletteOutlined/>} value={8} label={locale==='fa'?'تم مستقل':'widget themes'} />
+          <Stat icon={<PaletteOutlined/>} value={Object.keys(widgetThemes).length} label={locale==='fa'?'تم مستقل':'widget themes'} />
           <Stat icon={<GridViewOutlined/>} value={9} label={locale==='fa'?'اندازه شبکه':'grid sizes'} />
         </Box>
       </Container>
@@ -69,9 +69,9 @@ function ShowcaseApp() {
       </Box>
 
       {filtered.length ? <Box sx={{
-        p: widgetTheme.id==='gaming' || widgetTheme.id==='glass' ? {xs:1,md:1.5} : 0,
+        p: widgetTheme.id==='gaming' || widgetTheme.id==='glass' || widgetTheme.id==='industrial' ? {xs:1,md:1.5} : 0,
         borderRadius:4,
-        background: widgetTheme.id==='gaming' ? 'radial-gradient(circle at 18% 0%, rgba(25,247,255,.10), transparent 28%), #040914' : widgetTheme.id==='glass' ? widgetTheme.background : 'transparent',
+        background: widgetTheme.id==='gaming' ? 'radial-gradient(circle at 18% 0%, rgba(25,247,255,.10), transparent 28%), #040914' : widgetTheme.id==='glass' || widgetTheme.id==='industrial' ? widgetTheme.background : 'transparent',
         transition:'background .25s ease',
       }}><Box className="widget-grid">
         {filtered.map(def=><WidgetCard key={def.id} def={def} theme={widgetTheme} locale={locale} />)}
@@ -83,20 +83,20 @@ function ShowcaseApp() {
 function WidgetQaPage({ themeId, category, locale }: { themeId:WidgetThemeId; category:WidgetCategory; locale:Locale }) {
   const theme = widgetThemes[themeId];
   const widgets = widgetRegistry.filter(w => w.category === category);
-  const pageBackground = themeId === 'gaming'
+  const pageBackground = themeId === 'industrial' ? theme.background : themeId === 'gaming'
     ? 'radial-gradient(circle at 20% 0%, rgba(25,247,255,.10), transparent 28%), #040914'
     : themeId === 'glass'
       ? theme.background
       : '#edf1f5';
 
   return <Box data-qa-page="true" sx={{ minHeight:'100vh', minWidth:1920, bgcolor:'#edf1f5', background:pageBackground, py:3, px:3 }} dir={locale==='fa'?'rtl':'ltr'}>
-    <Box sx={{ mb:3, p:2, borderRadius:2, bgcolor:themeId==='gaming'||themeId==='glass'?'rgba(2,8,23,.52)':'#fff', color:themeId==='gaming'||themeId==='glass'?'#fff':'#111827', border:`1px solid ${theme.border}` }}>
+    <Box sx={{ mb:3, p:2, borderRadius:2, bgcolor:themeId==='gaming'||themeId==='glass'||themeId==='industrial'?'rgba(2,8,23,.52)':'#fff', color:themeId==='gaming'||themeId==='glass'||themeId==='industrial'?'#fff':'#111827', border:`1px solid ${theme.border}` }}>
       <Typography sx={{fontSize:22,fontWeight:900}}>Visual QA · {theme.label} · {category}</Typography>
       <Typography sx={{mt:.4,fontSize:12,opacity:.7}}>Every supported size is rendered below. Generated for overlap, clipping and responsive-content inspection.</Typography>
     </Box>
 
     {widgets.map(def => <Box key={def.id} data-qa-widget-section={def.id} sx={{ mb:4.5 }}>
-      <Box sx={{ display:'flex', alignItems:'baseline', gap:1.3, mb:1.2, color:themeId==='gaming'||themeId==='glass'?'#fff':'#111827' }}>
+      <Box sx={{ display:'flex', alignItems:'baseline', gap:1.3, mb:1.2, color:themeId==='gaming'||themeId==='glass'||themeId==='industrial'?'#fff':'#111827' }}>
         <Typography sx={{fontSize:18,fontWeight:900}}>{def.titleEn}</Typography>
         <Typography sx={{fontSize:11,opacity:.65,direction:'ltr'}}>{def.id}</Typography>
         <Typography sx={{fontSize:11,opacity:.65,direction:'ltr'}}>{def.supportedSizes.join(' · ')}</Typography>

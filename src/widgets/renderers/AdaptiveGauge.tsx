@@ -23,7 +23,7 @@ export function AdaptiveGauge({def,theme,locale,history,view='standard',bounds}:
   const high=pct>=.9, warning=pct>=.72;
   const accent=high?'#f17e7e':warning?'#e4b568':theme.accent;
   const label=locale==='fa'?(high?'بحرانی':warning?'هشدار':'عادی'):(high?'Critical':warning?'Elevated':'Normal');
-  const isDark=theme.paletteMode==='dark'||['studio','gaming','glass','horizon'].includes(theme.id);
+  const isDark=theme.paletteMode==='dark'||['studio','gaming','glass','horizon','industrial'].includes(theme.id);
   const track=isDark?theme.border:theme.border;
   const radius=75,circ=2*Math.PI*radius,arc=circ*.75;
   const {horizontal,detailed,showTrace,diameter,traceHeight}=measureGaugeLayout(bounds,view,history?.length??0);

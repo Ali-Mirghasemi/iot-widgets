@@ -78,7 +78,7 @@ export function detectQaResources() {
 }
 
 export function estimatedCaptureBytes(theme, profile = 'review') {
-  const typical = theme === 'glass' ? 3.4 : theme === 'gaming' ? 2.8 : 1.65;
+  const typical = theme === 'glass' ? 3.4 : theme === 'gaming' ? 2.8 : theme === 'industrial' ? 2.0 : 1.65;
   return (typical + (profile === 'detailed' ? 0.75 : 0)) * GiB;
 }
 
