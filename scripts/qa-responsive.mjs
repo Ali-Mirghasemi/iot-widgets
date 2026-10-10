@@ -23,7 +23,7 @@ const port=Number(value('--port','4387'));
 const baseUrl=external||`http://127.0.0.1:${port}`;
 for(const theme of themes)if(!getQaThemes().includes(theme))throw new Error('Unknown theme '+theme);
 for(const locale of languages)if(!['en','fa'].includes(locale))throw new Error('Unknown locale '+locale);
-for(const board of boards)if(!['factory','energy','fleet','lab'].includes(board))throw new Error('Unknown board '+board);
+for(const board of boards)if(!['factory','energy','fleet','lab','catalog'].includes(board))throw new Error('Unknown board '+board);
 if(widths.some(w=>w<300||w>2560||!Number.isInteger(w)))throw new Error('Invalid width');
 await mkdir(out,{recursive:true});
 let server,browser;
@@ -56,11 +56,13 @@ try{
         return r.left < -1||r.right>viewport+1 ? [{id:card.getAttribute('data-widget-id'),left:r.left,right:r.right}]:[];
       });
       return {viewport,scrollWidth:document.documentElement.scrollWidth,offscreen,
-        mode:document.querySelector('[data-dashboard-grid]')?.getAttribute('data-responsive-mode'),widgets:cards.length};
+        mode:document.querySelector('[data-dashboard-grid]')?.getAttribute('data-responsive-mode'),widgets:cards.length,
+        catalogExpected:Number(document.querySelector('[data-nexus-catalog]')?.getAttribute('data-total-widgets')||0)};
     });
     const name=`${theme}-${locale}-${board}-${width}`;
     await page.screenshot({path:path.join(out,`${name}.jpg`),type:'jpeg',quality:78,fullPage:true,animations:'disabled'});
-    const pass=result.scrollWidth<=result.viewport+2&&!result.offscreen.length&&!errors.length;
+    const pass=result.scrollWidth<=result.viewport+2&&!result.offscreen.length&&!errors.length&&
+      (board!=='catalog'||(result.catalogExpected>0&&result.widgets===result.catalogExpected));
     report.push({theme,locale,board,width,pass,...result,errors});
     console.log(`${pass?'PASS':'FAIL'} ${name}: ${result.widgets} widgets; width ${result.scrollWidth}/${result.viewport}; ${result.mode}`);
     await context.close();
