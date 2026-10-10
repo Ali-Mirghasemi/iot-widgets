@@ -14,6 +14,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getQaThemes } from './qa-config.mjs';
 import { zipDirectory } from './qa-zip.mjs';
+import { verifyCapture } from './qa-verify.mjs';
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const knownThemes = getQaThemes();
@@ -218,12 +219,16 @@ async function run() {
         });
         children.delete(child);
         if (code !== 0) throw new Error(`Capture exited with status ${code}`);
-        if (!existsSync(path.join(screenshotDir,task.theme))) throw new Error('Missing theme screenshot output');
-        if (!existsSync(path.join(screenshotDir,'report.json'))) throw new Error('Missing screenshot diagnostics');
+        const checked = await verifyCapture({ directory:screenshotDir, theme:task.theme, locale:task.locale, category:opts.category, format:opts.format });
+        if (!checked.ok) throw new Error(`Screenshot verification failed: ${checked.failures.join(' | ')}`);
+        console.log(`[images] ${key}: ${checked.screenshots} valid category screenshots`);
         status = 'PASS';
       } catch (error) {
         await writeFile(path.join(logDir,'ERROR.txt'), String(error.stack || error), 'utf8');
         console.error(`[fail] ${key}: ${error.message}`);
+        // The failure reason should be visible in PowerShell without opening a ZIP.
+        const workerLog = await readFile(logFile,'utf8').catch(() => '');
+        if (workerLog.trim()) console.error(`[worker ${key} log tail]\n${workerLog.trim().split(/\r?\n/).slice(-18).join('\n')}`);
       } finally {
         log.end();
         await once(log, 'finish');
@@ -299,14 +304,19 @@ async function run() {
         '', 'Contents: <locale>/widget-screenshots/ and <locale>/logs/',
       ];
       await writeFile(path.join(themeStage,'QA-MANIFEST.txt'), lines.join('\n') + '\n','utf8');
+      const allPassed = locales.every(locale=>results.get(`${theme}/${locale}`)==='PASS');
       const tempZip = path.join(outDir, `.${theme}-qa-${process.pid}.zip.tmp`);
       const finalZip = path.join(outDir,`${theme}-qa.zip`);
+      const failedZip = path.join(outDir,`${theme}-qa-FAILED.zip`);
+      // Never leave an old successful archive beside a newly failed run.
+      await rm(allPassed ? failedZip : finalZip,{force:true});
       try {
         const packed = await zipDirectory(themeStage,tempZip);
         // On Windows rename does not replace existing files consistently.
-        await rm(finalZip, { force:true });
-        await rename(tempZip,finalZip);
-        console.log(`ZIP: ${finalZip} (${packed.entries} files)`);
+        const destination = allPassed ? finalZip : failedZip;
+        await rm(destination, { force:true });
+        await rename(tempZip,destination);
+        console.log(`${allPassed?'ZIP':'FAILED DIAGNOSTICS ZIP'}: ${destination} (${packed.entries} files)`);
       } catch (error) {
         await rm(tempZip,{force:true});
         results.set(`${theme}/archive`,'FAIL');
