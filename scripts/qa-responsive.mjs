@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { getQaThemes } from './qa-config.mjs';
 import { zipDirectory } from './qa-zip.mjs';
 import { resolveBrowserExecutable, archiveStatus } from './qa-browser.mjs';
+import { inspectGaugeGeometry } from './qa-gauge-inspection.mjs';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const args=process.argv.slice(2);
@@ -102,15 +103,17 @@ try {
           direction:document.querySelector('[data-iot-dashboard-panel]')?.getAttribute('dir')};
       });
       Object.assign(entry,result);
+      Object.assign(entry,await page.evaluate(inspectGaugeGeometry));
       const file=path.join(out,`${name}.jpg`);
       await page.screenshot({path:file,type:'jpeg',quality:78,fullPage:true,animations:'disabled'});
       entry.screenshot=true;
       entry.pass=result.widgets>0 && result.locale===locale && result.direction===(locale==='fa'?'rtl':'ltr') && result.scrollWidth<=result.viewport+2 &&
-        result.offscreen.length===0 && entry.errors.length===0 &&
-        (board!=='catalog'||(result.catalogExpected>0&&result.widgets===result.catalogExpected));
+        result.offscreen.length===0 && entry.gaugeIssues.length===0 && entry.errors.length===0 &&
+        (board!=='catalog'||(result.catalogExpected>0&&result.widgets===result.catalogExpected&&entry.gauges>0));
     }catch(error){entry.errors.push(String(error?.stack??error));}
     finally {report.push(entry);if(context)await context.close();}
-    console.log(`${entry.pass?'PASS':'FAIL'} ${name}: ${entry.widgets??0} widgets, image ${entry.screenshot?'captured':'missing'}`);
+    console.log(`${entry.pass?'PASS':'FAIL'} ${name}: ${entry.widgets??0} widgets, ${entry.gauges??0} gauges, ${entry.gaugeIssues?.length??0} gauge issues, image ${entry.screenshot?'captured':'missing'}`);
+    if(entry.gaugeIssues?.length)console.error('Gauge clipping: '+JSON.stringify(entry.gaugeIssues.slice(0,10)));
   }
 }catch(error){
   fatalError=String(error?.stack??error);
