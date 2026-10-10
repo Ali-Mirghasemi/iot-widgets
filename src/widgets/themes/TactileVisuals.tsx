@@ -28,7 +28,15 @@ export function TactileVisualRenderer({def,theme,locale,view='standard',history}
  const actionButton=(label:string,clickedText:string)=><Button fullWidth aria-label={label} variant="contained" startIcon={<PowerSettingsNewRounded/>}
   sx={{height:compact?43:58,minHeight:40,borderRadius:4,bgcolor:theme.accent,color:'#fff',fontWeight:800,fontSize:compact?12:15,
    boxShadow:`0 8px 20px ${theme.accent}33`,'&:hover':{bgcolor:theme.accent},'&:active':{transform:'scale(.97)',boxShadow:'none'}}}>{clickedText}</Button>;
- if(def.visual==='button')return <Box sx={{height:'100%',display:'grid',placeItems:'center'}}>{actionButton(t('Send command','ارسال فرمان'),t('Press to activate','برای فعال‌سازی فشار دهید'))}</Box>;
+ if(def.visual==='button')return <Box sx={{height:'100%',minHeight:0,display:'grid',gridTemplateRows:detailed?'minmax(0,1fr) auto auto':'minmax(0,1fr)',alignItems:'center',justifyItems:'stretch',gap:detailed?1.3:0,overflow:'hidden'}}>
+  {detailed&&<Box sx={{minHeight:0,borderRadius:4,display:'grid',placeItems:'center',gap:1,alignContent:'center',background:`${theme.accent}0d`,border:`1px solid ${theme.border}`,p:1.5}}>
+   <Box sx={{height:76,width:76,borderRadius:'50%',display:'grid',placeItems:'center',background:`${theme.accent}1b`,boxShadow:`inset 0 2px 7px ${theme.accent}20,0 3px 12px ${theme.accent}12`}}><PowerSettingsNewRounded sx={{fontSize:40,color:theme.accent}}/></Box>
+   <Typography sx={{fontWeight:800,color:theme.foreground,fontSize:14}}>{t('Momentary action','فرمان لحظه‌ای')}</Typography>
+   <Typography sx={{fontSize:11.5,color:theme.muted,textAlign:'center'}}>{t('Control preview · No device connection','پیش‌نمایش کنترل · بدون اتصال دستگاه')}</Typography>
+  </Box>}
+  {actionButton(t('Send command','ارسال فرمان'),t('Press to activate','برای فعال‌سازی فشار دهید'))}
+  {detailed&&<Typography sx={{fontSize:11,color:theme.muted,textAlign:'center'}}>{t('Configure the host command handler to activate the device.','برای فعال کردن دستگاه، مدیریت فرمان را متصل کنید.')}</Typography>}
+ </Box>;
  if(def.visual==='switch'||def.visual==='boolean') return <Box sx={{height:'100%',display:'flex',alignItems:'center',justifyContent:'space-around',gap:1.2}}>
   <Box sx={{minWidth:0,display:'grid',gap:.4}}><Box sx={{width:compact?39:57,height:compact?39:57,borderRadius:compact?2.5:3.5,
    bgcolor:enabled?`${theme.accent}25`:`${theme.muted}1a`,display:'grid',placeItems:'center',color:enabled?theme.accent:theme.muted}}>
