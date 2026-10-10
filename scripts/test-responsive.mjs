@@ -1,0 +1,15 @@
+import { readFileSync } from 'node:fs';
+import { strict as assert } from 'node:assert';
+import ts from 'typescript';
+const source=readFileSync(new URL('../src/library/adaptive.ts',import.meta.url),'utf8');
+const transpiled=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
+const {resolveWidgetView}=await import('data:text/javascript,'+encodeURIComponent(transpiled));
+assert.equal(resolveWidgetView('1x1',{width:280,height:228}),'compact','a 1x1 must not upscale on a desktop gallery');
+assert.equal(resolveWidgetView('2x1',{width:576,height:228}),'standard','one-row card cannot show detailed content');
+assert.equal(resolveWidgetView('2x1',{width:576,height:155}),'compact','body height can force compact mode');
+assert.equal(resolveWidgetView('3x3',{width:390,height:500}),'detailed','large phone card may show details');
+assert.equal(resolveWidgetView('3x3',{width:275,height:190}),'standard','mobile widths downgrade content');
+assert.equal(resolveWidgetView('3x3',{width:180,height:145}),'compact','tiny embedding fits one reading');
+assert.equal(resolveWidgetView('3x3',{width:320,height:240},'detailed'),'standard','manual detailed must not overflow');
+assert.equal(resolveWidgetView('3x3',{width:330,height:700},'auto',true),'detailed','expanded view requests details');
+console.log('Responsive density regression tests passed (phone, tablet, desktop, expanded).');

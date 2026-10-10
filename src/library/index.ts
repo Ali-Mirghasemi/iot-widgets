@@ -1,3 +1,6 @@
+export { DashboardPanel } from './DashboardPanel';
+export type { DashboardPanelProps } from './DashboardPanel';
+export { dashboardPalettePresets, dashboardSurfacePalettes } from './DashboardPalettePresets';
 export { DeviceContainer } from './DeviceContainer';
 export type { DeviceContainerProps } from './DeviceContainer';
 export { DashboardGrid, settleDashboard } from './DashboardGrid';

@@ -29,7 +29,7 @@ const dims = (size: WidgetSize) => {
 
 const frameDims = (p:WidgetFrameProps) => {
   const d=dims(p.size);
-  return {...d,compact:p.view==='compact'||(p.view===undefined && d.compact)};
+  return {...d,compact:p.view==='compact'||(p.view===undefined && d.compact),roomy:p.view==='compact'?false:d.roomy};
 };
 
 function Actions({ theme, locale, onInfo, ios = false }: Pick<WidgetFrameProps,'theme'|'locale'|'onInfo'> & { ios?: boolean }) {

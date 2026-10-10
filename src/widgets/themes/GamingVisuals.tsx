@@ -21,6 +21,7 @@ type VisualProps = {
 };
 
 type FrameProps = VisualProps & {
+  view?: 'compact'|'standard'|'detailed';
   deviceName: string;
   locationLabel: string;
   status: string;
@@ -877,13 +878,14 @@ export function GamingVisualRenderer(props: VisualProps) {
 }
 
 export function GamingFrame(props: FrameProps) {
-  const p = profile(props.size);
+  const original=profile(props.size);
+  const p={...original,compact:props.view==='compact'||original.compact};
   const Icon = props.def.icon;
   const title = props.locale === 'fa' ? props.def.titleFa : props.def.titleEn;
   const tone = statusTone(props.status);
   const titleRtl = props.locale === 'fa';
   const showMeta = !p.compact;
-  const showFooter = p.h >= 2 || p.area >= 4;
+  const showFooter = !p.compact && (p.h >= 2 || p.area >= 4);
 
   return <Box sx={{
     height: '100%',

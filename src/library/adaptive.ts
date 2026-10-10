@@ -42,6 +42,9 @@ export function widgetSizeForGrid(def: WidgetDefinition, width: number, height: 
 }
 
 /** Respect actual rendered card dimensions as well as the nominal widget size. */
+/** Choose content density from both its *logical* span and measured DOM bounds.
+ * A 1x1 remains compact even on a wide monitor and a 2x1 can never grow a
+ * detailed chart simply because its width exceeds 400px. */
 export function resolveWidgetView(
   size: WidgetSize,
   bounds?: { width:number; height:number },
@@ -50,20 +53,20 @@ export function resolveWidgetView(
 ): ResolvedWidgetView {
   if (expanded) return 'detailed';
   const [w,h] = readSize(size);
-  let available:ResolvedWidgetView;
-  if (bounds && bounds.width > 0 && bounds.height > 0) {
-    const { width, height } = bounds;
-    const veryTight = width < 228 || height < 170;
-    const roomy = width >= 360 && height >= 260;
-    const supportsDetailByShape = width >= 300 && height >= 220 && (width >= 380 || height >= 300);
-    available = veryTight ? 'compact' : (roomy || supportsDetailByShape) ? 'detailed' : 'standard';
-  } else {
-    const area = w * h;
-    available = (area <= 1 || w === 1) ? 'compact' : (area >= 6 || (area >= 4 && h >= 2)) ? 'detailed' : 'standard';
+  let logical: ResolvedWidgetView = w === 1 && h === 1 ? 'compact'
+    : w === 1 || h === 1 ? 'standard'
+    : (w*h >= 4 ? 'detailed' : 'standard');
+  let physical: ResolvedWidgetView = logical;
+  if(bounds && bounds.width>0 && bounds.height>0){
+    const {width,height}=bounds;
+    physical = width < 220 || height < 160 ? 'compact'
+      : width >= 350 && height >= 255 ? 'detailed' : 'standard';
   }
-  if(requested==='auto') return available;
   const rank:Record<ResolvedWidgetView,number>={compact:0,standard:1,detailed:2};
-  return rank[requested]>rank[available] ? available : requested;
+  // Respect a user's explicit request, but never make a too-small card overflow.
+  const desired: ResolvedWidgetView = requested === 'auto' ? logical : requested;
+  const result = [desired,logical,physical].reduce((lowest,current) => rank[current]<rank[lowest]?current:lowest);
+  return result;
 }
 
 export function historyValues(data: Record<string,unknown> | undefined): number[] | undefined {

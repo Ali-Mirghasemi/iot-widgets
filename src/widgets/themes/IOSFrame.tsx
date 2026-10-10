@@ -2,12 +2,14 @@ import type { ReactNode } from 'react';
 import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import MoreHoriz from '@mui/icons-material/MoreHoriz';
 import type { Locale, WidgetDefinition, WidgetSize, WidgetThemeTokens } from '../core/types';
+import type { ResolvedWidgetView } from '../../library/adaptive';
 
 export interface IOSFrameProps {
   def: WidgetDefinition;
   theme: WidgetThemeTokens;
   locale: Locale;
   size: WidgetSize;
+  view?: ResolvedWidgetView;
   deviceName: string;
   locationLabel: string;
   status: string;
@@ -30,7 +32,8 @@ function statusTone(status: string) {
 }
 
 export function IOSFrame(p: IOSFrameProps) {
-  const d = dims(p.size);
+  const original=dims(p.size);
+  const d={...original,compact:p.view==='compact'||original.compact,roomy:p.view==='compact'?false:original.roomy};
   const Icon = p.def.icon;
   const title = p.locale === 'fa' ? p.def.titleFa : p.def.titleEn;
   const tone = statusTone(p.status);

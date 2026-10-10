@@ -37,6 +37,7 @@ function StudioMetric({def,theme,size,view,history}:WidgetRendererProps){
  const max=Number.isFinite(maxConfigured)?maxConfigured:Math.max(10,Math.ceil(Math.abs(value)*1.35));
  const fill=bounded(100*(value-minConfigured)/Math.max(1,max-minConfigured));
  const detailed=currentView==='detailed' && Boolean(history?.length);
+ if(currentView==='compact') return <Box sx={{height:'100%',display:'grid',placeItems:'center',textAlign:'center'}}><Value value={value} unit={unit} color={theme.foreground}/></Box>;
  return <Box sx={{height:'100%',minHeight:0,minWidth:0,display:'flex',flexDirection:'column',gap:currentView==='compact'?.25:1.1,overflow:'hidden'}}>
    <Box sx={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:1,minWidth:0}}>
      <Value value={value} unit={unit} color={theme.foreground}/>
@@ -114,7 +115,7 @@ function StudioGauge({def,theme,size,view,history}:WidgetRendererProps){
 function StudioBattery({def,theme,size,view}:WidgetRendererProps){
  const value=bounded(number(def.mock.value,76));const compact=(view??resolveWidgetView(size))==='compact';
  return <Box sx={{height:'100%',minHeight:0,display:'flex',flexDirection:'column',justifyContent:compact?'center':'space-around',gap:compact?.6:1.3,overflow:'hidden'}}>
-   <Box sx={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:1}}><Value value={value} unit="%" color={theme.foreground}/>{!compact&&<Typography sx={{fontSize:10.5,color:theme.accent2,fontWeight:750}}>● Healthy</Typography>}</Box>
+   <Box sx={{display:'flex',justifyContent:compact?'center':'space-between',alignItems:'center',gap:1}}><Value value={value} unit="%" color={theme.foreground}/>{!compact&&<Typography sx={{fontSize:10.5,color:theme.accent2,fontWeight:750}}>● Healthy</Typography>}</Box>
    {!compact&&<Box sx={{height:14,p:3/8,bgcolor:theme.border,borderRadius:2.5,position:'relative',flexShrink:0}}><Box sx={{height:'100%',width:`${value}%`,borderRadius:2.2,background:`linear-gradient(90deg,${theme.accent},${theme.accent2})`,transition:'width .2s'}}/></Box>}
    {!compact&&<Box sx={{display:'flex',justifyContent:'space-between',gap:1,flexWrap:'wrap'}}><Typography sx={{fontSize:10.5,color:theme.muted}}>Voltage <Box component="strong" sx={{color:theme.foreground}}>{string(def.mock.voltage,'3.94 V')}</Box></Typography><Typography sx={{fontSize:10.5,color:theme.muted}}>{string(def.mock.remaining,'8h left')}</Typography></Box>}
  </Box>;
@@ -136,7 +137,7 @@ function StudioChart({def,theme,size,view,history}:WidgetRendererProps){
 
 function StudioTank({def,theme,size,view}:WidgetRendererProps){
  const value=bounded(number(def.mock.value,63)),compact=(view??resolveWidgetView(size))==='compact';
- if(compact)return <Box sx={{display:'flex',alignItems:'center',height:'100%'}}><Value value={value} unit="%" color={theme.foreground}/></Box>;
+ if(compact)return <Box sx={{display:'grid',placeItems:'center',height:'100%'}}><Value value={value} unit="%" color={theme.foreground}/></Box>;
  return <Box sx={{height:'100%',minHeight:0,display:'flex',alignItems:'center',justifyContent:'space-around',gap:1.4,overflow:'hidden'}}><Box sx={{flex:'0 1 74px',minWidth:27,maxWidth:74,height:'83%',borderRadius:2.5,border:`2px solid ${theme.border}`,overflow:'hidden',position:'relative',bgcolor:`${theme.accent}0a`}}><Box sx={{position:'absolute',bottom:0,left:0,right:0,height:`${value}%`,background:`linear-gradient(0deg,${theme.accent},${theme.accent2}b0)`,borderRadius:'12px 12px 0 0'}}/></Box><Box sx={{minWidth:0}}><Value value={value} unit="%" color={theme.foreground}/><Typography sx={{fontSize:11,color:theme.muted,mt:.5}}>Fill level</Typography><Typography sx={{fontSize:11,color:theme.accent2,mt:.5}}>{string(def.mock.liters,'Normal')}</Typography></Box></Box>;
 }
 
@@ -148,7 +149,7 @@ function StudioSwitch({def,theme,size,view}:WidgetRendererProps){
 function StudioSignal({def,theme,size,view}:WidgetRendererProps){
  const value=number(def.mock.value,-74),compact=(view??resolveWidgetView(size))==='compact';
  return <Box sx={{height:'100%',minHeight:0,display:'flex',flexDirection:'column',justifyContent:'space-around',gap:.6,overflow:'hidden'}}>
-   <Box sx={{display:'flex',alignItems:'end',justifyContent:'space-between',gap:1}}><Value value={value} unit="dBm" color={theme.foreground}/>{!compact&&<Typography sx={{fontSize:10,color:theme.accent2,fontWeight:700}}>{string(def.mock.network,'LTE')}</Typography>}</Box>
+   <Box sx={{display:'flex',alignItems:'end',justifyContent:compact?'center':'space-between',gap:1}}><Value value={value} unit="dBm" color={theme.foreground}/>{!compact&&<Typography sx={{fontSize:10,color:theme.accent2,fontWeight:700}}>{string(def.mock.network,'LTE')}</Typography>}</Box>
    {!compact&&<><Box sx={{display:'flex',gap:5/8,alignItems:'end',height:32,flexShrink:1}}>{[25,40,54,70,88,100].map((h,i)=><Box key={h} sx={{height:`${h}%`,flex:1,bgcolor:i<5?theme.accent:theme.border,opacity:i<5?.48+i*.11:1,borderRadius:'5px 5px 2px 2px'}}/>)}</Box><Typography sx={{fontSize:10.5,color:theme.muted}}>Signal quality · Good</Typography></>}
  </Box>;
 }
@@ -193,7 +194,7 @@ export function StudioVisualRenderer(props:WidgetRendererProps){
   case 'events': case 'alarms': return <StudioList {...props}/>;
   default: if ((props.view??resolveWidgetView(props.size))==='compact' && props.def.visual!=='switch') {
     const Icon=props.def.icon;
-    return <Box sx={{display:'flex',height:'100%',alignItems:'center',gap:1.2,overflow:'hidden',color:props.theme.foreground}}><Icon sx={{color:props.theme.accent,fontSize:24}}/><Typography sx={{fontSize:13,color:props.theme.muted,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{props.locale==='fa'?props.def.titleFa:props.def.titleEn}</Typography></Box>;
+    return <Box sx={{display:'flex',height:'100%',alignItems:'center',justifyContent:'center',gap:1.2,overflow:'hidden',color:props.theme.foreground}}><Icon sx={{color:props.theme.accent,fontSize:24}}/><Typography sx={{fontSize:13,color:props.theme.muted,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{props.locale==='fa'?props.def.titleFa:props.def.titleEn}</Typography></Box>;
   }
   return <MaterialVisualRenderer {...props}/>;
  }
