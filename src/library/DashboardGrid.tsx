@@ -3,6 +3,7 @@ import { Box, IconButton, Tooltip, useMediaQuery } from '@mui/material';
 import DragIndicatorRounded from '@mui/icons-material/DragIndicatorRounded';
 import ArrowUpwardRounded from '@mui/icons-material/ArrowUpwardRounded';
 import ArrowDownwardRounded from '@mui/icons-material/ArrowDownwardRounded';
+import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded';
 import OpenInFullRounded from '@mui/icons-material/OpenInFullRounded';
 import type { WidgetInstanceConfig } from './types';
 import { settleDashboard } from './layout';
@@ -21,6 +22,7 @@ export type DashboardGridProps = {
   onChange: (items: DashboardItem[]) => void;
   renderWidget: (item: DashboardItem) => ReactNode;
   onExpand?: (item: DashboardItem) => void;
+  onRemove?: (item: DashboardItem) => void;
   onContextItem?: (item: DashboardItem, event: React.MouseEvent<HTMLDivElement>) => void;
   columns?: number;
   rowHeight?: number;
@@ -29,7 +31,7 @@ export type DashboardGridProps = {
 
 type Gesture = {kind:'drag'|'resize';id:string;startX:number;startY:number;item:DashboardItem;items:DashboardItem[];unitX:number;unitY:number;lastDx:number;lastDy:number;lastTarget?:string};
 
-export function DashboardGrid({items,editable=false,onChange,renderWidget,onExpand,onContextItem,columns=12,rowHeight=98,gap=14}:DashboardGridProps){
+export function DashboardGrid({items,editable=false,onChange,renderWidget,onExpand,onRemove,onContextItem,columns=12,rowHeight=98,gap=14}:DashboardGridProps){
   const ref=useRef<HTMLDivElement>(null);
   const [availableWidth,setAvailableWidth]=useState(0);
   useEffect(()=>{
@@ -116,6 +118,7 @@ export function DashboardGrid({items,editable=false,onChange,renderWidget,onExpa
     {layout.map(item=><Box key={item.id} data-dashboard-item={item.id}
       onContextMenu={event=>{event.preventDefault();onContextItem?.(item,event);}}
       onPointerDown={event=>{if(!editable)return;const target=event.target as HTMLElement;
+        if(target.closest('[data-dashboard-action]'))return;
         const resizing=Boolean(target.closest('[data-dashboard-resize]'));
         if(narrow && !resizing && !target.closest('[data-dashboard-drag]'))return;
         begin(event,item,resizing?'resize':'drag');}}
@@ -144,6 +147,7 @@ export function DashboardGrid({items,editable=false,onChange,renderWidget,onExpa
           <Tooltip title="Drag or use arrow keys to reorder"><Box component="button" data-dashboard-drag="true" type="button" aria-label={`Move ${item.widgetId}`} onKeyDown={event=>{const moves:Record<string,[number,number]>={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};const delta=moves[event.key];if(!delta)return;event.preventDefault();nudge(item,...delta);}} sx={{all:'unset',touchAction:'none',cursor:'grab',width:narrow?44:36,height:narrow?44:32,display:'grid',placeItems:'center',bgcolor:'rgba(20,30,48,.90)',border:'1px solid rgba(255,255,255,.23)',borderRadius:1.5,color:'#fff','&:active':{cursor:'grabbing'}}}><DragIndicatorRounded fontSize="small"/></Box></Tooltip>
           {narrow&&<><IconButton size="small" aria-label={`Move ${item.widgetId} earlier`} onClick={e=>{e.stopPropagation();reorder(item,-1);}} sx={{color:'#fff',background:'rgba(20,30,48,.90)',minWidth:38,minHeight:38}}><ArrowUpwardRounded fontSize="small"/></IconButton>
           <IconButton size="small" aria-label={`Move ${item.widgetId} later`} onClick={e=>{e.stopPropagation();reorder(item,1);}} sx={{color:'#fff',background:'rgba(20,30,48,.90)',minWidth:38,minHeight:38}}><ArrowDownwardRounded fontSize="small"/></IconButton></>}
+          {onRemove&&<Tooltip title="Remove widget"><IconButton data-dashboard-action="true" size="small" aria-label={`Remove ${item.widgetId}`} onClick={event=>{event.stopPropagation();onRemove(item);}} sx={{color:'#fff',background:'rgba(115,35,45,.94)',minWidth:38,minHeight:38}}><DeleteOutlineRounded fontSize="small"/></IconButton></Tooltip>}
         </Box>
         <Tooltip title="Drag to resize"><Box component="button" data-dashboard-resize="true" type="button" aria-label={`Resize ${item.widgetId}`}  sx={{all:'unset',touchAction:'none',position:'absolute',right:0,bottom:0,zIndex:7,cursor:'nwse-resize',width:narrow?44:32,height:narrow?44:32,display:'grid',placeItems:'center',color:'#fff',background:'linear-gradient(135deg,transparent 25%,rgba(28,43,65,.9) 26%)',borderBottomRightRadius:2}}><Box sx={{fontSize:23,fontWeight:900,transform:'rotate(-45deg)',lineHeight:1}}>⌁</Box></Box></Tooltip>
       </>}

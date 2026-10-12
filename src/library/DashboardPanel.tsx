@@ -8,7 +8,7 @@ import { getWidgetDefinition } from './catalog';
 import { widgetSizeForGrid } from './adaptive';
 import type { Locale } from '../widgets/core/types';
 
-export interface DashboardPanelProps extends Pick<DashboardGridProps,'items'|'editable'|'onChange'|'onContextItem'|'columns'|'rowHeight'|'gap'> {
+export interface DashboardPanelProps extends Pick<DashboardGridProps,'items'|'editable'|'onChange'|'onRemove'|'onContextItem'|'columns'|'rowHeight'|'gap'> {
   /** Panel-level visual theme and colors inherited by all children by default. */
   appearance:DashboardAppearance;
   locale?:Locale;
@@ -26,7 +26,7 @@ export interface DashboardPanelProps extends Pick<DashboardGridProps,'items'|'ed
  * responsive grid, palette inheritance and optional expanded view—not API
  * requests, telemetry, persistence or user permissions.
  */
-export function DashboardPanel({items,editable=false,onChange,onContextItem,appearance,locale='en',
+export function DashboardPanel({items,editable=false,onChange,onRemove,onContextItem,appearance,locale='en',
   className,renderWidget,onExpand,expandable=true,columns=12,rowHeight=98,gap=14}:DashboardPanelProps){
   const [expanded,setExpanded]=useState<DashboardItem|null>(null);
   const phone=useMediaQuery('(max-width:600px)');
@@ -44,7 +44,7 @@ export function DashboardPanel({items,editable=false,onChange,onContextItem,appe
   return <WidgetThemeProvider appearance={appearance}>
     <Box className={className} data-iot-dashboard-panel="true" data-dashboard-locale={locale}
       dir={direction} sx={{width:'100%',minWidth:0,direction:'ltr'}}>
-      <DashboardGrid items={items} editable={editable} onChange={onChange} onExpand={expand}
+      <DashboardGrid items={items} editable={editable} onChange={onChange} onExpand={expand} onRemove={onRemove}
         onContextItem={onContextItem} columns={columns} rowHeight={rowHeight} gap={gap}
         renderWidget={item=>render(item,false)}/>
       <Dialog open={Boolean(expanded)} onClose={()=>setExpanded(null)} fullScreen={phone}

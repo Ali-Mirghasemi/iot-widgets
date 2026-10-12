@@ -12,6 +12,7 @@
     "screenshots:full": "node scripts/full-screenshots.mjs",
     "build:app": "tsc -b && vite build",
     "build:lib": "tsc -p tsconfig.lib.json",
+    "prepare": "npm run build:lib",
     "pack:lib": "npm run build:lib && npm pack",
     "test:layout": "node scripts/test-dashboard-layout.mjs",
     "test:qa": "node scripts/test-qa-config.mjs && node scripts/test-qa-resources.mjs && node scripts/test-qa-parallel.mjs",

@@ -40,6 +40,7 @@ export function IoTWidget({
   expanded = false,
   locale = 'en',
   data,
+  demoFallback = true,
   metadata,
   onInfo,
   onInteraction,
@@ -88,12 +89,12 @@ export function IoTWidget({
     () => ({
       ...baseDefinition,
       mock: {
-        ...baseDefinition.mock,
+        ...(demoFallback ? baseDefinition.mock : {}),
         ...metadata,
         ...data,
       },
     }),
-    [baseDefinition, data, metadata],
+    [baseDefinition, data, demoFallback, metadata],
   );
 
   const mock = runtimeDefinition.mock;

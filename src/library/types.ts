@@ -97,6 +97,9 @@ export interface IoTWidgetProps {
   /** Runtime values merged over the definition's demo/mock values. */
   data?: WidgetData;
 
+  /** Production consumers should set false: never substitute demo telemetry for missing values. */
+  demoFallback?: boolean;
+
   /** Device/site/status metadata merged over the definition's demo metadata. */
   metadata?: WidgetMetadata;
 

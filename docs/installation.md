@@ -46,12 +46,9 @@ import { IoTWidget } from 'iot-widget-studio-react';
 
 ## Method 2 — install from Git
 
-Run and commit the library build before tagging a release:
+The package's `prepare` lifecycle builds the library during Git installation. You can tag a release without committing `dist/`:
 
 ```bash
-npm run build:lib
-git add dist package.json package-lock.json
-git commit -m "Build widget library"
 git tag v0.4.0
 git push --tags
 ```
@@ -68,7 +65,7 @@ or:
 npm install github:YOUR_ORG/YOUR_REPO#v0.4.0
 ```
 
-The `dist/` directory must exist in the Git revision because this repository deliberately does not require a package build during Git installation.
+Git installations build `dist/` in the install environment. The consumer lockfile records the exact resolved commit, so deployments are reproducible.
 
 ## Method 3 — npm/private registry
 
