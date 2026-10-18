@@ -20,7 +20,8 @@
     "test": "npm run test:layout && npm run test:adaptive && npm run test:qa && npm run test:responsive",
     "qa:responsive": "node scripts/qa-responsive.mjs",
     "test:responsive": "node scripts/test-responsive.mjs",
-    "test:selective": "node --test scripts/test-selective-renderer-imports.mjs"
+    "test:selective": "node --test scripts/test-selective-renderer-imports.mjs",
+    "test:scoped": "node --test scripts/test-scoped-widget-imports.mjs"
   },
   "devDependencies": {
     "@emotion/react": "^11.14.0",
@@ -89,6 +90,18 @@
     "./renderers/tactile": {
       "types": "./dist/widgets/themes/TactileVisuals.d.ts",
       "import": "./dist/widgets/themes/TactileVisuals.js"
+    },
+    "./scoped": {
+      "types": "./dist/library/ScopedIoTWidget.d.ts",
+      "import": "./dist/library/ScopedIoTWidget.js"
+    },
+    "./frames/industrial": {
+      "types": "./dist/widgets/themes/ProcessFrame.d.ts",
+      "import": "./dist/widgets/themes/ProcessFrame.js"
+    },
+    "./frames/minimal": {
+      "types": "./dist/widgets/frames/MinimalFrame.d.ts",
+      "import": "./dist/widgets/frames/MinimalFrame.js"
     },
     "./package.json": "./package.json"
   },

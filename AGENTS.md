@@ -35,3 +35,15 @@ A customer build using the root `IoTWidget`/`DashboardPanel` **cannot** claim th
 exclusion. Use the explicit renderer subpaths only when constructing a restricted
 entry; verify its **compiled** output and keep future source changes aligned with
 `docs/SELECTIVE_RENDERERS.md`. Keep this module free of backend/customer logic.
+
+
+## INC-003 scoped composition guardrails
+
+Use `iot-widget-studio-react/scoped` with static imports from selected renderer
+and frame subpaths for customer builds. Pass only explicitly allowed theme tokens
+and widget definitions. Never import the root registry/all-theme `IoTWidget` or
+`DashboardPanel` in a restricted build. Register each selected ID explicitly,
+fail closed for unknown widget/theme IDs, and keep demo fallback disabled for
+real telemetry. Do not treat a client-side interaction event as authorization.
+All output-bundle exclusion/security claims require artifact verification, not
+just import-graph assertions. Use `INC-NNN-repository-purpose.patch` naming.

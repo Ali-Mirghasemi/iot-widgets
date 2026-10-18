@@ -2,6 +2,23 @@
 
 Log actual project changes in reverse chronological order, including verified test results and known limitations. Do not treat proposed work as completed.
 
+## INC-003 — Scoped widget runtime composition (2026-10-18)
+
+- Introduced `src/library/ScopedIoTWidget.tsx` with `createScopedIoTWidget()`:
+  client-provided allowlists of definitions, theme tokens, visual renderer modules
+  and frame modules. No default theme registry, demo catalog, or all-theme frame
+  import is pulled by the scoped entry.
+- Added independent minimal frame subpath and existing industrial frame subpath.
+  Existing `IoTWidget` and full registry remain unchanged for compatibility.
+- Production-scoped widgets default to no mock fallback and show explicit
+  unavailable state when required live telemetry or control handlers are absent.
+- Added static guard tests (`npm run test:scoped`) and scoped API documentation.
+- **Verification in patch authoring environment:** static Node checks passed;
+  full `tsc -p tsconfig.lib.json` and browser/bundle audits require the user's
+  installed React/MUI dependencies. **No Nira build-profile integration yet.**
+- Next: consume scoped entry from Nira's generated frontend and audit its emitted
+  code; do not claim private renderer exclusion until that test passes.
+
 ## INC-001 — Selective renderer entry foundation (2026-10-18)
 
 - Extracted shared visual-body composition into `WidgetVisualCore.tsx` without eager

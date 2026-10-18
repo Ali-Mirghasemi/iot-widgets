@@ -37,3 +37,11 @@ theme ID. `package.json` exposes `./visual-core` and per-theme `./renderers/*`
 subpaths, while the root library entry preserves the all-themes API.
 **Renderer-only:** selective *complete widget* and build artifact guarantees are
 not implemented; see `docs/SELECTIVE_RENDERERS.md` and `TODO.md`.
+
+## Increment INC-003 — Scoped IoTWidget
+
+`iot-widget-studio-react/scoped` provides `createScopedIoTWidget()` and its own
+appearance provider. The host passes the compiled, allowed widget definitions,
+theme tokens, renderers and frames. It rejects unregistered IDs and defaults to
+no demo data fallback. Root library API remains backwards compatible and still
+imports all themes. See `docs/SELECTIVE_RENDERERS.md` for usage and limitations.

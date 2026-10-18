@@ -31,6 +31,7 @@
 ## INC-001 follow-ups — selective renderers
 
 - [x] Extract theme-neutral body rendering factory and publish individual renderer subpaths (implementation in incremental patch INC-001; verify on user's checkout).
-- [ ] Add selectively composed full `IoTWidget`/`DashboardPanel` entry that does not import the default renderer registry, theme token registry or demo-only catalog unless explicitly chosen.
+- [x] Add a selectively composed full widget entry with explicit tokens/frames/definitions (`INC-003`; build/browser verification pending).
+- [ ] Add a selectively composed `DashboardPanel`/`DashboardGrid` without eager default catalog imports.
 - [ ] Integrate allowlisted widget styles with Nira's `build-profiles/*.json` generator and audit actual customer JS/CSS/public assets after Vite production compilation.
 - [ ] Prove excluded themes are absent with a real compiled canary app; validate production data/no-mock behavior, RTL and all selected rendering styles.
