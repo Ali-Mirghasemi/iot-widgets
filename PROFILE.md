@@ -28,3 +28,12 @@ Reusable, Git-versioned React/MUI widget library. Its core package name is `iot-
 - The project's gallery/showcase screenshots are aesthetic references. Production layout and host permissions must be independently tested.
 
 See `README.md` and `docs/` for public APIs and specifics; `TODO.md` for incomplete tasks.
+
+## Increment INC-001 — theme-neutral renderer composition
+
+`createWidgetVisualRenderer()` in `src/widgets/renderers/WidgetVisualCore.tsx` accepts a
+static, partial map of theme-specific React components and refuses an unavailable
+theme ID. `package.json` exposes `./visual-core` and per-theme `./renderers/*`
+subpaths, while the root library entry preserves the all-themes API.
+**Renderer-only:** selective *complete widget* and build artifact guarantees are
+not implemented; see `docs/SELECTIVE_RENDERERS.md` and `TODO.md`.

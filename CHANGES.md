@@ -2,6 +2,20 @@
 
 Log actual project changes in reverse chronological order, including verified test results and known limitations. Do not treat proposed work as completed.
 
+## INC-001 — Selective renderer entry foundation (2026-10-18)
+
+- Extracted shared visual-body composition into `WidgetVisualCore.tsx` without eager
+  imports of any built-in theme implementation. The default `WidgetVisuals.tsx`
+  still registers all visual themes and exports the same names.
+- Added explicit package exports for a renderer-independent factory and individual
+  theme modules; unsupported theme selections throw instead of silently falling back.
+- Added a static contract test and `docs/SELECTIVE_RENDERERS.md`.
+- Validation evidence: `node --test scripts/test-selective-renderer-imports.mjs`
+  passed 3 static checks in the reconstructed source fixture. Full TypeScript
+  build, browser rendering and emitted-bundle exclusion are **not yet verified**.
+- Next: deliver an import-clean IoTWidget/Panel composition API, then integrate
+  the customer build profiles and compile/audit the final Nira bundles.
+
 ## 2026-10-18 — Project tracking contract
 
 **Added:** root `AGENTS.md`, `PROFILE.md`, `TODO.md`, `CHANGES.md` as an explicit handoff, library/host responsibility contract, and roadmap for Nira's exhibition demo plus future customer-selective builds.

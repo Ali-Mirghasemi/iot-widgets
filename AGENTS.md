@@ -26,3 +26,12 @@ Read **`PROFILE.md`**, **`TODO.md`**, **`CHANGES.md`**, then **`AGENTS.md`** bef
 ## Local verification reference
 
 Check scripts in the current `package.json` rather than assuming they still exist. Typical checks: `npm run build:lib`, `npm test`, `npm run test:layout`, `npm run test:adaptive`, and focused screenshot QA. Log test commands that actually ran, not anticipated results. Check RTL, responsive and per-widget appearance inheritance manually and with automated coverage.
+
+## INC-001 selective renderer safety
+
+`WidgetVisualCore.tsx` must not import `WidgetVisuals.tsx` or theme implementation
+modules. The full registry stays in `WidgetVisuals.tsx` for backward compatibility.
+A customer build using the root `IoTWidget`/`DashboardPanel` **cannot** claim theme
+exclusion. Use the explicit renderer subpaths only when constructing a restricted
+entry; verify its **compiled** output and keep future source changes aligned with
+`docs/SELECTIVE_RENDERERS.md`. Keep this module free of backend/customer logic.

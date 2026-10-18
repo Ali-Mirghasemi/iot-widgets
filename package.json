@@ -19,7 +19,8 @@
     "test:adaptive": "node scripts/test-adaptive.mjs",
     "test": "npm run test:layout && npm run test:adaptive && npm run test:qa && npm run test:responsive",
     "qa:responsive": "node scripts/qa-responsive.mjs",
-    "test:responsive": "node scripts/test-responsive.mjs"
+    "test:responsive": "node scripts/test-responsive.mjs",
+    "test:selective": "node --test scripts/test-selective-renderer-imports.mjs"
   },
   "devDependencies": {
     "@emotion/react": "^11.14.0",
@@ -44,6 +45,50 @@
       "types": "./dist/library/index.d.ts",
       "import": "./dist/library/index.js",
       "default": "./dist/library/index.js"
+    },
+    "./visual-core": {
+      "types": "./dist/widgets/renderers/WidgetVisualCore.d.ts",
+      "import": "./dist/widgets/renderers/WidgetVisualCore.js"
+    },
+    "./renderers/material": {
+      "types": "./dist/widgets/themes/MaterialVisuals.d.ts",
+      "import": "./dist/widgets/themes/MaterialVisuals.js"
+    },
+    "./renderers/flat": {
+      "types": "./dist/widgets/themes/FlatVisuals.d.ts",
+      "import": "./dist/widgets/themes/FlatVisuals.js"
+    },
+    "./renderers/minimal": {
+      "types": "./dist/widgets/themes/MinimalVisuals.d.ts",
+      "import": "./dist/widgets/themes/MinimalVisuals.js"
+    },
+    "./renderers/gaming": {
+      "types": "./dist/widgets/themes/GamingVisuals.d.ts",
+      "import": "./dist/widgets/themes/GamingVisuals.js"
+    },
+    "./renderers/ios": {
+      "types": "./dist/widgets/themes/IOSVisuals.d.ts",
+      "import": "./dist/widgets/themes/IOSVisuals.js"
+    },
+    "./renderers/glass": {
+      "types": "./dist/widgets/themes/GlassVisuals.d.ts",
+      "import": "./dist/widgets/themes/GlassVisuals.js"
+    },
+    "./renderers/studio": {
+      "types": "./dist/widgets/themes/StudioVisuals.d.ts",
+      "import": "./dist/widgets/themes/StudioVisuals.js"
+    },
+    "./renderers/horizon": {
+      "types": "./dist/widgets/themes/StudioVisuals.d.ts",
+      "import": "./dist/widgets/themes/StudioVisuals.js"
+    },
+    "./renderers/industrial": {
+      "types": "./dist/widgets/themes/ProcessVisuals.d.ts",
+      "import": "./dist/widgets/themes/ProcessVisuals.js"
+    },
+    "./renderers/tactile": {
+      "types": "./dist/widgets/themes/TactileVisuals.d.ts",
+      "import": "./dist/widgets/themes/TactileVisuals.js"
     },
     "./package.json": "./package.json"
   },
