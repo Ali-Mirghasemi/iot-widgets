@@ -48,6 +48,8 @@ export function DashboardGrid({items,editable=false,onChange,renderWidget,onExpa
   const phone=useMediaQuery('(max-width:600px)') || (availableWidth>0&&availableWidth<600);
   const minFor=(item:DashboardItem,n:number)=>getWidgetGridMinimum(getWidgetDefinition(item.widgetId),n);
   const gesture=useRef<Gesture|null>(null);
+  const [activeGesture,setActiveGesture]=useState<{id:string;kind:'drag'|'resize'}|null>(null);
+  const [hoverId,setHoverId]=useState<string|null>(null);
   const layout=settleDashboard(items,undefined,columns,minFor);
   const maxRow=layout.reduce((r,i)=>Math.max(r,i.y+i.h),0);
   const begin=(event:PointerEvent<HTMLElement>,item:DashboardItem,kind:'drag'|'resize')=>{
@@ -56,11 +58,22 @@ export function DashboardGrid({items,editable=false,onChange,renderWidget,onExpa
     const parent=ref.current?.getBoundingClientRect();if(!parent)return;
     const unitX=Math.max(1,(parent.width+gap)/columns);
     gesture.current={kind,id:item.id,startX:event.clientX,startY:event.clientY,item:{...item},items:layout.map(i=>({...i})),unitX,unitY:rowHeight+gap,lastDx:0,lastDy:0};
+    setActiveGesture({id:item.id,kind});
+    setHoverId(null);
     event.currentTarget.setPointerCapture(event.pointerId);
   };
   const move=(event:PointerEvent<HTMLElement>)=>{
     const g=gesture.current;if(!g)return;
     event.preventDefault();
+    if(g.kind==='drag'){
+      const targets=Array.from(ref.current?.querySelectorAll<HTMLElement>('[data-dashboard-item]')??[])
+        .filter(el=>el.dataset.dashboardItem!==g.id);
+      const closest=targets.map(el=>{const r=el.getBoundingClientRect();return {
+        id:el.dataset.dashboardItem!,distance:Math.hypot(event.clientX-(r.left+r.right)/2,event.clientY-(r.top+r.bottom)/2),
+        radius:Math.max(r.width,r.height),
+      };}).sort((a,b)=>a.distance-b.distance)[0];
+      setHoverId(previous=>{const next=closest&&closest.distance<closest.radius?closest.id:null;return previous===next?previous:next;});
+    }
     const dx=Math.round((event.clientX-g.startX)/g.unitX);
     const dy=Math.round((event.clientY-g.startY)/g.unitY);
     if(narrow && g.kind==='drag'){
@@ -76,7 +89,9 @@ export function DashboardGrid({items,editable=false,onChange,renderWidget,onExpa
       const from=order.findIndex(i=>i.id===g.id),target=order.findIndex(i=>i.id===closest.id);
       if(from<0||target<0)return;
       const [moved]=order.splice(from,1);order.splice(target,0,moved);
-      onChange(settleDashboard(order.map((item,index)=>({...item,x:0,y:index*100})),undefined,columns,minFor));
+      const settled=settleDashboard(order.map((item,index)=>({...item,x:0,y:index*100})),undefined,columns,minFor);
+      g.items=settled.map(i=>({...i}));
+      onChange(settled);
       return;
     }
     if(dx===g.lastDx&&dy===g.lastDy)return;
@@ -93,6 +108,8 @@ export function DashboardGrid({items,editable=false,onChange,renderWidget,onExpa
   const end=(event:PointerEvent<HTMLElement>)=>{
     if(!gesture.current)return;
     gesture.current=null;
+    setActiveGesture(null);
+    setHoverId(null);
     if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);
   };
   const reorder=(item:DashboardItem,delta:number)=>{
@@ -116,11 +133,14 @@ export function DashboardGrid({items,editable=false,onChange,renderWidget,onExpa
       gridAutoRows:narrow?'auto':undefined,gap:narrow?2:undefined}}>
 
     {layout.map(item=><Box key={item.id} data-dashboard-item={item.id}
+      data-dashboard-dragging={activeGesture?.id===item.id&&activeGesture.kind==='drag'?'true':undefined}
+      data-dashboard-drop-target={hoverId===item.id?'true':undefined}
       onContextMenu={event=>{event.preventDefault();onContextItem?.(item,event);}}
       onPointerDown={event=>{if(!editable)return;const target=event.target as HTMLElement;
         if(target.closest('[data-dashboard-action]'))return;
         const resizing=Boolean(target.closest('[data-dashboard-resize]'));
-        if(narrow && !resizing && !target.closest('[data-dashboard-drag]'))return;
+        const dragging=Boolean(target.closest('[data-dashboard-drag]'));
+        if(!resizing&&!dragging)return;
         begin(event,item,resizing?'resize':'drag');}}
       onPointerMove={move} onPointerUp={end} onPointerCancel={end}
       sx={{position:narrow?'relative':'absolute',
@@ -136,9 +156,14 @@ export function DashboardGrid({items,editable=false,onChange,renderWidget,onExpa
       gridColumn:narrow?(phone||isCanvasWidget(getWidgetDefinition(item.widgetId)??{visual:'metric' as const,category:'metrics' as const})?'1 / -1':'span 1'):undefined,
       gridRow:narrow?'span 1':undefined,
       minWidth:0,minHeight:0,zIndex:gesture.current?.id===item.id?3:1,
-      cursor:editable&&!narrow?'grab':undefined,touchAction:editable&&!narrow?'none':undefined,userSelect:editable?'none':undefined,
-      transition:gesture.current?.id===item.id?'none':'left .16s ease, top .16s ease, width .16s ease, height .16s ease',
-      outline:editable?'1px dashed rgba(100,140,185,.42)':undefined,outlineOffset:editable?2:undefined,
+      cursor:editable?'default':undefined,touchAction:'auto',userSelect:editable?'none':undefined,
+      transform:activeGesture?.id===item.id?'scale(1.015)':undefined,
+      boxShadow:activeGesture?.id===item.id?'0 16px 36px rgba(34,60,100,.20)':hoverId===item.id?'0 0 0 3px rgba(100,132,255,.25)':undefined,
+      borderRadius:2.5,
+      transition:activeGesture?.id===item.id?'transform .12s ease, box-shadow .12s ease':'left .22s cubic-bezier(.2,.8,.2,1), top .22s cubic-bezier(.2,.8,.2,1), width .22s ease, height .22s ease, transform .16s ease, box-shadow .16s ease',
+      '@media (prefers-reduced-motion: reduce)':{transition:'none',transform:'none'},
+      outline:hoverId===item.id?'2px solid rgba(100,132,255,.7)':editable?'1px dashed rgba(100,140,185,.42)':undefined,
+      outlineOffset:editable?2:undefined,
       '&:hover .dashboard-actions':{opacity:1},
     }}>
       <Box sx={{height:'100%',width:'100%',pointerEvents:editable?'none':'auto'}}>{renderWidget(item)}</Box>
